@@ -20,6 +20,8 @@ public class Game1 : Game
     {
         // TODO: Add your initialization logic here
 
+        this.Components.Add(new GameBoard(this));
+
         base.Initialize();
     }
 
