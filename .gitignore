@@ -95,3 +95,6 @@ vsxmake2022
 
 # docfx
 _*
+
+# Nopipeline
+*.mgcb
