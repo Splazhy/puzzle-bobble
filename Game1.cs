@@ -7,7 +7,7 @@ namespace puzzle_bobble;
 public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
+    public SpriteBatch SpriteBatch { get; private set; }
 
     public Game1()
     {
@@ -19,13 +19,14 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
+        Components.Add(new Slingshot(this));
 
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
+        SpriteBatch = new SpriteBatch(GraphicsDevice);
 
         // TODO: use this.Content to load your game content here
     }
