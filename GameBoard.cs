@@ -27,10 +27,10 @@ public class GameBoard : DrawableGameComponent
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         ballTypes = [
-            Game.Content.Load<Texture2D>("redBall"),
-            Game.Content.Load<Texture2D>("greenBall"),
-            Game.Content.Load<Texture2D>("blueBall"),
-            Game.Content.Load<Texture2D>("yellowBall"),
+            Game.Content.Load<Texture2D>("Graphics/redBall"),
+            Game.Content.Load<Texture2D>("Graphics/greenBall"),
+            Game.Content.Load<Texture2D>("Graphics/blueBall"),
+            Game.Content.Load<Texture2D>("Graphics/yellowBall"),
         ];
 
 
