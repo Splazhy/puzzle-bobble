@@ -30,7 +30,7 @@ public class Slingshot : DrawableGameComponent
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
-        _texture = Game.Content.Load<Texture2D>("slingshot");
+        _texture = Game.Content.Load<Texture2D>("Graphics/slingshot");
 
         base.LoadContent();
     }
