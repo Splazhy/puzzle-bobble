@@ -1,69 +1,70 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace puzzle_bobble;
 
-public class Slingshot : DrawableGameComponent
+public class Slingshot : GameObject
 {
-    // Rotations in this class are in radians
+    // Rotations are in radians, not degrees
     public static readonly float MIN_ROTATION = -MathF.PI * 1.0f / 3.0f;
     public static readonly float MAX_ROTATION = MathF.PI * 1.0f / 3.0f;
     protected float rotation = 0.0f;
 
-    private Texture2D _texture;
-    private SpriteBatch _spriteBatch;
-    private Vector2 slingshotPosition;
-
-    public Slingshot(Game game) : base(game)
+    public Slingshot(Game game) : base("slingshot")
     {
-        slingshotPosition = new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
+        Position = new Vector2(game.GraphicsDevice.Viewport.Width / 2, game.GraphicsDevice.Viewport.Height / 2);
+        Scale = new Vector2(0.5f, 0.5f);
     }
 
-    public override void Initialize()
+    public override void LoadContent(ContentManager content)
     {
-        Console.WriteLine("initialize");
-        base.Initialize();
-    }
-
-    protected override void LoadContent()
-    {
-        _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
-        _texture = Game.Content.Load<Texture2D>("Graphics/slingshot");
-
-        base.LoadContent();
+        _texture = content.Load<Texture2D>("Graphics/slingshot");
     }
 
     public override void Update(GameTime gameTime)
     {
+        // TODO: Implement `IsJustPressed` method for new InputManager class
+        // This code executes multiple times per a short key press,
+        // resulting in undesired behavior.
+        //
+        // if (Keyboard.GetState().IsKeyDown(Keys.H))
+        //     IsActive = !IsActive;
+
+        if (Keyboard.GetState().IsKeyDown(Keys.OemPlus))
+            Scale += new Vector2(0.01f, 0.01f);
+        if (Keyboard.GetState().IsKeyDown(Keys.OemMinus))
+            Scale -= new Vector2(0.01f, 0.01f);
+
+        if (!IsActive) return;
+
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X;
         int mouseY = mouseState.Y;
 
-        Vector2 direction = new Vector2(mouseX, mouseY) - slingshotPosition;
+        Vector2 direction = new Vector2(mouseX, mouseY) - Position;
         direction.Rotate(MathF.PI / 2.0f);
         rotation = MathF.Atan2(direction.Y, direction.X);
         rotation = MathHelper.Clamp(rotation, MIN_ROTATION, MAX_ROTATION);
     }
 
-    public override void Draw(GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _spriteBatch.Begin();
-        _spriteBatch.Draw(
+        spriteBatch.Begin();
+        spriteBatch.Draw(
             _texture,
-            slingshotPosition,
+            Position,
             null,
             Color.White,
             rotation,
             new Vector2(_texture.Width / 2, _texture.Height / 2),
-            1.0f,
+            Scale,
             SpriteEffects.None,
             0
         );
-        _spriteBatch.End();
-
-        base.Draw(gameTime);
+        spriteBatch.End();
     }
 
 }

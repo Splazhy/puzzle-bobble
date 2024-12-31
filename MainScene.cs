@@ -1,15 +1,17 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace puzzle_bobble;
 
-public class Game1 : Game
+public class MainScene : Game
 {
     private GraphicsDeviceManager _graphics;
-    public SpriteBatch SpriteBatch { get; private set; }
+    private SpriteBatch SpriteBatch;
+    private List<GameObject> _gameObjects;
 
-    public Game1()
+    public MainScene()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
@@ -18,8 +20,10 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
-        Components.Add(new Slingshot(this));
+        _gameObjects = new List<GameObject>();
+
+        // NOTE: Add game objects to the scene here
+        _gameObjects.Add(new Slingshot(this));
 
         base.Initialize();
     }
@@ -28,7 +32,7 @@ public class Game1 : Game
     {
         SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-        // TODO: use this.Content to load your game content here
+        _gameObjects.ForEach(gameObject => gameObject.LoadContent(Content));
     }
 
     protected override void Update(GameTime gameTime)
@@ -36,7 +40,8 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        // TODO: Add your update logic here
+        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
+        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
 
         base.Update(gameTime);
     }
@@ -45,7 +50,7 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        // TODO: Add your drawing code here
+        _gameObjects.ForEach(gameObject => gameObject.Draw(SpriteBatch, gameTime));
 
         base.Draw(gameTime);
     }

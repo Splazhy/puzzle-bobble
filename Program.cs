@@ -1,2 +1,2 @@
-﻿using var game = new puzzle_bobble.Game1();
+﻿using var game = new puzzle_bobble.MainScene();
 game.Run();
