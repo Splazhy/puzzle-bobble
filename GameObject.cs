@@ -6,8 +6,6 @@ namespace puzzle_bobble;
 
 public class GameObject
 {
-    protected Texture2D _texture { get; set; }
-
     public Vector2 Position { get; set; }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
@@ -15,19 +13,6 @@ public class GameObject
     public Vector2 Velocity { get; set; }
 
     public readonly string Name;
-
-    public Rectangle Rectangle
-    {
-        get
-        {
-            return new Rectangle(
-                (int)Position.X,
-                (int)Position.Y,
-                (int)(_texture.Width * Scale.X),
-                (int)(_texture.Height * Scale.Y)
-            );
-        }
-    }
 
     // Is this object being updated in main game loop?
     public bool IsActive { get; set; }

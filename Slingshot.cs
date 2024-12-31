@@ -8,6 +8,8 @@ namespace puzzle_bobble;
 
 public class Slingshot : GameObject
 {
+    private Texture2D _texture;
+
     // Rotations are in radians, not degrees
     public static readonly float MIN_ROTATION = -MathF.PI * 1.0f / 3.0f;
     public static readonly float MAX_ROTATION = MathF.PI * 1.0f / 3.0f;
@@ -52,7 +54,6 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.Begin();
         spriteBatch.Draw(
             _texture,
             Position,
@@ -64,7 +65,6 @@ public class Slingshot : GameObject
             SpriteEffects.None,
             0
         );
-        spriteBatch.End();
     }
 
 }

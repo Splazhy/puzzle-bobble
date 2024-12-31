@@ -8,7 +8,7 @@ namespace puzzle_bobble;
 public class MainScene : Game
 {
     private GraphicsDeviceManager _graphics;
-    private SpriteBatch SpriteBatch;
+    private SpriteBatch _spriteBatch;
     private List<GameObject> _gameObjects;
 
     public MainScene()
@@ -24,15 +24,14 @@ public class MainScene : Game
 
         // NOTE: Add game objects to the scene here
         _gameObjects.Add(new Slingshot(this));
-
-        this.Components.Add(new GameBoard(this));
+        _gameObjects.Add(new GameBoard(this));
 
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        SpriteBatch = new SpriteBatch(GraphicsDevice);
+        _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         _gameObjects.ForEach(gameObject => gameObject.LoadContent(Content));
     }
@@ -52,7 +51,9 @@ public class MainScene : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        _gameObjects.ForEach(gameObject => gameObject.Draw(SpriteBatch, gameTime));
+        _spriteBatch.Begin();
+        _gameObjects.ForEach(gameObject => gameObject.Draw(_spriteBatch, gameTime));
+        _spriteBatch.End();
 
         base.Draw(gameTime);
     }
