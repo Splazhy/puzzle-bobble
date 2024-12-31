@@ -25,6 +25,8 @@ public class MainScene : Game
         // NOTE: Add game objects to the scene here
         _gameObjects.Add(new Slingshot(this));
 
+        this.Components.Add(new GameBoard(this));
+
         base.Initialize();
     }
 
