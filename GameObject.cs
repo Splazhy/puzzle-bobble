@@ -41,6 +41,7 @@ public class GameObject
 
     public virtual void Update(GameTime gameTime)
     {
+        Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
     }
 
     public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)

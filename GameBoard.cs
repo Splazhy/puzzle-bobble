@@ -25,10 +25,10 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         ballTypes = [
-            content.Load<Texture2D>("Graphics/redBall"),
-            content.Load<Texture2D>("Graphics/greenBall"),
-            content.Load<Texture2D>("Graphics/blueBall"),
-            content.Load<Texture2D>("Graphics/yellowBall"),
+            content.Load<Texture2D>("Graphics/Ball/red"),
+            content.Load<Texture2D>("Graphics/Ball/green"),
+            content.Load<Texture2D>("Graphics/Ball/blue"),
+            content.Load<Texture2D>("Graphics/Ball/brown"),
         ];
     }
 
