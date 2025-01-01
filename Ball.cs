@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -25,30 +26,57 @@ public class Ball : GameObject
     }
 
     private Texture2D _texture;
+    private Circle _circle
+    {
+        get
+        {
+            Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
+            Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
+            return new Circle(Position, _texture.Width / 2 * Scale.X);
+        }
+    }
     private Color _color;
+    private State _state;
 
     public Ball(Color ballType) : base("ball")
     {
+        _state = State.Moving;
         _color = ballType;
-        Position = new Vector2(200.0f, 200.0f);
-        Velocity = new Vector2(-20, -20);
     }
 
     public override void LoadContent(ContentManager content)
     {
-        // HACK: This is a temporary solution to load the correct texture
-        // we might need to load all textures at once and store them in a dictionary.
+        // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _texture = content.Load<Texture2D>($"Graphics/Ball/{_color}");
     }
 
     public override void Update(GameTime gameTime)
     {
-        // TODO: Implement ball movement
-        base.Update(gameTime);
+        switch (_state)
+        {
+            case State.Idle:
+                break;
+            case State.Moving:
+                Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                break;
+            case State.Falling:
+                Position += new Vector2(0, 1);
+                break;
+        }
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.Draw(_texture, Position, null, Microsoft.Xna.Framework.Color.White);
+        spriteBatch.Draw(
+            _texture,
+            Position,
+            null,
+            Microsoft.Xna.Framework.Color.White,
+            Rotation,
+            new Vector2(_texture.Width / 2, _texture.Height / 2),
+            Scale,
+            SpriteEffects.None,
+            0
+        );
     }
 }
