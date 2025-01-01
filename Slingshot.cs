@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace puzzle_bobble;
+namespace PuzzleBobble;
 
 public class Slingshot : GameObject
 {

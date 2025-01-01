@@ -1,30 +1,26 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace puzzle_bobble;
+namespace PuzzleBobble;
 
-public class MainScene : Game
+public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-    private List<GameObject> _gameObjects;
+    private SceneManager _sceneManager;
 
-    public MainScene()
+    public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
+        _sceneManager = new SceneManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
     }
 
     protected override void Initialize()
     {
-        _gameObjects = new List<GameObject>();
-
-        // NOTE: Add game objects to the scene here
-        _gameObjects.Add(new Slingshot(this));
-        _gameObjects.Add(new GameBoard(this));
+        _sceneManager.Initialize(this);
 
         base.Initialize();
     }
@@ -32,8 +28,7 @@ public class MainScene : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        _gameObjects.ForEach(gameObject => gameObject.LoadContent(Content));
+        _sceneManager.LoadContent(this.Content);
     }
 
     protected override void Update(GameTime gameTime)
@@ -41,8 +36,7 @@ public class MainScene : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+        _sceneManager.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -52,7 +46,7 @@ public class MainScene : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         _spriteBatch.Begin();
-        _gameObjects.ForEach(gameObject => gameObject.Draw(_spriteBatch, gameTime));
+        _sceneManager.Draw(_spriteBatch, gameTime);
         _spriteBatch.End();
 
         base.Draw(gameTime);

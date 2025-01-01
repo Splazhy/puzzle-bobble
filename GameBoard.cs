@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace puzzle_bobble;
+namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
