@@ -1,3 +1,5 @@
+using PuzzleBobble.Scene;
+
 namespace PuzzleBobble;
 
 public class Scenes

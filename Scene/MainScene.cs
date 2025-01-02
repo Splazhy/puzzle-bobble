@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace PuzzleBobble;
+namespace PuzzleBobble.Scene;
 
 public class MainScene : AbstractScene
 {
@@ -49,6 +50,28 @@ public class MainScene : AbstractScene
         _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
         _gameObjects.AddRange(_pendingGameObjects);
         _pendingGameObjects.Clear();
+
+        var movingBalls = _gameObjects.FindAll(gameObject =>
+            gameObject is Ball ball &&
+            ball.state == Ball.State.Moving
+        ).Cast<Ball>().ToList();
+
+        var idleBalls = _gameObjects.FindAll(gameObject =>
+            gameObject is Ball ball &&
+            ball.state == Ball.State.Idle
+        ).Cast<Ball>().ToList();
+
+        movingBalls.ForEach(movingBall =>
+        {
+            idleBalls.ForEach(idleBall =>
+            {
+                if (movingBall.IsCollideWith(idleBall))
+                {
+                    movingBall.state = Ball.State.Idle;
+                }
+            });
+        });
+
         _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
     }
 

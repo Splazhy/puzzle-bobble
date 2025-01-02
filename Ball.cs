@@ -26,7 +26,7 @@ public class Ball : GameObject
     }
 
     private Texture2D _texture;
-    private Circle _circle
+    public Circle Circle
     {
         get
         {
@@ -36,11 +36,13 @@ public class Ball : GameObject
         }
     }
     private Color _color;
-    private State _state;
+    public State state;
+    private Viewport _viewport;
 
-    public Ball(Color ballType) : base("ball")
+    public Ball(Color ballType, Viewport viewport) : base("ball")
     {
-        _state = State.Moving;
+        _viewport = viewport;
+        state = State.Moving;
         _color = ballType;
     }
 
@@ -52,12 +54,21 @@ public class Ball : GameObject
 
     public override void Update(GameTime gameTime)
     {
-        switch (_state)
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        switch (state)
         {
             case State.Idle:
                 break;
             case State.Moving:
-                Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (Position.X - Circle.radius < 0 || Position.X + Circle.radius > _viewport.Width)
+                {
+                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
+                }
+                if (Position.Y - Circle.radius < 0 || Position.Y + Circle.radius > _viewport.Height)
+                {
+                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
+                }
+                Position += Velocity * deltaTime;
                 break;
             case State.Falling:
                 Position += new Vector2(0, 1);
@@ -78,5 +89,10 @@ public class Ball : GameObject
             SpriteEffects.None,
             0
         );
+    }
+
+    public bool IsCollideWith(Ball other)
+    {
+        return Circle.Intersects(other.Circle) > 0;
     }
 }

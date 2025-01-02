@@ -13,7 +13,7 @@ public class Circle
         this.radius = radius;
     }
 
-    public float Overlap(Circle other)
+    public float Intersects(Circle other)
     {
         float distance = Vector2.Distance(position, other.position);
         return radius + other.radius - distance;

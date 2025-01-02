@@ -8,6 +8,7 @@ namespace PuzzleBobble;
 
 public class Slingshot : GameObject
 {
+    private Viewport _viewport;
     private Texture2D _texture;
     private float firerate; // shots per second
     private float _timeSinceLastFired;
@@ -21,7 +22,8 @@ public class Slingshot : GameObject
 
     public Slingshot(Game game) : base("slingshot")
     {
-        Position = new Vector2(game.GraphicsDevice.Viewport.Width / 2, game.GraphicsDevice.Viewport.Height / 1.125f);
+        _viewport = game.GraphicsDevice.Viewport;
+        Position = new Vector2(_viewport.Width / 2, _viewport.Height / 1.125f);
         Scale = new Vector2(0.5f, 0.5f);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
@@ -59,7 +61,7 @@ public class Slingshot : GameObject
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new Ball(Ball.Color.Brown);
+            Ball newBall = new Ball(Ball.Color.Brown, _viewport);
             newBall.Position = Position;
             newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * 500;
             newBall.Scale = Scale;
