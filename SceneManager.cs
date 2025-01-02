@@ -22,15 +22,9 @@ public class SceneManager
         // The scene invoking the event must be the current scene
         Debug.Assert(currentScene == oldScene);
 
+        currentScene.SceneChanged -= ChangeScene;
         currentScene.Deinitialize();
         currentScene = newScene;
-
-        // https://stackoverflow.com/questions/19314983/attaching-an-event-handler-multiple-times
-        //
-        // Unsubscribe if the scene was already subscribed to
-        // prevent duplicate subscriptions to the same event.
-        // Unsubscribe (-=) is ignored when already unsubscribed.
-        currentScene.SceneChanged -= ChangeScene;
         currentScene.SceneChanged += ChangeScene;
 
         currentScene.Initialize(_game);
