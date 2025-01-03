@@ -1,16 +1,19 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+using Myra.Graphics2D;
+using Myra.Graphics2D.UI;
 
 namespace PuzzleBobble.Scene;
 
 public class MenuScene : AbstractScene
 {
-    private SpriteFont _font;
+    private Game _game;
+    private Desktop _desktop;
 
     public override void Initialize(Game game)
     {
+        _game = game;
     }
 
     public override void Deinitialize()
@@ -19,20 +22,61 @@ public class MenuScene : AbstractScene
 
     public override void LoadContent(ContentManager content)
     {
-        _font = content.Load<SpriteFont>("Fonts/Arial24");
+
+        Button startBtn = new Button
+        {
+            Content = new Label { Text = "Start" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        startBtn.Click += (sender, args) => ChangeScene(Scenes.GAME);
+
+        var optionsBtn = new Button
+        {
+            Content = new Label { Text = "Options" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+
+        var creditsBtn = new Button
+        {
+            Content = new Label { Text = "Credits" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        creditsBtn.Click += (sender, args) => ChangeScene(Scenes.CREDITS);
+
+        var quitBtn = new Button
+        {
+            Content = new Label { Text = "Quit" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        quitBtn.Click += (sender, args) => _game.Exit();
+
+        VerticalStackPanel menu = new VerticalStackPanel
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Widgets =
+            {
+                startBtn,
+                optionsBtn,
+                creditsBtn,
+                quitBtn
+            }
+        };
+
+        _desktop = new Desktop();
+        _desktop.Root = menu;
     }
 
     public override void Update(GameTime gameTime)
     {
-        if (Keyboard.GetState().IsKeyDown(Keys.Enter))
-        {
-            ChangeScene(Scenes.MAIN);
-        }
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.DrawString(_font, "Menu Scene", new Vector2(100, 100), Color.White);
-        spriteBatch.DrawString(_font, "Press Enter to change scene", new Vector2(100, 150), Color.White);
+        _desktop.Render();
     }
 }

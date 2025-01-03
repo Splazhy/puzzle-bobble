@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace PuzzleBobble.Scene;
 
-public class MainScene : AbstractScene
+public class GameScene : AbstractScene
 {
     private List<GameObject> _gameObjects;
     private List<GameObject> _pendingGameObjects;

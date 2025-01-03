@@ -13,6 +13,7 @@ public class Game1 : Game
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
+        // Window.AllowUserResizing = true;
         // _graphics.PreferredBackBufferWidth = 1280;
         // _graphics.PreferredBackBufferHeight = 720;
         // _graphics.ToggleFullScreen();
@@ -24,6 +25,7 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
+        Myra.MyraEnvironment.Game = this;
         _sceneManager.Initialize(this);
 
         base.Initialize();
