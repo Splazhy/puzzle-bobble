@@ -8,7 +8,15 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
+    // a packed grid of balls becomes a hexagon grid
+    // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 64;
+    public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
+    public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
+
+    public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
+    public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
+
     private Texture2D[] ballTypes = null;
     // balltype is class with name, sprite texture, color, etc.
     // gameboard reference ball type using int for index into this array
@@ -50,10 +58,10 @@ public class GameBoard : GameObject
             {
                 if (reduceWidthByHalfBall && (y % 2) == 1 && x == board.GetLength(1) - 1) continue;
 
-                int rowOffset = (y % 2) == 1 ? (BALL_SIZE / 2) : 0;
+                double rowOffset = (y % 2) == 1 ? (HEX_WIDTH / 2) : 0;
                 if (debug_gridpos.HasValue && debug_gridpos.Value.Item1 == x && debug_gridpos.Value.Item2 == y)
                 {
-                    spriteBatch.Draw(ballTypes[0], new Rectangle(x * BALL_SIZE + rowOffset, y * BALL_SIZE, BALL_SIZE, BALL_SIZE), Color.White);
+                    spriteBatch.Draw(ballTypes[0], new Rectangle((int)(x * HEX_WIDTH + rowOffset), (int)(y * HEX_HEIGHT * (3 / 4.0)), BALL_SIZE, BALL_SIZE), Color.White);
                     continue;
                 }
 
@@ -62,7 +70,7 @@ public class GameBoard : GameObject
 
 
                 // TODO: Rewrite this in a way that it can be drawn at different scales and positions
-                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle(x * BALL_SIZE + rowOffset, y * BALL_SIZE, BALL_SIZE, BALL_SIZE), Color.White);
+                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)(x * HEX_WIDTH + rowOffset), (int)(y * HEX_HEIGHT * (3 / 4.0)), BALL_SIZE, BALL_SIZE), Color.White);
 
             }
         }
@@ -77,6 +85,7 @@ public class GameBoard : GameObject
 
 
     /// <param name="pos">ball's top left corner</param>
+    // TODO: fix for hexagon grid https://lospec.com/palette-list/resurrect-64
     public (int, int)? ComputeClosestGridPoint(Vector2 pos)
     {
         Vector2 ballCenterPos = pos + new Vector2(BALL_SIZE / 2, BALL_SIZE / 2);
