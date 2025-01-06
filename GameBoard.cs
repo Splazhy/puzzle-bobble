@@ -6,6 +6,7 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
+    public static readonly int BALL_SIZE = 64;
     private Texture2D[] ballTypes = null;
     // balltype is class with name, sprite texture, color, etc.
     // gameboard reference ball type using int for index into this array
@@ -43,10 +44,10 @@ public class GameBoard : GameObject
                 int ball = board[y, x];
                 if (ball == 0) continue;
 
-                int rowOffset = (y % 2) == 1 ? 32 : 0;
+                int rowOffset = (y % 2) == 1 ? (BALL_SIZE / 2) : 0;
 
                 // TODO: Rewrite this in a way that it can be drawn at different scales and positions
-                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle(x * 64 + rowOffset, y * 64, 64, 64), Color.White);
+                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle(x * BALL_SIZE + rowOffset, y * BALL_SIZE, BALL_SIZE, BALL_SIZE), Color.White);
             }
         }
     }
