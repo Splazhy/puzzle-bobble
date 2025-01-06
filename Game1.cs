@@ -21,6 +21,9 @@ public class Game1 : Game
         _sceneManager = new SceneManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        Window.AllowUserResizing = true;
+
+        Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 
     protected override void Initialize()
@@ -56,5 +59,12 @@ public class Game1 : Game
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void Window_ClientSizeChanged(object sender, System.EventArgs e)
+    {
+        Window.ClientSizeChanged -= Window_ClientSizeChanged;
+        // TODO: code that needs to be run on window size change
+        Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }
