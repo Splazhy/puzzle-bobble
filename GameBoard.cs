@@ -1,6 +1,8 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace PuzzleBobble;
 
@@ -13,13 +15,19 @@ public class GameBoard : GameObject
 
     private int[,] board;
     private bool reduceWidthByHalfBall;
+
+    private (int, int)? debug_gridpos;
+    private Vector2? debug_mousepos;
     public GameBoard(Game game) : base("gameboard")
     {
         board = new int[,] {
-            {1,1,1,1},
-            {2,2,2,2},
-            {3,3,3,3},
-            {4,4,4,4},
+            {2,2,2,2,0,0,0,0},
+            {2,2,2,2,0,0,0,0},
+            {3,3,3,3,0,0,0,0},
+            {4,4,4,4,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
         };
     }
 
@@ -35,21 +43,70 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+
         for (int y = 0; y < board.GetLength(0); y++)
         {
             for (int x = 0; x < board.GetLength(1); x++)
             {
                 if (reduceWidthByHalfBall && (y % 2) == 1 && x == board.GetLength(1) - 1) continue;
 
+                int rowOffset = (y % 2) == 1 ? (BALL_SIZE / 2) : 0;
+                if (debug_gridpos.HasValue && debug_gridpos.Value.Item1 == x && debug_gridpos.Value.Item2 == y)
+                {
+                    spriteBatch.Draw(ballTypes[0], new Rectangle(x * BALL_SIZE + rowOffset, y * BALL_SIZE, BALL_SIZE, BALL_SIZE), Color.White);
+                    continue;
+                }
+
                 int ball = board[y, x];
                 if (ball == 0) continue;
 
-                int rowOffset = (y % 2) == 1 ? (BALL_SIZE / 2) : 0;
 
                 // TODO: Rewrite this in a way that it can be drawn at different scales and positions
                 spriteBatch.Draw(ballTypes[ball - 1], new Rectangle(x * BALL_SIZE + rowOffset, y * BALL_SIZE, BALL_SIZE, BALL_SIZE), Color.White);
+
             }
         }
+
+
+        if (debug_mousepos.HasValue)
+        {
+            spriteBatch.Draw(ballTypes[3], new Rectangle((int)debug_mousepos.Value.X, (int)debug_mousepos.Value.Y, BALL_SIZE, BALL_SIZE), Color.White);
+        }
+    }
+
+
+
+    /// <param name="pos">ball's top left corner</param>
+    public (int, int)? ComputeClosestGridPoint(Vector2 pos)
+    {
+        Vector2 ballCenterPos = pos + new Vector2(BALL_SIZE / 2, BALL_SIZE / 2);
+        int gridY = (int)Math.Floor(ballCenterPos.Y / BALL_SIZE);
+
+        int rowOffset = (gridY % 2) == 1 ? (BALL_SIZE / 2) : 0;
+        int gridX = (int)Math.Floor((ballCenterPos.X - rowOffset) / BALL_SIZE);
+
+        if (gridX < 0 || board.GetLength(1) <= gridX ||
+            gridY < 0 || board.GetLength(0) <= gridY)
+        {
+            return null;
+        }
+
+
+        return (gridX, gridY);
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+
+        MouseState mouseState = Mouse.GetState();
+        int mouseX = mouseState.X;
+        int mouseY = mouseState.Y;
+
+        debug_mousepos = new Vector2(mouseX, mouseY);
+        debug_gridpos = ComputeClosestGridPoint(debug_mousepos.Value);
+
+
+        base.Update(gameTime);
     }
 
 }
