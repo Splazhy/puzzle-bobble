@@ -56,6 +56,7 @@ public class CraftScene : AbstractScene
         {
             Content = new Label{ Text = "C" },
             Left = 372,
+            Top = 240,
             Padding = new Thickness(10, 5)
         };
 
@@ -63,7 +64,7 @@ public class CraftScene : AbstractScene
         {
             Content = new Label{ Text = "O" },
             Left = 372,
-            Top = 30,
+            Top = 270,
             Padding = new Thickness(10, 5)
         }; 
 
