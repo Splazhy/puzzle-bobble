@@ -10,7 +10,7 @@ public class GameBoard : GameObject
 {
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
-    public static readonly int BALL_SIZE = 64;
+    public static readonly int BALL_SIZE = 48;
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
     public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
 

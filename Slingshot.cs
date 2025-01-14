@@ -24,7 +24,7 @@ public class Slingshot : GameObject
     {
         _viewport = game.GraphicsDevice.Viewport;
         Position = new Vector2(_viewport.Width / 2, _viewport.Height / 1.125f);
-        Scale = new Vector2(0.5f, 0.5f);
+        Scale = new Vector2(48f / 128, 48f / 128);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
     }

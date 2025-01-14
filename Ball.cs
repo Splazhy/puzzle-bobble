@@ -60,6 +60,7 @@ public class Ball : GameObject
             case State.Idle:
                 break;
             case State.Moving:
+                // TODO: fix this to take gameboard bounds into account
                 if (Position.X - Circle.radius < 0 || Position.X + Circle.radius > _viewport.Width)
                 {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
