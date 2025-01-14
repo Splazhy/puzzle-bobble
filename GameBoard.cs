@@ -90,11 +90,40 @@ public class GameBoard : GameObject
     }
 
 
-
-    /// <param name="pos">ball's top left corner</param>
-    public Hex ComputeClosestGridPoint(Vector2 pos)
+    public Hex ComputeClosestHex(Vector2 pos)
     {
         return hexLayout.PixelToHex(pos).Round();
+    }
+
+    public bool IsBallAt(Hex hex)
+    {
+        OffsetCoord offset = hex.ToOffsetCoord();
+        if (offset.row < 0 || board.GetLength(0) <= offset.row ||
+            offset.col < 0 || board.GetLength(1) <= offset.col) return false;
+        return board[offset.row, offset.col] != 0;
+    }
+
+    public bool IsBallSurronding(Hex hex)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            Hex neighbor = hex.Neighbor(i);
+            if (IsBallAt(neighbor)) return true;
+        }
+        return false;
+    }
+
+    public void SetBallAt(Hex hex, int ball)
+    {
+        OffsetCoord offset = hex.ToOffsetCoord();
+        if (offset.row < 0 || board.GetLength(0) <= offset.row ||
+            offset.col < 0 || board.GetLength(1) <= offset.col) return;
+        board[offset.row, offset.col] = ball;
+    }
+
+    public void ExplodeBalls(Hex hex)
+    {
+        // TODO: this
     }
 
     public override void Update(GameTime gameTime)
@@ -105,7 +134,7 @@ public class GameBoard : GameObject
         int mouseY = mouseState.Y;
 
         debug_mousepos = new Vector2(mouseX, mouseY);
-        debug_gridpos = ComputeClosestGridPoint(debug_mousepos.Value);
+        debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
 
 
         base.Update(gameTime);

@@ -14,14 +14,16 @@ public class GameScene : AbstractScene
     private SpriteFont _font;
     private ContentManager _content;
 
+    private GameBoard _gameBoard;
+
     public override void Initialize(Game game)
     {
         Slingshot slingshot = new Slingshot(game);
-        GameBoard gameBoard = new GameBoard(game);
+        _gameBoard = new GameBoard(game);
         slingshot.BallFired += SpawnBall;
         _gameObjects = [
             slingshot,
-            gameBoard,
+            _gameBoard,
         ];
         _pendingGameObjects = [];
     }
@@ -63,13 +65,17 @@ public class GameScene : AbstractScene
 
         movingBalls.ForEach(movingBall =>
         {
-            idleBalls.ForEach(idleBall =>
+            Hex ballClosestHex = _gameBoard.ComputeClosestHex(movingBall.Position);
+            // TODO: better collision detection, possibly by taking ball velocity direction into account
+            bool colliding = _gameBoard.IsBallSurronding(ballClosestHex);
+
+            if (colliding)
             {
-                if (movingBall.IsCollideWith(idleBall))
-                {
-                    movingBall.state = Ball.State.Idle;
-                }
-            });
+                // TODO: correctly set ball color
+                _gameBoard.SetBallAt(ballClosestHex, 4);
+                _gameBoard.ExplodeBalls(ballClosestHex);
+                movingBall.Destroy();
+            }
         });
 
         _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));

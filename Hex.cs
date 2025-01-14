@@ -56,4 +56,11 @@ public readonly struct Hex
     }
 
     public Hex Neighbor(int direction) => this + Direction(direction);
+
+    public OffsetCoord ToOffsetCoord()
+    {
+        int col = q + (r + OffsetCoord.ODD * (r & 1)) / 2;
+        int row = r;
+        return new OffsetCoord(col, row);
+    }
 }
