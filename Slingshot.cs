@@ -14,16 +14,15 @@ public class Slingshot : GameObject
     private float _timeSinceLastFired;
 
     // Rotations are in radians, not degrees
-    public static readonly float MIN_ROTATION = -MathF.PI * 1.0f / 3.0f;
-    public static readonly float MAX_ROTATION = MathF.PI * 1.0f / 3.0f;
+    public static readonly float MIN_ROTATION = MathF.PI * -80.0f / 180.0f;
+    public static readonly float MAX_ROTATION = MathF.PI * 80.0f / 180.0f;
 
     public event BallFiredHandler BallFired;
     public delegate void BallFiredHandler(Ball ball);
 
     public Slingshot(Game game) : base("slingshot")
     {
-        _viewport = game.GraphicsDevice.Viewport;
-        Position = new Vector2(_viewport.Width / 2, _viewport.Height / 1.125f);
+        Position = new Vector2(0, 300);
         Scale = new Vector2(48f / 128, 48f / 128);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
@@ -46,8 +45,8 @@ public class Slingshot : GameObject
         _timeSinceLastFired += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X;
-        int mouseY = mouseState.Y;
+        int mouseX = mouseState.X - (int)VirtualOrigin.X;
+        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
 
         Vector2 direction = new Vector2(mouseX, mouseY) - Position;
 
@@ -74,7 +73,7 @@ public class Slingshot : GameObject
     {
         spriteBatch.Draw(
             _texture,
-            Position,
+            ScreenPosition,
             null,
             Color.White,
             Rotation,

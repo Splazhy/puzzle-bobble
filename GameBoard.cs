@@ -40,16 +40,18 @@ public class GameBoard : GameObject
             {2,2,2,2,3,3,4,4},
             {3,3,3,3,3,3,4,4},
             {4,4,4,4,3,3,4,4},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
-            {0,0,0,1,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0},
         };
         reduceWidthByHalfBall = true;
+
+        Position = new Vector2((float)(HEX_WIDTH * -4), -300);
     }
 
     public override void LoadContent(ContentManager content)
@@ -77,7 +79,7 @@ public class GameBoard : GameObject
                 // TODO: Rewrite this in a way that it can be drawn at different scales and positions
                 int hx = x - (y / 2);
                 Vector2 p = hexLayout.HexToDrawLocation(new Hex(hx, y)).Downcast();
-                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
+                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE), Color.White);
             }
         }
 
@@ -85,14 +87,14 @@ public class GameBoard : GameObject
         if (debug_mousepos.HasValue)
         {
             Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
-            spriteBatch.Draw(ballTypes[3], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
+            spriteBatch.Draw(ballTypes[3], new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE), Color.White);
         }
     }
 
 
     public Hex ComputeClosestHex(Vector2 pos)
     {
-        return hexLayout.PixelToHex(pos).Round();
+        return hexLayout.PixelToHex(pos - Position).Round();
     }
 
     public bool IsBallAt(Hex hex)
@@ -130,8 +132,8 @@ public class GameBoard : GameObject
     {
 
         MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X;
-        int mouseY = mouseState.Y;
+        int mouseX = mouseState.X - (int)VirtualOrigin.X;
+        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
 
         debug_mousepos = new Vector2(mouseX, mouseY);
         debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
