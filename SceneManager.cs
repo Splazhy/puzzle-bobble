@@ -14,7 +14,7 @@ public class SceneManager
     public SceneManager(Game game)
     {
         _game = game;
-        currentScene = Scenes.MENU;
+        currentScene = Scenes.GAME;
         currentScene.SceneChanged += ChangeScene;
     }
 

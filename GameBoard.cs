@@ -17,6 +17,13 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
+    private HexLayout hexLayout = new HexLayout(
+        HexOrientation.POINTY,
+        new Vector2Double(HEX_SIZE, HEX_SIZE),
+        new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
+
+    );
+
     private Texture2D[] ballTypes = null;
     // balltype is class with name, sprite texture, color, etc.
     // gameboard reference ball type using int for index into this array
@@ -24,7 +31,7 @@ public class GameBoard : GameObject
     private int[,] board;
     private bool reduceWidthByHalfBall;
 
-    private (int, int)? debug_gridpos;
+    private Hex debug_gridpos;
     private Vector2? debug_mousepos;
     public GameBoard(Game game) : base("gameboard")
     {
@@ -51,57 +58,30 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-
-        for (int y = 0; y < board.GetLength(0); y++)
+        for (int y = 0; y < 10; y++)
         {
-            for (int x = 0; x < board.GetLength(1); x++)
+            for (int x = 0; x < 6; x++)
             {
-                if (reduceWidthByHalfBall && (y % 2) == 1 && x == board.GetLength(1) - 1) continue;
-
-                double rowOffset = (y % 2) == 1 ? (HEX_WIDTH / 2) : 0;
-                if (debug_gridpos.HasValue && debug_gridpos.Value.Item1 == x && debug_gridpos.Value.Item2 == y)
-                {
-                    spriteBatch.Draw(ballTypes[0], new Rectangle((int)(x * HEX_WIDTH + rowOffset), (int)(y * HEX_HEIGHT * (3 / 4.0)), BALL_SIZE, BALL_SIZE), Color.White);
-                    continue;
-                }
-
-                int ball = board[y, x];
-                if (ball == 0) continue;
-
-
-                // TODO: Rewrite this in a way that it can be drawn at different scales and positions
-                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)(x * HEX_WIDTH + rowOffset), (int)(y * HEX_HEIGHT * (3 / 4.0)), BALL_SIZE, BALL_SIZE), Color.White);
-
+                int hx = x - (y / 2);
+                Vector2 p = hexLayout.HexToDrawLocation(new Hex(hx, y)).Downcast();
+                spriteBatch.Draw(ballTypes[1], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
             }
         }
 
 
         if (debug_mousepos.HasValue)
         {
-            spriteBatch.Draw(ballTypes[3], new Rectangle((int)debug_mousepos.Value.X, (int)debug_mousepos.Value.Y, BALL_SIZE, BALL_SIZE), Color.White);
+            Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
+            spriteBatch.Draw(ballTypes[3], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
         }
     }
 
 
 
     /// <param name="pos">ball's top left corner</param>
-    // TODO: fix for hexagon grid https://www.redblobgames.com/grids/hexagons/implementation.html#pixel-to-hex
-    public (int, int)? ComputeClosestGridPoint(Vector2 pos)
+    public Hex ComputeClosestGridPoint(Vector2 pos)
     {
-        Vector2 ballCenterPos = pos + new Vector2(BALL_SIZE / 2, BALL_SIZE / 2);
-        int gridY = (int)Math.Floor(ballCenterPos.Y / BALL_SIZE);
-
-        int rowOffset = (gridY % 2) == 1 ? (BALL_SIZE / 2) : 0;
-        int gridX = (int)Math.Floor((ballCenterPos.X - rowOffset) / BALL_SIZE);
-
-        if (gridX < 0 || board.GetLength(1) <= gridX ||
-            gridY < 0 || board.GetLength(0) <= gridY)
-        {
-            return null;
-        }
-
-
-        return (gridX, gridY);
+        return hexLayout.PixelToHex(pos).Round();
     }
 
     public override void Update(GameTime gameTime)
