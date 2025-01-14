@@ -71,8 +71,7 @@ public class GameScene : AbstractScene
 
             if (colliding)
             {
-                // TODO: correctly set ball color
-                _gameBoard.SetBallAt(ballClosestHex, 4);
+                _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
                 _gameBoard.ExplodeBalls(ballClosestHex);
                 movingBall.Destroy();
             }

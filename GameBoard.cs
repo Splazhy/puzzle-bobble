@@ -11,6 +11,7 @@ public class GameBoard : GameObject
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
+    public static readonly Vector2 BALL_SCALE = new Vector2(3, 3);
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
     public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
 
@@ -24,9 +25,7 @@ public class GameBoard : GameObject
 
     );
 
-    private Texture2D[] ballTypes = null;
-    // balltype is class with name, sprite texture, color, etc.
-    // gameboard reference ball type using int for index into this array
+    private Texture2D ballSpriteSheet = null;
 
     private int[,] board;
     private bool reduceWidthByHalfBall;
@@ -36,18 +35,18 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         board = new int[,] {
-            {2,2,2,2,3,3,4,4},
+            {2,1,2,2,3,3,4,4},
             {2,2,2,2,3,3,4,4},
             {3,3,3,3,3,3,4,4},
             {4,4,4,4,3,3,4,4},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,0},
+            {0,5,0,0,0,0,0,0},
+            {0,6,0,0,0,0,0,0},
+            {0,7,0,0,0,0,0,0},
+            {0,8,0,0,0,0,0,0},
+            {0,9,0,0,0,0,0,0},
+            {0,10,0,0,0,0,0,0},
+            {0,11,0,0,0,0,0,0},
+            {0,12,0,0,0,0,0,0},
         };
         reduceWidthByHalfBall = true;
 
@@ -56,12 +55,7 @@ public class GameBoard : GameObject
 
     public override void LoadContent(ContentManager content)
     {
-        ballTypes = [
-            content.Load<Texture2D>("Graphics/Ball/red"),
-            content.Load<Texture2D>("Graphics/Ball/green"),
-            content.Load<Texture2D>("Graphics/Ball/blue"),
-            content.Load<Texture2D>("Graphics/Ball/brown"),
-        ];
+        ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -79,7 +73,12 @@ public class GameBoard : GameObject
                 // TODO: Rewrite this in a way that it can be drawn at different scales and positions
                 int hx = x - (y / 2);
                 Vector2 p = hexLayout.HexToDrawLocation(new Hex(hx, y)).Downcast();
-                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE), Color.White);
+                spriteBatch.Draw(
+                    ballSpriteSheet,
+                    new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+                    new Rectangle((ball - 1) * 16, 0, 16, 16),
+                    Color.White
+                );
             }
         }
 
@@ -87,7 +86,12 @@ public class GameBoard : GameObject
         if (debug_mousepos.HasValue)
         {
             Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
-            spriteBatch.Draw(ballTypes[3], new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE), Color.White);
+            spriteBatch.Draw(
+                ballSpriteSheet,
+                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+                new Rectangle(0, 0, 16, 16),
+                Color.White
+            );
         }
     }
 

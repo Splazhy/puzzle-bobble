@@ -54,7 +54,7 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        _spriteBatch.Begin();
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         _sceneManager.Draw(_spriteBatch, gameTime);
         _spriteBatch.End();
 
