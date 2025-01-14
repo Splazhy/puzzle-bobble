@@ -36,14 +36,20 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         board = new int[,] {
-            {2,2,2,2,0,0,0,0},
-            {2,2,2,2,0,0,0,0},
-            {3,3,3,3,0,0,0,0},
-            {4,4,4,4,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
+            {2,2,2,2,3,3,4,4},
+            {2,2,2,2,3,3,4,4},
+            {3,3,3,3,3,3,4,4},
+            {4,4,4,4,3,3,4,4},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
+            {0,0,0,1,0,0,0,0},
         };
+        reduceWidthByHalfBall = true;
     }
 
     public override void LoadContent(ContentManager content)
@@ -58,13 +64,20 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        for (int y = 0; y < 10; y++)
+        for (int y = 0; y < board.GetLength(0); y++)
         {
-            for (int x = 0; x < 6; x++)
+            for (int x = 0; x < board.GetLength(1); x++)
             {
+                if (reduceWidthByHalfBall && (y % 2) == 1 && x == board.GetLength(1) - 1) continue;
+
+                int ball = board[y, x];
+                if (ball == 0) continue;
+
+
+                // TODO: Rewrite this in a way that it can be drawn at different scales and positions
                 int hx = x - (y / 2);
                 Vector2 p = hexLayout.HexToDrawLocation(new Hex(hx, y)).Downcast();
-                spriteBatch.Draw(ballTypes[1], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
+                spriteBatch.Draw(ballTypes[ball - 1], new Rectangle((int)p.X, (int)p.Y, BALL_SIZE, BALL_SIZE), Color.White);
             }
         }
 
