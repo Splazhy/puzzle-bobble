@@ -32,7 +32,7 @@ public class Ball : GameObject
         {
             Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
             Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
-            return new Circle(Position, _texture.Width / 2 * Scale.X);
+            return new Circle(ScreenPosition, _texture.Width / 2 * Scale.X);
         }
     }
     private Color _color;
@@ -60,11 +60,12 @@ public class Ball : GameObject
             case State.Idle:
                 break;
             case State.Moving:
-                if (Position.X - Circle.radius < 0 || Position.X + Circle.radius > _viewport.Width)
+                // TODO: fix this to take gameboard bounds into account
+                if (Position.X - Circle.radius < -600 || 600 < Position.X + Circle.radius)
                 {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
                 }
-                if (Position.Y - Circle.radius < 0 || Position.Y + Circle.radius > _viewport.Height)
+                if (Position.Y - Circle.radius < -600 || 600 < Position.Y + Circle.radius)
                 {
                     Velocity = new Vector2(Velocity.X, -Velocity.Y);
                 }
@@ -80,7 +81,7 @@ public class Ball : GameObject
     {
         spriteBatch.Draw(
             _texture,
-            Position,
+            ScreenPosition,
             null,
             Microsoft.Xna.Framework.Color.White,
             Rotation,

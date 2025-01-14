@@ -6,6 +6,14 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
+    // maybe find a better way to do this
+    public static Vector2 VirtualOrigin = Vector2.Zero;
+    public Vector2 ScreenPosition
+    {
+        get { return Position + VirtualOrigin; }
+        set { Position = value - VirtualOrigin; }
+    }
+
     public Vector2 Position { get; set; }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
