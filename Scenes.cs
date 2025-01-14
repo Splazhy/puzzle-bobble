@@ -8,4 +8,5 @@ public class Scenes
     public static readonly AbstractScene MENU = new MenuScene();
     public static readonly AbstractScene CREDITS = new CreditsScene();
     public static readonly AbstractScene GAME = new GameScene();
+    public static readonly AbstractScene Craft = new CraftScene();
 }
