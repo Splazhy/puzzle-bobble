@@ -90,7 +90,11 @@ public class Ball : GameObject
             // new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
             new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
             new Rectangle((int)_color * 16, 0, 16, 16),
-            Microsoft.Xna.Framework.Color.White
+            Microsoft.Xna.Framework.Color.White,
+            0.0f,
+            new Vector2(16 / 2, 16 / 2),
+            SpriteEffects.None,
+            0
         );
     }
 
