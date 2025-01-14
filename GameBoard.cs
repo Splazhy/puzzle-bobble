@@ -85,7 +85,7 @@ public class GameBoard : GameObject
 
 
     /// <param name="pos">ball's top left corner</param>
-    // TODO: fix for hexagon grid https://lospec.com/palette-list/resurrect-64
+    // TODO: fix for hexagon grid https://www.redblobgames.com/grids/hexagons/implementation.html#pixel-to-hex
     public (int, int)? ComputeClosestGridPoint(Vector2 pos)
     {
         Vector2 ballCenterPos = pos + new Vector2(BALL_SIZE / 2, BALL_SIZE / 2);
