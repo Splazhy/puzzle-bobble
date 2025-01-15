@@ -9,7 +9,9 @@ namespace PuzzleBobble;
 public class Slingshot : GameObject
 {
     private Viewport _viewport;
-    private Texture2D _texture;
+    private Texture2D _slingshotTexture;
+    private Texture2D _arrowTexture;
+    private Texture2D _ballSpriteSheet;
     private float firerate; // shots per second
     private float _timeSinceLastFired;
     private Ball.Color _ballColor;
@@ -25,15 +27,16 @@ public class Slingshot : GameObject
     public Slingshot(Game game) : base("slingshot")
     {
         Position = new Vector2(0, 300);
-        // TODO: change when slingshot sprite has been updated
-        Scale = new Vector2(48f / 128, 48f / 128);
+        Scale = new Vector2(3, 3);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
     }
 
     public override void LoadContent(ContentManager content)
     {
-        _texture = content.Load<Texture2D>("Graphics/slingshot");
+        _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
+        _ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+        _arrowTexture = content.Load<Texture2D>("Graphics/arrow");
     }
 
     public override void Update(GameTime gameTime)
@@ -66,7 +69,7 @@ public class Slingshot : GameObject
             Ball newBall = new Ball(_ballColor, _viewport);
             newBall.Position = Position;
             newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed;
-            newBall.Scale = new Vector2(3, 3);
+            newBall.Scale = Scale;
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
@@ -77,13 +80,34 @@ public class Slingshot : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         spriteBatch.Draw(
-            _texture,
+            _slingshotTexture,
+            ScreenPosition,
+            null,
+            Color.White,
+            0.0f,
+            new Vector2(_slingshotTexture.Width / 2, _slingshotTexture.Height / 2),
+            Scale,
+            SpriteEffects.None,
+            0
+        );
+        spriteBatch.Draw(
+            _arrowTexture,
             ScreenPosition,
             null,
             Color.White,
             Rotation,
-            new Vector2(_texture.Width / 2, _texture.Height / 2),
+            new Vector2(_arrowTexture.Width / 2, 20),
             Scale,
+            SpriteEffects.None,
+            0
+        );
+        spriteBatch.Draw(
+            _ballSpriteSheet,
+            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
+            new Rectangle((int)_ballColor * 16, 0, 16, 16),
+            Microsoft.Xna.Framework.Color.White,
+            0.0f,
+            new Vector2(16 / 2, 16 / 2),
             SpriteEffects.None,
             0
         );
