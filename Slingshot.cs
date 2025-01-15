@@ -24,6 +24,7 @@ public class Slingshot : GameObject
     public Slingshot(Game game) : base("slingshot")
     {
         Position = new Vector2(0, 300);
+        // TODO: change when slingshot sprite has been updated
         Scale = new Vector2(48f / 128, 48f / 128);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
@@ -63,8 +64,8 @@ public class Slingshot : GameObject
             float targetRotation = Rotation - MathF.PI / 2.0f;
             Ball newBall = new Ball(_ballColor, _viewport);
             newBall.Position = Position;
-            newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * 500;
-            newBall.Scale = Scale;
+            newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * 1000;
+            newBall.Scale = new Vector2(3, 3);
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation

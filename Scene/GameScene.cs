@@ -66,14 +66,19 @@ public class GameScene : AbstractScene
         movingBalls.ForEach(movingBall =>
         {
             Hex ballClosestHex = _gameBoard.ComputeClosestHex(movingBall.Position);
-            // TODO: better collision detection, possibly by taking ball velocity direction into account
-            bool colliding = _gameBoard.IsBallSurronding(ballClosestHex);
-
-            if (colliding)
+            foreach (var dir in Hex.directions)
             {
+                Hex neighborHex = ballClosestHex + dir;
+                if (!_gameBoard.IsBallAt(neighborHex)) continue;
+
+                Vector2 neighborCirclePos = _gameBoard.ConvertHexToCenter(neighborHex);
+                bool colliding = movingBall.Circle.Intersects(new Circle(neighborCirclePos, movingBall.Circle.radius)) > 0;
+                if (!colliding) continue;
+
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
                 _gameBoard.ExplodeBalls(ballClosestHex);
                 movingBall.Destroy();
+                break;
             }
         });
 

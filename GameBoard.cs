@@ -101,6 +101,11 @@ public class GameBoard : GameObject
         return hexLayout.PixelToHex(pos - Position).Round();
     }
 
+    public Vector2 ConvertHexToCenter(Hex hex)
+    {
+        return hexLayout.HexToPixel(hex).Downcast() + Position;
+    }
+
     public bool IsBallAt(Hex hex)
     {
         OffsetCoord offset = hex.ToOffsetCoord();
