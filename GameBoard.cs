@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -9,10 +10,11 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
+    private Game1 _game;
+
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
-    public static readonly Vector2 BALL_SCALE = new Vector2(3, 3);
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
     public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
 
@@ -38,6 +40,7 @@ public class GameBoard : GameObject
     private List<Vector2> debug_points = new List<Vector2>();
     public GameBoard(Game game) : base("gameboard")
     {
+        _game = (Game1)game;
         hexMap = new HexRectMap<int>(
             new int[,] {
             {2,1,2,2,3,3,4,4},
@@ -85,13 +88,19 @@ public class GameBoard : GameObject
 
         if (debug_mousepos.HasValue)
         {
-            Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(0, 0, 16, 16),
+            spriteBatch.DrawString(
+                _game.Font,
+                $"{debug_gridpos.q}, {debug_gridpos.r}",
+                Mouse.GetState().Position.ToVector2(),
                 Color.White
             );
+            // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
+            // spriteBatch.Draw(
+            //     ballSpriteSheet,
+            //     new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+            //     new Rectangle(0, 0, 16, 16),
+            //     Color.White
+            // );
         }
     }
 
@@ -170,38 +179,34 @@ public class GameBoard : GameObject
 
     public void RemoveFloatingBalls()
     {
-        HashSet<Hex> lastRowConnected = new HashSet<Hex>();
-        HashSet<Hex> thisRowConnected = new HashSet<Hex>();
-        List<Hex> floating = new List<Hex>();
-        int lastRow = 0;
-        foreach (var item in hexMap)
+        HashSet<Hex> floating = new HashSet<Hex>();
+        floating.UnionWith(hexMap.GetKeys());
+
+        Queue<Hex> bfsQueue = new Queue<Hex>();
+        // Balls from the top row can't be floating
+        foreach (var item in hexMap.Where(kv => kv.Key.r == 0))
         {
             Hex hex = item.Key;
-            int ball = item.Value;
-            if (lastRow != hex.r)
-            {
-                lastRow = hex.r;
-                lastRowConnected = thisRowConnected;
-                thisRowConnected = new HashSet<Hex>();
-            }
-            if (ball == 0) continue;
+            if (!IsBallAt(hex)) continue;
+            bfsQueue.Enqueue(hex);
+        }
 
-            if (hex.r == 0)
-            {
-                thisRowConnected.Add(hex);
-                continue;
-            }
+        // Remove all connected balls from the floating set
+        while (bfsQueue.Count > 0)
+        {
+            Hex current = bfsQueue.Dequeue();
+            if (!floating.Contains(current)) continue;
+            floating.Remove(current);
 
-            if (lastRowConnected.Contains(hex + Hex.Direction(1)) || lastRowConnected.Contains(hex + Hex.Direction(2)))
+            foreach (var dir in Hex.directions)
             {
-                thisRowConnected.Add(hex);
-            }
-            else
-            {
-                floating.Add(hex);
+                Hex neighbor = current + dir;
+                if (!IsBallAt(neighbor)) continue;
+                bfsQueue.Enqueue(neighbor);
             }
         }
 
+        // Set floating balls to 0 (empty cell)
         foreach (Hex hex in floating)
         {
             hexMap[hex] = 0;

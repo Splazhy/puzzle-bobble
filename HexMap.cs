@@ -23,6 +23,7 @@ class HexRectMap<T> : IEnumerable<KeyValuePair<Hex, T>>
     }
 
     public bool IsHexInMap(Hex hex) => _map.ContainsKey(hex);
+    public Dictionary<Hex, T>.KeyCollection GetKeys() => _map.Keys;
 
     public T this[Hex hex]
     {

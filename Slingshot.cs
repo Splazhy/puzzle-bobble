@@ -13,6 +13,7 @@ public class Slingshot : GameObject
     private float firerate; // shots per second
     private float _timeSinceLastFired;
     private Ball.Color _ballColor;
+    public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
     public static readonly float MIN_ROTATION = MathF.PI * -80.0f / 180.0f;
@@ -64,7 +65,7 @@ public class Slingshot : GameObject
             float targetRotation = Rotation - MathF.PI / 2.0f;
             Ball newBall = new Ball(_ballColor, _viewport);
             newBall.Position = Position;
-            newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * 1000;
+            newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed;
             newBall.Scale = new Vector2(3, 3);
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;

@@ -48,7 +48,8 @@ public class GameScene : AbstractScene
             ChangeScene(Scenes.MENU);
         }
         _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // FIXME: urgh, we're loading content for every new ball
+        // NOTE: we need to load content for every new game objects,
+        // not sure if this is a design flaw or not.
         _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
         _gameObjects.AddRange(_pendingGameObjects);
         _pendingGameObjects.Clear();
@@ -72,8 +73,9 @@ public class GameScene : AbstractScene
                 Hex neighborHex = ballClosestHex + dir;
                 if (!_gameBoard.IsBallAt(neighborHex)) continue;
 
-                Vector2 neighborCirclePos = _gameBoard.ConvertHexToCenter(neighborHex);
-                bool colliding = movingBall.Circle.Intersects(new Circle(neighborCirclePos, movingBall.Circle.radius)) > 0;
+                Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
+                Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
+                bool colliding = movingBall.Circle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
