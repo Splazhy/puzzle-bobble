@@ -65,6 +65,7 @@ public class GameScene : AbstractScene
 
         movingBalls.ForEach(movingBall =>
         {
+            // FIXME: when ball goes too fast, it could overwrite another ball
             Hex ballClosestHex = _gameBoard.ComputeClosestHex(movingBall.Position);
             foreach (var dir in Hex.directions)
             {
@@ -77,6 +78,7 @@ public class GameScene : AbstractScene
 
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
                 _gameBoard.ExplodeBalls(ballClosestHex);
+                _gameBoard.RemoveFloatingBalls();
                 movingBall.Destroy();
                 break;
             }
