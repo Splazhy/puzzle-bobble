@@ -9,14 +9,16 @@ public class Ball : GameObject
 {
     public enum Color
     {
+        // The order of the colors is significant,
+        // as it is connected to the sprite sheet.
         Red = 0,
         Orange,
         Yellow,
         Green,
-        Cyan,
+        Teal,
         Sky,
         Blue,
-        Taro,
+        Lavender,
         Purple,
         Pink,
         White,
