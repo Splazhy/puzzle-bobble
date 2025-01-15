@@ -93,6 +93,42 @@ public class GameBoard : GameObject
                 Color.White
             );
         }
+
+        foreach (Hex hex in debug_hexes)
+        {
+            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
+            spriteBatch.Draw(
+                ballSpriteSheet,
+                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+                new Rectangle(0, 0, 16, 16),
+                Color.White
+            );
+
+        }
+        debug_hexes.Clear();
+
+        foreach (Vector2 point in debug_points)
+        {
+            Vector2 p = point;
+            spriteBatch.Draw(
+                ballSpriteSheet,
+                new Rectangle((int)(p.X + ScreenPosition.X - 4), (int)(p.Y + ScreenPosition.Y - 4), 9, 9),
+                new Rectangle(16 * 11, 16 * 11, 16, 16),
+                Color.White
+            );
+
+        }
+        debug_points.Clear();
+    }
+
+    public void DebugDrawHex(Hex hex)
+    {
+        debug_hexes.Add(hex);
+    }
+
+    public void DebugDrawPoint(Vector2 point)
+    {
+        debug_points.Add(point - Position);
     }
 
 
