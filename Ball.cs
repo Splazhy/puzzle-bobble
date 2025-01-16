@@ -89,8 +89,7 @@ public class Ball : GameObject
     {
         spriteBatch.Draw(
             _spriteSheet,
-            // new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
+            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
             new Rectangle((int)_color * 16, 0, 16, 16),
             Microsoft.Xna.Framework.Color.White,
             0.0f,

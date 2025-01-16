@@ -64,10 +64,19 @@ public class GameScene : AbstractScene
             ball.state == Ball.State.Idle
         ).Cast<Ball>().ToList();
 
+        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         movingBalls.ForEach(movingBall =>
         {
             // FIXME: when ball goes too fast, it could overwrite another ball
-            Hex ballClosestHex = _gameBoard.ComputeClosestHex(movingBall.Position);
+
+            // use ahead position to check for collision so player won't see the ball
+            // overlapping with balls on the grid as much (visual polish).
+            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
+            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
+            Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
+
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
@@ -75,7 +84,7 @@ public class GameScene : AbstractScene
 
                 Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = movingBall.Circle.Intersects(neighborCircle) > 0;
+                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
@@ -86,7 +95,6 @@ public class GameScene : AbstractScene
             }
         });
 
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
