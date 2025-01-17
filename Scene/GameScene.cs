@@ -48,7 +48,8 @@ public class GameScene : AbstractScene
             ChangeScene(Scenes.MENU);
         }
         _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // FIXME: urgh, we're loading content for every new ball
+        // NOTE: we need to load content for every new game objects,
+        // not sure if this is a design flaw or not.
         _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
         _gameObjects.AddRange(_pendingGameObjects);
         _pendingGameObjects.Clear();
@@ -63,21 +64,37 @@ public class GameScene : AbstractScene
             ball.state == Ball.State.Idle
         ).Cast<Ball>().ToList();
 
+        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         movingBalls.ForEach(movingBall =>
         {
-            Hex ballClosestHex = _gameBoard.ComputeClosestHex(movingBall.Position);
-            // TODO: better collision detection, possibly by taking ball velocity direction into account
-            bool colliding = _gameBoard.IsBallSurronding(ballClosestHex);
+            // FIXME: when ball goes too fast, it could overwrite another ball
 
-            if (colliding)
+            // use ahead position to check for collision so player won't see the ball
+            // overlapping with balls on the grid as much (visual polish).
+            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
+            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
+            Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
+
+            foreach (var dir in Hex.directions)
             {
+                Hex neighborHex = ballClosestHex + dir;
+                if (!_gameBoard.IsBallAt(neighborHex)) continue;
+
+                Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
+                Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
+                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
+                if (!colliding) continue;
+
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
                 _gameBoard.ExplodeBalls(ballClosestHex);
+                _gameBoard.RemoveFloatingBalls();
                 movingBall.Destroy();
+                break;
             }
         });
 
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

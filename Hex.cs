@@ -44,7 +44,7 @@ public readonly struct Hex
         return (this - other).Length();
     }
 
-    static readonly Hex[] directions = [
+    public static readonly Hex[] directions = [
         new(1,0,-1),  new(1, -1, 0), new(0, -1, 1),
         new(-1, 0, 1), new(-1, 1, 0), new(0, 1, -1)
     ];

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,10 +10,11 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
+    private Game1 _game;
+
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
-    public static readonly Vector2 BALL_SCALE = new Vector2(3, 3);
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
     public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
 
@@ -26,15 +29,21 @@ public class GameBoard : GameObject
     );
 
     private Texture2D ballSpriteSheet = null;
+    private AnimatedTextureInstancer shineAnimation = null;
 
-    private int[,] board;
+    private HexRectMap<int> hexMap;
     private bool reduceWidthByHalfBall;
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
+
+    private List<Hex> debug_hexes = new List<Hex>();
+    private List<Vector2> debug_points = new List<Vector2>();
     public GameBoard(Game game) : base("gameboard")
     {
-        board = new int[,] {
+        _game = (Game1)game;
+        hexMap = new HexRectMap<int>(
+            new int[,] {
             {2,1,2,2,3,3,4,4},
             {2,2,2,2,3,3,4,4},
             {3,3,3,3,3,3,4,4},
@@ -47,7 +56,9 @@ public class GameBoard : GameObject
             {0,10,0,0,0,0,0,0},
             {0,11,0,0,0,0,0,0},
             {0,12,0,0,0,0,0,0},
-        };
+        }
+        );
+
         reduceWidthByHalfBall = true;
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
@@ -56,43 +67,85 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+
+        var animation = new AnimatedTexture2D(
+            content.Load<Texture2D>("Graphics/ball_shine"),
+            9, 0.01f, false
+        );
+        shineAnimation = new AnimatedTextureInstancer(animation);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        for (int y = 0; y < board.GetLength(0); y++)
+        foreach (var item in hexMap)
         {
-            for (int x = 0; x < board.GetLength(1); x++)
-            {
-                if (reduceWidthByHalfBall && (y % 2) == 1 && x == board.GetLength(1) - 1) continue;
+            Hex hex = item.Key;
+            int ball = item.Value;
+            if (ball == 0) continue;
 
-                int ball = board[y, x];
-                if (ball == 0) continue;
-
-
-                // TODO: Rewrite this in a way that it can be drawn at different scales and positions
-                int hx = x - (y / 2);
-                Vector2 p = hexLayout.HexToDrawLocation(new Hex(hx, y)).Downcast();
-                spriteBatch.Draw(
-                    ballSpriteSheet,
-                    new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                    new Rectangle((ball - 1) * 16, 0, 16, 16),
-                    Color.White
-                );
-            }
+            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
+            spriteBatch.Draw(
+                ballSpriteSheet,
+                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+                new Rectangle((ball - 1) * 16, 0, 16, 16),
+                Color.White
+            );
         }
 
+        shineAnimation.Draw(spriteBatch, gameTime);
 
         if (debug_mousepos.HasValue)
         {
-            Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
+            spriteBatch.DrawString(
+                _game.Font,
+                $"{debug_gridpos.q}, {debug_gridpos.r}",
+                Mouse.GetState().Position.ToVector2(),
+                Color.White
+            );
+            // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
+            // spriteBatch.Draw(
+            //     ballSpriteSheet,
+            //     new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
+            //     new Rectangle(0, 0, 16, 16),
+            //     Color.White
+            // );
+        }
+
+        foreach (Hex hex in debug_hexes)
+        {
+            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
             spriteBatch.Draw(
                 ballSpriteSheet,
                 new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
                 new Rectangle(0, 0, 16, 16),
                 Color.White
             );
+
         }
+        debug_hexes.Clear();
+
+        foreach (Vector2 point in debug_points)
+        {
+            Vector2 p = point;
+            spriteBatch.Draw(
+                ballSpriteSheet,
+                new Rectangle((int)(p.X + ScreenPosition.X - 4), (int)(p.Y + ScreenPosition.Y - 4), 9, 9),
+                new Rectangle(16 * 11, 16 * 11, 16, 16),
+                Color.White
+            );
+
+        }
+        debug_points.Clear();
+    }
+
+    public void DebugDrawHex(Hex hex)
+    {
+        debug_hexes.Add(hex);
+    }
+
+    public void DebugDrawPoint(Vector2 point)
+    {
+        debug_points.Add(point - Position);
     }
 
 
@@ -101,12 +154,20 @@ public class GameBoard : GameObject
         return hexLayout.PixelToHex(pos - Position).Round();
     }
 
+    public Vector2 ConvertHexToCenter(Hex hex)
+    {
+        return hexLayout.HexToPixel(hex).Downcast() + Position;
+    }
+
+    public bool IsValidHex(Hex hex)
+    {
+        return hexMap.IsHexInMap(hex);
+    }
+
     public bool IsBallAt(Hex hex)
     {
-        OffsetCoord offset = hex.ToOffsetCoord();
-        if (offset.row < 0 || board.GetLength(0) <= offset.row ||
-            offset.col < 0 || board.GetLength(1) <= offset.col) return false;
-        return board[offset.row, offset.col] != 0;
+        if (!IsValidHex(hex)) return false;
+        return hexMap[hex] != 0;
     }
 
     public bool IsBallSurronding(Hex hex)
@@ -121,19 +182,88 @@ public class GameBoard : GameObject
 
     public void SetBallAt(Hex hex, int ball)
     {
-        OffsetCoord offset = hex.ToOffsetCoord();
-        if (offset.row < 0 || board.GetLength(0) <= offset.row ||
-            offset.col < 0 || board.GetLength(1) <= offset.col) return;
-        board[offset.row, offset.col] = ball;
+        if (!IsValidHex(hex)) return;
+        hexMap[hex] = ball;
+        var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+        shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
     }
 
     public void ExplodeBalls(Hex hex)
     {
-        // TODO: this
+        if (!IsValidHex(hex)) return;
+        int specifiedBall = hexMap[hex];
+        if (specifiedBall == 0) return;
+
+        Queue<Hex> pending = new Queue<Hex>();
+        pending.Enqueue(hex);
+        HashSet<Hex> connected = new HashSet<Hex>();
+
+        while (pending.Count > 0)
+        {
+            Hex current = pending.Dequeue();
+            connected.Add(current);
+
+            for (int i = 0; i < 6; i++)
+            {
+                Hex neighbor = current.Neighbor(i);
+                if (IsValidHex(neighbor) && hexMap[neighbor] == specifiedBall && !connected.Contains(neighbor))
+                {
+                    pending.Enqueue(neighbor);
+                }
+            }
+        }
+
+        if (connected.Count < 3) return;
+
+        foreach (Hex connectedHex in connected)
+        {
+            hexMap[connectedHex] = 0;
+        }
+
+        // TODO: return connected balls for animation or etc.
+    }
+
+    public void RemoveFloatingBalls()
+    {
+        HashSet<Hex> floating = new HashSet<Hex>();
+        floating.UnionWith(hexMap.GetKeys());
+
+        Queue<Hex> bfsQueue = new Queue<Hex>();
+        // Balls from the top row can't be floating
+        foreach (var item in hexMap.Where(kv => kv.Key.r == 0))
+        {
+            Hex hex = item.Key;
+            if (!IsBallAt(hex)) continue;
+            bfsQueue.Enqueue(hex);
+        }
+
+        // Remove all connected balls from the floating set
+        while (bfsQueue.Count > 0)
+        {
+            Hex current = bfsQueue.Dequeue();
+            if (!floating.Contains(current)) continue;
+            floating.Remove(current);
+
+            foreach (var dir in Hex.directions)
+            {
+                Hex neighbor = current + dir;
+                if (!IsBallAt(neighbor)) continue;
+                bfsQueue.Enqueue(neighbor);
+            }
+        }
+
+        // Set floating balls to 0 (empty cell)
+        foreach (Hex hex in floating)
+        {
+            hexMap[hex] = 0;
+        }
+
+        // TODO: return floating balls for animation or etc.
     }
 
     public override void Update(GameTime gameTime)
     {
+        shineAnimation.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;

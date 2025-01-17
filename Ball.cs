@@ -40,7 +40,7 @@ public class Ball : GameObject
             Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
             // We use sprite sheet now, so this assertion is no longer valid
             // Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
-            return new Circle(ScreenPosition, 16 / 2 * Scale.X);
+            return new Circle(Position, 16 / 2 * Scale.X);
         }
     }
     private Color _color; public Color GetColor() { return _color; }
@@ -89,8 +89,7 @@ public class Ball : GameObject
     {
         spriteBatch.Draw(
             _spriteSheet,
-            // new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
+            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
             new Rectangle((int)_color * 16, 0, 16, 16),
             Microsoft.Xna.Framework.Color.White,
             0.0f,

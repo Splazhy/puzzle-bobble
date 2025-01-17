@@ -6,6 +6,7 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
+    public SpriteFont Font { get; private set; }
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SceneManager _sceneManager;
@@ -37,6 +38,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        Font = Content.Load<SpriteFont>("Fonts/Arial24");
         _sceneManager.LoadContent(this.Content);
     }
 
