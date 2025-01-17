@@ -8,9 +8,71 @@ namespace PuzzleBobble;
 
 public class Slingshot : GameObject
 {
+    public class Guideline
+    {
+        private Texture2D _texture;
+        private float _length;
+        private float _duration; // in seconds
+        private float _progress; // 0.0f to 1.0f
+        private int _count;
+        private float _timePassed;
+        private Vector2 _origin;
+
+        public Guideline(Texture2D texture, int drawCount, float lineLength, float loopDuration)
+        {
+            _texture = texture;
+            _length = lineLength;
+            _duration = loopDuration;
+            _count = drawCount;
+            _progress = 0.0f;
+            _timePassed = 0.0f;
+            _origin = new Vector2(_texture.Width / 2, _texture.Height / 2);
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            _timePassed += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _progress = _timePassed / _duration;
+            if (_progress > 1.0f)
+            {
+                _progress = 0.0f;
+                _timePassed = 0.0f;
+            }
+        }
+
+        public void Draw(SpriteBatch spriteBatch, Vector2 startPoint, float rotation, Vector2 scale)
+        {
+            var endPoint = new Vector2(
+                startPoint.X + _length * MathF.Cos(rotation),
+                startPoint.Y + _length * MathF.Sin(rotation)
+            );
+
+            for (int i = 0; i < _count; i++)
+            {
+                var subProgress = (_progress + (float)i / _count) % 1.0f;
+                var subPosition = new Vector2(
+                    startPoint.X + subProgress * (endPoint.X - startPoint.X),
+                    startPoint.Y + subProgress * (endPoint.Y - startPoint.Y)
+                );
+                var actualScale = scale * (1.0f - subProgress);
+                spriteBatch.Draw(
+                    _texture,
+                    subPosition,
+                    null,
+                    Color.White,
+                    0,
+                    _origin,
+                    actualScale,
+                    SpriteEffects.None,
+                    0
+                );
+            }
+        }
+    }
+
     private Viewport _viewport;
     private Texture2D _slingshotTexture;
-    private Texture2D _arrowTexture;
+    private Guideline _guideline;
     private Texture2D _ballSpriteSheet;
     private float firerate; // shots per second
     private float _timeSinceLastFired;
@@ -36,7 +98,7 @@ public class Slingshot : GameObject
     {
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
-        _arrowTexture = content.Load<Texture2D>("Graphics/arrow");
+        _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
     }
 
     public override void Update(GameTime gameTime)
@@ -49,6 +111,8 @@ public class Slingshot : GameObject
         //     IsActive = !IsActive;
 
         _timeSinceLastFired += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _guideline.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;
@@ -79,6 +143,8 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        _guideline.Draw(spriteBatch, ScreenPosition, Rotation - MathF.PI / 2, Scale);
+
         spriteBatch.Draw(
             _slingshotTexture,
             ScreenPosition,
@@ -90,17 +156,7 @@ public class Slingshot : GameObject
             SpriteEffects.None,
             0
         );
-        spriteBatch.Draw(
-            _arrowTexture,
-            ScreenPosition,
-            null,
-            Color.White,
-            Rotation,
-            new Vector2(_arrowTexture.Width / 2, 20),
-            Scale,
-            SpriteEffects.None,
-            0
-        );
+
         spriteBatch.Draw(
             _ballSpriteSheet,
             new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
