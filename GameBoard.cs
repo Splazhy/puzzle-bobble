@@ -184,8 +184,6 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
-        var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
-        shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
     }
 
     public void ExplodeBalls(Hex hex)
@@ -213,7 +211,18 @@ public class GameBoard : GameObject
             }
         }
 
-        if (connected.Count < 3) return;
+        if (connected.Count < 3)
+        {
+            // We want to play the shine animation when a ball is settled
+            // and that ball doesn't cause any explosion.
+            //
+            // We currently only call this method on settled moving ball,
+            // so we can assume that calling play shine animation here will
+            // yield the expected outcome.
+            var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+            shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
+            return;
+        }
 
         foreach (Hex connectedHex in connected)
         {
