@@ -29,6 +29,7 @@ public class GameBoard : GameObject
     );
 
     private Texture2D ballSpriteSheet = null;
+    private AnimatedTextureInstancer shineAnimation = null;
 
     private HexRectMap<int> hexMap;
     private bool reduceWidthByHalfBall;
@@ -66,6 +67,12 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+
+        var animation = new AnimatedTexture2D(
+            content.Load<Texture2D>("Graphics/ball_shine"),
+            9, 0.01f, false
+        );
+        shineAnimation = new AnimatedTextureInstancer(animation);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -85,6 +92,7 @@ public class GameBoard : GameObject
             );
         }
 
+        shineAnimation.Draw(spriteBatch, gameTime);
 
         if (debug_mousepos.HasValue)
         {
@@ -176,6 +184,8 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
+        var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+        shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
     }
 
     public void ExplodeBalls(Hex hex)
@@ -253,6 +263,7 @@ public class GameBoard : GameObject
 
     public override void Update(GameTime gameTime)
     {
+        shineAnimation.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;
