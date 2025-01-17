@@ -11,6 +11,14 @@ namespace PuzzleBobble;
 public class GameBoard : GameObject
 {
     private Game1 _game;
+    /// <summary>
+    /// For random falling velocity of falling balls
+    /// </summary>
+    private Random _rand;
+    private const float FALLING_SPREAD = 50;
+
+    public event FloatingBallsFellHandler FloatingBallsFell;
+    public delegate void FloatingBallsFellHandler(List<Ball> floatingBalls);
 
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
@@ -25,11 +33,12 @@ public class GameBoard : GameObject
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
         new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
-
     );
 
     private Texture2D ballSpriteSheet = null;
     private AnimatedTextureInstancer shineAnimation = null;
+
+    private List<Hex> _pendingBallRemoval = [];
 
     private HexRectMap<int> hexMap;
     private bool reduceWidthByHalfBall;
@@ -42,6 +51,7 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
+        _rand = new Random();
         hexMap = new HexRectMap<int>(
             new int[,] {
             {2,1,2,2,3,3,4,4},
@@ -192,9 +202,9 @@ public class GameBoard : GameObject
         int specifiedBall = hexMap[hex];
         if (specifiedBall == 0) return;
 
-        Queue<Hex> pending = new Queue<Hex>();
+        Queue<Hex> pending = [];
         pending.Enqueue(hex);
-        HashSet<Hex> connected = new HashSet<Hex>();
+        HashSet<Hex> connected = [];
 
         while (pending.Count > 0)
         {
@@ -234,8 +244,8 @@ public class GameBoard : GameObject
 
     public void RemoveFloatingBalls()
     {
-        HashSet<Hex> floating = new HashSet<Hex>();
-        floating.UnionWith(hexMap.GetKeys());
+        HashSet<Hex> floating = [];
+        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0));
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -261,18 +271,35 @@ public class GameBoard : GameObject
             }
         }
 
-        // Set floating balls to 0 (empty cell)
+        if (floating.Count == 0) return;
+
+        List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            hexMap[hex] = 0;
+            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex]-1, Ball.State.Falling)
+            {
+                Position = ConvertHexToCenter(hex),
+                Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
+                Scale = new Vector2(3, 3),
+            });
         }
 
-        // TODO: return floating balls for animation or etc.
+        // We don't want to remove the balls immediately
+        // because the ball will disappear for one frame.
+        _pendingBallRemoval.AddRange(floating);
+
+        FloatingBallsFell?.Invoke(fallingBalls);
     }
 
     public override void Update(GameTime gameTime)
     {
         shineAnimation.Update(gameTime);
+
+        foreach (Hex hex in _pendingBallRemoval)
+        {
+            hexMap[hex] = 0;
+        }
+        _pendingBallRemoval.Clear();
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;

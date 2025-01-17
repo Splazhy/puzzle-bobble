@@ -130,10 +130,12 @@ public class Slingshot : GameObject
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new Ball(_ballColor, _viewport);
-            newBall.Position = Position;
-            newBall.Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed;
-            newBall.Scale = Scale;
+            Ball newBall = new Ball(_ballColor, Ball.State.Moving)
+            {
+                Position = Position,
+                Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
+                Scale = Scale,
+            };
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
