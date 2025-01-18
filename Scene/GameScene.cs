@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -20,7 +21,8 @@ public class GameScene : AbstractScene
     {
         Slingshot slingshot = new Slingshot(game);
         _gameBoard = new GameBoard(game);
-        slingshot.BallFired += SpawnBall;
+        _gameBoard.FloatingBallsFell += balls => _pendingGameObjects.AddRange(balls);
+        slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
             slingshot,
             _gameBoard,
@@ -56,12 +58,12 @@ public class GameScene : AbstractScene
 
         var movingBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&
-            ball.state == Ball.State.Moving
+            ball.GetState() == Ball.State.Moving
         ).Cast<Ball>().ToList();
 
         var idleBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&
-            ball.state == Ball.State.Idle
+            ball.GetState() == Ball.State.Idle
         ).Cast<Ball>().ToList();
 
         _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
@@ -101,10 +103,5 @@ public class GameScene : AbstractScene
     {
         _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime));
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
-    }
-
-    private void SpawnBall(Ball ball)
-    {
-        _pendingGameObjects.Add(ball);
     }
 }

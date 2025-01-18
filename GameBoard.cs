@@ -11,6 +11,14 @@ namespace PuzzleBobble;
 public class GameBoard : GameObject
 {
     private Game1 _game;
+    /// <summary>
+    /// For random falling velocity of falling balls
+    /// </summary>
+    private Random _rand;
+    private const float FALLING_SPREAD = 50;
+
+    public event FloatingBallsFellHandler FloatingBallsFell;
+    public delegate void FloatingBallsFellHandler(List<Ball> floatingBalls);
 
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
@@ -25,11 +33,12 @@ public class GameBoard : GameObject
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
         new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
-
     );
 
     private Texture2D ballSpriteSheet = null;
     private AnimatedTextureInstancer shineAnimation = null;
+
+    private List<Hex> _pendingBallRemoval = [];
 
     private HexRectMap<int> hexMap;
     private bool reduceWidthByHalfBall;
@@ -42,30 +51,18 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
-        hexMap = new HexRectMap<int>(
-            new int[,] {
-            {2,1,2,2,3,3,4,4},
-            {2,2,2,2,3,3,4,4},
-            {3,3,3,3,3,3,4,4},
-            {4,4,4,4,3,3,4,4},
-            {0,5,0,0,0,0,0,0},
-            {0,6,0,0,0,0,0,0},
-            {0,7,0,0,0,0,0,0},
-            {0,8,0,0,0,0,0,0},
-            {0,9,0,0,0,0,0,0},
-            {0,10,0,0,0,0,0,0},
-            {0,11,0,0,0,0,0,0},
-            {0,12,0,0,0,0,0,0},
-        }
-        );
+        _rand = new Random();
 
-        reduceWidthByHalfBall = true;
+        reduceWidthByHalfBall = false;
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
     }
 
     public override void LoadContent(ContentManager content)
     {
+        var level = Level<int>.Load("test");
+        hexMap = new HexRectMap<int>(level);
+
         ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
 
         var animation = new AnimatedTexture2D(
@@ -184,8 +181,6 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
-        var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
-        shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
     }
 
     public void ExplodeBalls(Hex hex)
@@ -194,9 +189,9 @@ public class GameBoard : GameObject
         int specifiedBall = hexMap[hex];
         if (specifiedBall == 0) return;
 
-        Queue<Hex> pending = new Queue<Hex>();
+        Queue<Hex> pending = [];
         pending.Enqueue(hex);
-        HashSet<Hex> connected = new HashSet<Hex>();
+        HashSet<Hex> connected = [];
 
         while (pending.Count > 0)
         {
@@ -213,7 +208,18 @@ public class GameBoard : GameObject
             }
         }
 
-        if (connected.Count < 3) return;
+        if (connected.Count < 3)
+        {
+            // We want to play the shine animation when a ball is settled
+            // and that ball doesn't cause any explosion.
+            //
+            // We currently only call this method on settled moving ball,
+            // so we can assume that calling play shine animation here will
+            // yield the expected outcome.
+            var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+            shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
+            return;
+        }
 
         foreach (Hex connectedHex in connected)
         {
@@ -225,8 +231,8 @@ public class GameBoard : GameObject
 
     public void RemoveFloatingBalls()
     {
-        HashSet<Hex> floating = new HashSet<Hex>();
-        floating.UnionWith(hexMap.GetKeys());
+        HashSet<Hex> floating = [];
+        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0));
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -252,18 +258,35 @@ public class GameBoard : GameObject
             }
         }
 
-        // Set floating balls to 0 (empty cell)
+        if (floating.Count == 0) return;
+
+        List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            hexMap[hex] = 0;
+            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex]-1, Ball.State.Falling)
+            {
+                Position = ConvertHexToCenter(hex),
+                Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
+                Scale = new Vector2(3, 3),
+            });
         }
 
-        // TODO: return floating balls for animation or etc.
+        // We don't want to remove the balls immediately
+        // because the ball will disappear for one frame.
+        _pendingBallRemoval.AddRange(floating);
+
+        FloatingBallsFell?.Invoke(fallingBalls);
     }
 
     public override void Update(GameTime gameTime)
     {
         shineAnimation.Update(gameTime);
+
+        foreach (Hex hex in _pendingBallRemoval)
+        {
+            hexMap[hex] = 0;
+        }
+        _pendingBallRemoval.Clear();
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;

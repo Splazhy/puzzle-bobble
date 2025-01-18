@@ -44,14 +44,14 @@ public class Ball : GameObject
         }
     }
     private Color _color; public Color GetColor() { return _color; }
-    public State state;
-    private Viewport _viewport;
+    private State _state; public State GetState() { return _state; }
 
-    public Ball(Color ballType, Viewport viewport) : base("ball")
+    private static readonly Vector2 GRAVITY = new Vector2(0, 9.8f * 100);
+
+    public Ball(Color ballType, State state) : base("ball")
     {
-        _viewport = viewport;
-        state = State.Moving;
         _color = ballType;
+        _state = state;
     }
 
     public override void LoadContent(ContentManager content)
@@ -63,7 +63,7 @@ public class Ball : GameObject
     public override void Update(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        switch (state)
+        switch (_state)
         {
             case State.Idle:
                 break;
@@ -80,7 +80,10 @@ public class Ball : GameObject
                 Position += Velocity * deltaTime;
                 break;
             case State.Falling:
-                Position += new Vector2(0, 1);
+                Velocity += GRAVITY * deltaTime;
+                Position += Velocity * deltaTime;
+                if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
+                    Destroy();
                 break;
         }
     }
