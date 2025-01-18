@@ -54,6 +54,14 @@ public class MenuScene : AbstractScene
         };
         quitBtn.Click += (sender, args) => _game.Exit();
 
+        var testBtn = new Button
+        {
+            Content = new Label { Text = "Test" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        testBtn.Click += (sender, args) => ChangeScene(Scenes.Craft);
+
         VerticalStackPanel menu = new VerticalStackPanel
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -63,7 +71,8 @@ public class MenuScene : AbstractScene
                 startBtn,
                 optionsBtn,
                 creditsBtn,
-                quitBtn
+                quitBtn,
+                testBtn
             }
         };
 

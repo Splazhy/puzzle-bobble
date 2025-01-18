@@ -6,6 +6,14 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
+    // maybe find a better way to do this
+    public static Vector2 VirtualOrigin = Vector2.Zero;
+    public Vector2 ScreenPosition
+    {
+        get { return Position + VirtualOrigin; }
+        set { Position = value - VirtualOrigin; }
+    }
+
     public Vector2 Position { get; set; }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
@@ -25,10 +33,11 @@ public class GameObject
     // We treat GameObject contructor like Initialize method
     public GameObject(string name)
     {
-        Position = Vector2.Zero;
-        Rotation = 0.0f;
-        Scale = Vector2.One;
-        Velocity = Vector2.Zero;
+        // We don't want to override these values set by derived classes
+        // Position = Vector2.Zero;
+        // Rotation = 0.0f;
+        // Scale = Vector2.One;
+        // Velocity = Vector2.Zero;
         Name = name;
         IsActive = true;
         IsVisible = true;

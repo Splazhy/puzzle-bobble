@@ -1,0 +1,44 @@
+using Microsoft.Xna.Framework;
+
+// https://www.redblobgames.com/grids/hexagons/implementation.html
+public struct HexLayout
+{
+    public readonly HexOrientation orientation;
+    public readonly Vector2Double size;
+    public readonly Vector2Double origin;
+
+    public HexLayout(HexOrientation orientation_, Vector2Double size_, Vector2Double origin_)
+    {
+        orientation = orientation_;
+        size = size_;
+        origin = origin_;
+    }
+
+    public Vector2Double HexToPixel(Hex h)
+    {
+        double x = (orientation.f0 * h.q + orientation.f1 * h.r) * size.X;
+        double y = (orientation.f2 * h.q + orientation.f3 * h.r) * size.Y;
+        return new Vector2Double(x + origin.X, y + origin.Y);
+    }
+
+    public Vector2Double HexToDrawLocation(Hex h)
+    {
+        double x = (orientation.f0 * h.q + orientation.f1 * h.r) * size.X;
+        double y = (orientation.f2 * h.q + orientation.f3 * h.r) * size.Y;
+        return new Vector2Double(x, y);
+    }
+
+    public HexFrac PixelToHex(Vector2Double p)
+    {
+        Vector2Double pt = new((p.X - origin.X) / size.X,
+                                (p.Y - origin.Y) / size.Y);
+        double q = orientation.b0 * pt.X + orientation.b1 * pt.Y;
+        double r = orientation.b2 * pt.X + orientation.b3 * pt.Y;
+        return new HexFrac(q, r, -q - r);
+    }
+
+    public HexFrac PixelToHex(Vector2 p)
+    {
+        return PixelToHex(new Vector2Double(p));
+    }
+};

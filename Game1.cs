@@ -6,6 +6,7 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
+    public SpriteFont Font { get; private set; }
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SceneManager _sceneManager;
@@ -13,14 +14,17 @@ public class Game1 : Game
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
-        // Window.AllowUserResizing = true;
         // _graphics.PreferredBackBufferWidth = 1280;
         // _graphics.PreferredBackBufferHeight = 720;
-        // _graphics.ToggleFullScreen();
 
         _sceneManager = new SceneManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        Window.AllowUserResizing = true;
+
+        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+
+        Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 
     protected override void Initialize()
@@ -34,6 +38,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        Font = Content.Load<SpriteFont>("Fonts/Arial24");
         _sceneManager.LoadContent(this.Content);
     }
 
@@ -51,10 +56,19 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        _spriteBatch.Begin();
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         _sceneManager.Draw(_spriteBatch, gameTime);
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void Window_ClientSizeChanged(object sender, System.EventArgs e)
+    {
+        Window.ClientSizeChanged -= Window_ClientSizeChanged;
+
+        // TODO: code that needs to be run on window size change
+        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }
