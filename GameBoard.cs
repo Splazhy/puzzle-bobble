@@ -52,30 +52,17 @@ public class GameBoard : GameObject
     {
         _game = (Game1)game;
         _rand = new Random();
-        hexMap = new HexRectMap<int>(
-            new int[,] {
-            {2,1,2,2,3,3,4,4},
-            {2,2,2,2,3,3,4,4},
-            {3,3,3,3,3,3,4,4},
-            {4,4,4,4,3,3,4,4},
-            {0,5,0,0,0,0,0,0},
-            {0,6,0,0,0,0,0,0},
-            {0,7,0,0,0,0,0,0},
-            {0,8,0,0,0,0,0,0},
-            {0,9,0,0,0,0,0,0},
-            {0,10,0,0,0,0,0,0},
-            {0,11,0,0,0,0,0,0},
-            {0,12,0,0,0,0,0,0},
-        }
-        );
 
-        reduceWidthByHalfBall = true;
+        reduceWidthByHalfBall = false;
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
     }
 
     public override void LoadContent(ContentManager content)
     {
+        var level = Level<int>.Load("test");
+        hexMap = new HexRectMap<int>(level);
+
         ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
 
         var animation = new AnimatedTexture2D(

@@ -36,6 +36,12 @@
 				"PremultiplyAlpha": "True",
 				"TextureFormat": "Compressed"
 			}
+		},
+		"templates":
+		{
+			"path": "Levels/*.txt",
+			"recursive": "True",
+			"action": "copy",
 		}
 	}
 }
