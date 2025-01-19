@@ -1,13 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 namespace PuzzleBobble.HexGrid;
-
 
 class HexRectMap<T> : IEnumerable<KeyValuePair<Hex, T>>
 {
     private Dictionary<Hex, T> _map = new Dictionary<Hex, T>();
-
-
-    private OffsetCoord maxOffset = new OffsetCoord(0, 0);
 
     public HexRectMap(T[,] rectanglularData)
     {
@@ -20,8 +17,11 @@ class HexRectMap<T> : IEnumerable<KeyValuePair<Hex, T>>
                 _map[hex] = rectanglularData[y, x];
             }
         }
+    }
 
-        maxOffset = new OffsetCoord(rectanglularData.GetLength(1) - 1, rectanglularData.GetLength(0) - 1);
+    public HexRectMap(PuzzleBobble.Level<T> level)
+    {
+        _map = level.Map;
     }
 
     public bool IsHexInMap(Hex hex) => _map.ContainsKey(hex);
@@ -47,21 +47,12 @@ class HexRectMap<T> : IEnumerable<KeyValuePair<Hex, T>>
 
     public IEnumerator<KeyValuePair<Hex, T>> GetEnumerator()
     {
-        for (int y = 0; y <= maxOffset.row; y++)
-        {
-            for (int x = 0; x <= maxOffset.col; x++)
-            {
-                OffsetCoord offset = new OffsetCoord(x, y);
-                Hex hex = offset.ToHex();
-                yield return new KeyValuePair<Hex, T>(hex, _map[hex]);
-            }
-        }
+        return _map.GetEnumerator();
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
-
 
 }
