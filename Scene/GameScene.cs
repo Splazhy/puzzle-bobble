@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -22,6 +21,7 @@ public class GameScene : AbstractScene
     {
         Slingshot slingshot = new Slingshot(game);
         _gameBoard = new GameBoard(game);
+        _gameBoard.BallsExploded += balls => _pendingGameObjects.AddRange(balls);
         _gameBoard.FloatingBallsFell += balls => _pendingGameObjects.AddRange(balls);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [

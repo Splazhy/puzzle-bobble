@@ -18,6 +18,9 @@ public class GameBoard : GameObject
     private Random _rand;
     private const float FALLING_SPREAD = 50;
 
+    public event BallsExplodedHandler BallsExploded;
+    public delegate void BallsExplodedHandler(List<Ball> explodingBalls);
+
     public event FloatingBallsFellHandler FloatingBallsFell;
     public delegate void FloatingBallsFellHandler(List<Ball> floatingBalls);
 
@@ -68,7 +71,7 @@ public class GameBoard : GameObject
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 0.01f, false
+            9, 1, 0.01f, false
         );
         shineAnimation = new AnimatedTextureInstancer(animation);
     }
@@ -184,14 +187,14 @@ public class GameBoard : GameObject
         hexMap[hex] = ball;
     }
 
-    public void ExplodeBalls(Hex hex)
+    public void ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(hex)) return;
-        int specifiedBall = hexMap[hex];
+        if (!IsValidHex(sourceHex)) return;
+        int specifiedBall = hexMap[sourceHex];
         if (specifiedBall == 0) return;
 
         Queue<Hex> pending = [];
-        pending.Enqueue(hex);
+        pending.Enqueue(sourceHex);
         HashSet<Hex> connected = [];
 
         while (pending.Count > 0)
@@ -217,23 +220,33 @@ public class GameBoard : GameObject
             // We currently only call this method on settled moving ball,
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
-            var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+            var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
             shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
             return;
         }
 
-        foreach (Hex connectedHex in connected)
+        List<Ball> explodingBalls = [];
+        foreach (Hex hex in connected)
         {
-            hexMap[connectedHex] = 0;
+            explodingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Exploding)
+            {
+                Position = ConvertHexToCenter(hex),
+                Scale = new Vector2(3, 3),
+            });
         }
 
-        // TODO: return connected balls for animation or etc.
+        // We don't want to remove the balls immediately
+        // because the ball will disappear for one frame,
+        // causing visual hiccup.
+        _pendingBallRemoval.AddRange(connected);
+
+        BallsExploded?.Invoke(explodingBalls);
     }
 
     public void RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0));
+        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0 && !_pendingBallRemoval.Contains(kv)));
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -264,7 +277,7 @@ public class GameBoard : GameObject
         List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex]-1, Ball.State.Falling)
+            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Falling)
             {
                 Position = ConvertHexToCenter(hex),
                 Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
@@ -273,7 +286,8 @@ public class GameBoard : GameObject
         }
 
         // We don't want to remove the balls immediately
-        // because the ball will disappear for one frame.
+        // because the ball will disappear for one frame,
+        // causing visual hiccup.
         _pendingBallRemoval.AddRange(floating);
 
         FloatingBallsFell?.Invoke(fallingBalls);
