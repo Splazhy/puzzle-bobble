@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using PuzzleBobble.HexGrid;
 namespace PuzzleBobble;
 
 public class Level<T>
