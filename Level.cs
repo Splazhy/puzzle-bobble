@@ -26,7 +26,7 @@ public class Level
                 int? value = cells[x] switch
                 {
                     "." => null,
-                    _ => (int)cells[x][0] - 96
+                    _ => (int)cells[x][0] - 97
                 };
                 map[hex] = value;
             }

@@ -85,7 +85,7 @@ public class GameScene : AbstractScene
                 bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
-                _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
+                _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor());
                 _gameBoard.ExplodeBalls(ballClosestHex);
                 var fallBalls = _gameBoard.RemoveFloatingBalls();
                 _pendingGameObjects.AddRange(fallBalls);

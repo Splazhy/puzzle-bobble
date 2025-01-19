@@ -19,7 +19,7 @@ public class GameBoard : GameObject
     private Random _rand;
     private const float FALLING_SPREAD = 50;
 
-    public event BallsExplodedHandler BallsExploded;
+    public event BallsExplodedHandler? BallsExploded;
     public delegate void BallsExplodedHandler(List<Ball> explodingBalls);
 
     // a packed grid of balls becomes a hexagon grid
@@ -82,7 +82,7 @@ public class GameBoard : GameObject
             spriteBatch.Draw(
                 ballSpriteSheet,
                 new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle((ball - 1) * 16, 0, 16, 16),
+                new Rectangle(ball * 16, 0, 16, 16),
                 Color.White
             );
         }
@@ -223,18 +223,16 @@ public class GameBoard : GameObject
         List<Ball> explodingBalls = [];
         foreach (Hex hex in connected)
         {
-            explodingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Exploding)
+            if (hexMap[hex] is int ball)
             {
-                Position = ConvertHexToCenter(hex),
-                Scale = new Vector2(3, 3),
-            });
-            hexMap[hex] = null;
+                explodingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Exploding)
+                {
+                    Position = ConvertHexToCenter(hex),
+                    Scale = new Vector2(3, 3),
+                });
+                hexMap[hex] = null;
+            }
         }
-
-        // We don't want to remove the balls immediately
-        // because the ball will disappear for one frame,
-        // causing visual hiccup.
-        _pendingBallRemoval.AddRange(connected);
 
         BallsExploded?.Invoke(explodingBalls);
     }

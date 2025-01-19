@@ -34,7 +34,7 @@ public class Ball : GameObject
     }
 
     private Texture2D? _spriteSheet;
-    private AnimatedTexture2D _explosionSpriteSheet;
+    private AnimatedTexture2D? _explosionSpriteSheet;
     public Circle Circle
     {
         get
@@ -84,6 +84,7 @@ public class Ball : GameObject
                 Position += Velocity * deltaTime;
                 break;
             case State.Exploding:
+                if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Play();
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)
@@ -103,6 +104,7 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Exploding:
+                if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Draw(
                     spriteBatch,
                     // FIXME: this position is not accurate (the y position is off by a bit)
