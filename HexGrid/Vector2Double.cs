@@ -1,5 +1,6 @@
-
 using Microsoft.Xna.Framework;
+
+namespace PuzzleBobble.HexGrid;
 
 public struct Vector2Double
 {

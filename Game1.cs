@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -10,12 +11,16 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SceneManager _sceneManager;
-
+    private FrameCounter _frameCounter = new FrameCounter();
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
         // _graphics.PreferredBackBufferWidth = 1280;
         // _graphics.PreferredBackBufferHeight = 720;
+
+        // change framerate to vsync
+        _graphics.SynchronizeWithVerticalRetrace = true;
+        IsFixedTimeStep = false;
 
         _sceneManager = new SceneManager(this);
         Content.RootDirectory = "Content";
@@ -25,6 +30,7 @@ public class Game1 : Game
         GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
 
         Window.ClientSizeChanged += Window_ClientSizeChanged;
+
     }
 
     protected override void Initialize()
@@ -48,15 +54,21 @@ public class Game1 : Game
             Exit();
 
         _sceneManager.Update(gameTime);
+        _frameCounter.Update(gameTime.ElapsedGameTime.TotalSeconds);
 
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
+
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        // TODO: hide/show these using debug options
+        _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
+        _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
+
         _sceneManager.Draw(_spriteBatch, gameTime);
         _spriteBatch.End();
 

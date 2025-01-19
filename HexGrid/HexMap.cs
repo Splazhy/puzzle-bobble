@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+namespace PuzzleBobble.HexGrid;
 
 class HexRectMap<T> : IEnumerable<KeyValuePair<Hex, T>>
 {

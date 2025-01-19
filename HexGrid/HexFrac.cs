@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 
+namespace PuzzleBobble.HexGrid;
+
 public readonly struct HexFrac
 {
     public readonly double q;
