@@ -1,0 +1,4 @@
+. . b c a a . .
+ c a c . b a c
+a a . . . . c b
+ b b . . . b c 
