@@ -11,12 +11,12 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private List<GameObject> _gameObjects;
-    private List<GameObject> _pendingGameObjects;
-    private SpriteFont _font;
-    private ContentManager _content;
+    private List<GameObject> _gameObjects = [];
+    private List<GameObject> _pendingGameObjects = [];
+    private SpriteFont? _font;
+    private ContentManager? _content;
 
-    private GameBoard _gameBoard;
+    private GameBoard? _gameBoard;
 
     public override void Initialize(Game game)
     {
@@ -49,6 +49,8 @@ public class GameScene : AbstractScene
         {
             ChangeScene(Scenes.MENU);
         }
+
+        if (_gameBoard is null || _content is null) return;
 
         var movingBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&

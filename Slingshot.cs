@@ -70,10 +70,9 @@ public class Slingshot : GameObject
         }
     }
 
-    private Viewport _viewport;
-    private Texture2D _slingshotTexture;
-    private Guideline _guideline;
-    private Texture2D _ballSpriteSheet;
+    private Texture2D? _slingshotTexture;
+    private Guideline? _guideline;
+    private Texture2D? _ballSpriteSheet;
     private float firerate; // shots per second
     private float _timeSinceLastFired;
     private Ball.Color _ballColor;
@@ -83,7 +82,7 @@ public class Slingshot : GameObject
     public static readonly float MIN_ROTATION = MathF.PI * -80.0f / 180.0f;
     public static readonly float MAX_ROTATION = MathF.PI * 80.0f / 180.0f;
 
-    public event BallFiredHandler BallFired;
+    public event BallFiredHandler? BallFired;
     public delegate void BallFiredHandler(Ball ball);
 
     public Slingshot(Game game) : base("slingshot")
@@ -112,7 +111,7 @@ public class Slingshot : GameObject
 
         _timeSinceLastFired += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        _guideline.Update(gameTime);
+        _guideline?.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;
@@ -145,6 +144,10 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        if (_slingshotTexture is null || _ballSpriteSheet is null || _guideline is null)
+        {
+            return;
+        }
         _guideline.Draw(spriteBatch, ScreenPosition, Rotation - MathF.PI / 2, Scale);
 
         spriteBatch.Draw(

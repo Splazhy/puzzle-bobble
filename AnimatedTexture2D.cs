@@ -15,8 +15,6 @@ public class AnimatedTexture2D
     private bool isPlaying;
     public bool IsFinished { get; private set; }
     private float timeSinceStart;
-    private AnimatedTexture2D animatedTexture;
-
     public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, float frameDuration, bool isLooping = false)
     {
         this.spriteSheet = spriteSheet;

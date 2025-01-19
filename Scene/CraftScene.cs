@@ -9,7 +9,7 @@ namespace PuzzleBobble.Scene;
 
 public class CraftScene : AbstractScene
 {
-    private Desktop _desktop;
+    private Desktop? _desktop;
 
     public override void Initialize(Game game)
     {
@@ -35,18 +35,18 @@ public class CraftScene : AbstractScene
 
         var rightGrid = new Grid
         {
-        RowSpacing = 8,
-        ColumnSpacing = 0,
+            RowSpacing = 8,
+            ColumnSpacing = 0,
         };
 
-        rightGrid.RowsProportions.Add(new Proportion(ProportionType.Part, 1)); 
-        rightGrid.RowsProportions.Add(new Proportion(ProportionType.Auto));   
+        rightGrid.RowsProportions.Add(new Proportion(ProportionType.Part, 1));
+        rightGrid.RowsProportions.Add(new Proportion(ProportionType.Auto));
         rightGrid.RowsProportions.Add(new Proportion(ProportionType.Part, 1));
 
         // Button
         var BackBtn = new Button
         {
-            Content = new Label{ Text = "Back" },
+            Content = new Label { Text = "Back" },
             Left = 366,
             VerticalAlignment = VerticalAlignment.Bottom
         };
@@ -54,7 +54,7 @@ public class CraftScene : AbstractScene
 
         var CraftBtn = new Button
         {
-            Content = new Label{ Text = "C" },
+            Content = new Label { Text = "C" },
             Left = 372,
             Top = 240,
             Padding = new Thickness(10, 5)
@@ -62,11 +62,11 @@ public class CraftScene : AbstractScene
 
         var OrderBtn = new Button
         {
-            Content = new Label{ Text = "O" },
+            Content = new Label { Text = "O" },
             Left = 372,
             Top = 270,
             Padding = new Thickness(10, 5)
-        }; 
+        };
 
         // Label
         var inventoryLabel = new Label
@@ -106,8 +106,8 @@ public class CraftScene : AbstractScene
 
         var dividerLine = new HorizontalSeparator
         {
-            Thickness = 2, 
-            Color = Color.Black, 
+            Thickness = 2,
+            Color = Color.Black,
         };
         rightGrid.Widgets.Add(dividerLine);
         Grid.SetRow(dividerLine, 1);
@@ -154,13 +154,13 @@ public class CraftScene : AbstractScene
             Grid.SetRow(rightBottom, 2);
         };
 
-         CraftBtn.Click += (sender, args) =>
-        {
-            rightBottom.Widgets.Clear();
-            rightBottom.Widgets.Add(CraftLabel);
+        CraftBtn.Click += (sender, args) =>
+       {
+           rightBottom.Widgets.Clear();
+           rightBottom.Widgets.Add(CraftLabel);
 
-            Grid.SetRow(rightBottom,2);
-        };
+           Grid.SetRow(rightBottom, 2);
+       };
 
         _desktop = new Desktop
         {
@@ -175,6 +175,6 @@ public class CraftScene : AbstractScene
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _desktop.Render();
+        _desktop?.Render();
     }
 }

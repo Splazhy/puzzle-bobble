@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -33,11 +34,10 @@ public class GameBoard : GameObject
         new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
     );
 
-    private Texture2D ballSpriteSheet = null;
-    private AnimatedTextureInstancer shineAnimation = null;
+    private Texture2D? ballSpriteSheet = null;
+    private AnimatedTextureInstancer? shineAnimation = null;
 
-    private HexMap<int> hexMap;
-    private bool reduceWidthByHalfBall;
+    private HexMap<int> hexMap = new HexMap<int>();
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
@@ -48,8 +48,6 @@ public class GameBoard : GameObject
     {
         _game = (Game1)game;
         _rand = new Random();
-
-        reduceWidthByHalfBall = false;
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
     }
@@ -86,7 +84,7 @@ public class GameBoard : GameObject
             );
         }
 
-        shineAnimation.Draw(spriteBatch, gameTime);
+        shineAnimation?.Draw(spriteBatch, gameTime);
 
         if (debug_mousepos.HasValue)
         {
@@ -215,7 +213,7 @@ public class GameBoard : GameObject
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
-            shineAnimation.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
+            shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
             return;
         }
 
@@ -261,14 +259,16 @@ public class GameBoard : GameObject
         List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Falling)
+            if (hexMap[hex] is int ball)
             {
-                Position = ConvertHexToCenter(hex),
-                Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
-                Scale = new Vector2(3, 3),
-            });
-
-            hexMap[hex] = null;
+                fallingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Falling)
+                {
+                    Position = ConvertHexToCenter(hex),
+                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
+                    Scale = new Vector2(3, 3),
+                });
+                hexMap[hex] = null;
+            }
         }
 
 
@@ -277,7 +277,7 @@ public class GameBoard : GameObject
 
     public override void Update(GameTime gameTime)
     {
-        shineAnimation.Update(gameTime);
+        shineAnimation?.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;

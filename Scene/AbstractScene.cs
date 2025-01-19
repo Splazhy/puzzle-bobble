@@ -6,7 +6,7 @@ namespace PuzzleBobble.Scene;
 
 public abstract class AbstractScene
 {
-    public event SceneChangedHandler SceneChanged;
+    public event SceneChangedHandler? SceneChanged;
 
     public delegate void SceneChangedHandler(AbstractScene oldScene, AbstractScene newScene);
 

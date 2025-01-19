@@ -10,7 +10,7 @@ namespace PuzzleBobble.Scene;
 
 public class CreditsScene : AbstractScene
 {
-    private Desktop _desktop;
+    private Desktop? _desktop;
 
     public override void Initialize(Game game)
     {
@@ -70,6 +70,6 @@ public class CreditsScene : AbstractScene
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _desktop.Render();
+        _desktop?.Render();
     }
 }

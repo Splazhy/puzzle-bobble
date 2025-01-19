@@ -32,7 +32,7 @@ public class Ball : GameObject
         Falling,
     }
 
-    private Texture2D _spriteSheet;
+    private Texture2D? _spriteSheet;
     public Circle Circle
     {
         get

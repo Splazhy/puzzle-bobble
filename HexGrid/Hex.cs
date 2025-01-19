@@ -29,7 +29,7 @@ public readonly struct Hex
         }
     }
 
-    public override bool Equals(object obj) => obj is Hex other && Equals(other);
+    public override bool Equals(object? obj) => obj is Hex other && Equals(other);
 
     public bool Equals(Hex other) => q == other.q && r == other.r;
     public override int GetHashCode() => (q, r).GetHashCode();

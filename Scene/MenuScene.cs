@@ -8,8 +8,8 @@ namespace PuzzleBobble.Scene;
 
 public class MenuScene : AbstractScene
 {
-    private Game _game;
-    private Desktop _desktop;
+    private Game? _game;
+    private Desktop? _desktop;
 
     public override void Initialize(Game game)
     {
@@ -52,7 +52,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        quitBtn.Click += (sender, args) => _game.Exit();
+        quitBtn.Click += (sender, args) => _game?.Exit();
 
         var testBtn = new Button
         {
@@ -86,6 +86,6 @@ public class MenuScene : AbstractScene
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _desktop.Render();
+        _desktop?.Render();
     }
 }

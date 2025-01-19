@@ -17,7 +17,7 @@ public readonly struct HexFrac
     }
 
 
-    public override bool Equals(object obj) => obj is HexFrac other && Equals(other);
+    public override bool Equals(object? obj) => obj is HexFrac other && Equals(other);
 
     public bool Equals(HexFrac other) => q == other.q && r == other.r;
     public override int GetHashCode() => (q, r).GetHashCode();

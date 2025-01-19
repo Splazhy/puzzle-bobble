@@ -7,9 +7,9 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
-    public SpriteFont Font { get; private set; }
+    public SpriteFont? Font { get; private set; }
     private GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
+    private SpriteBatch? _spriteBatch;
     private SceneManager _sceneManager;
     private FrameCounter _frameCounter = new FrameCounter();
     public Game1()
@@ -61,6 +61,10 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        if (_spriteBatch == null)
+        {
+            return;
+        }
 
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
@@ -75,7 +79,7 @@ public class Game1 : Game
         base.Draw(gameTime);
     }
 
-    private void Window_ClientSizeChanged(object sender, System.EventArgs e)
+    private void Window_ClientSizeChanged(object? sender, System.EventArgs e)
     {
         Window.ClientSizeChanged -= Window_ClientSizeChanged;
 
