@@ -1,3 +1,5 @@
+namespace PuzzleBobble.HexGrid;
+
 public struct OffsetCoord
 {
     public const int ODD = -1;

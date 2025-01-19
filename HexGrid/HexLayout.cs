@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+namespace PuzzleBobble.HexGrid;
 
 // https://www.redblobgames.com/grids/hexagons/implementation.html
 public struct HexLayout

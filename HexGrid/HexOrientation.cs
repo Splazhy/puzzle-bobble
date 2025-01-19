@@ -1,4 +1,6 @@
 using System;
+namespace PuzzleBobble.HexGrid;
+
 
 public readonly struct HexOrientation
 {
