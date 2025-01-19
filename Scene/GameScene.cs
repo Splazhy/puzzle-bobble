@@ -22,7 +22,6 @@ public class GameScene : AbstractScene
     {
         Slingshot slingshot = new Slingshot(game);
         _gameBoard = new GameBoard(game);
-        _gameBoard.FloatingBallsFell += balls => _pendingGameObjects.AddRange(balls);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
             slingshot,
@@ -50,12 +49,6 @@ public class GameScene : AbstractScene
         {
             ChangeScene(Scenes.MENU);
         }
-        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // NOTE: we need to load content for every new game objects,
-        // not sure if this is a design flaw or not.
-        _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
-        _gameObjects.AddRange(_pendingGameObjects);
-        _pendingGameObjects.Clear();
 
         var movingBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&
@@ -92,12 +85,20 @@ public class GameScene : AbstractScene
 
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor() + 1);
                 _gameBoard.ExplodeBalls(ballClosestHex);
-                _gameBoard.RemoveFloatingBalls();
+                var fallBalls = _gameBoard.RemoveFloatingBalls();
+                _pendingGameObjects.AddRange(fallBalls);
+
                 movingBall.Destroy();
                 break;
             }
         });
 
+        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
+        // NOTE: we need to load content for every new game objects,
+        // not sure if this is a design flaw or not.
+        _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
+        _gameObjects.AddRange(_pendingGameObjects);
+        _pendingGameObjects.Clear();
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

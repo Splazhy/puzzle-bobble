@@ -18,9 +18,6 @@ public class GameBoard : GameObject
     private Random _rand;
     private const float FALLING_SPREAD = 50;
 
-    public event FloatingBallsFellHandler FloatingBallsFell;
-    public delegate void FloatingBallsFellHandler(List<Ball> floatingBalls);
-
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
@@ -38,8 +35,6 @@ public class GameBoard : GameObject
 
     private Texture2D ballSpriteSheet = null;
     private AnimatedTextureInstancer shineAnimation = null;
-
-    private List<Hex> _pendingBallRemoval = [];
 
     private HexRectMap<int> hexMap;
     private bool reduceWidthByHalfBall;
@@ -230,7 +225,7 @@ public class GameBoard : GameObject
         // TODO: return connected balls for animation or etc.
     }
 
-    public void RemoveFloatingBalls()
+    public List<Ball> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0));
@@ -259,35 +254,28 @@ public class GameBoard : GameObject
             }
         }
 
-        if (floating.Count == 0) return;
+        if (floating.Count == 0) return [];
 
         List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex]-1, Ball.State.Falling)
+            fallingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Falling)
             {
                 Position = ConvertHexToCenter(hex),
                 Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
                 Scale = new Vector2(3, 3),
             });
+
+            hexMap[hex] = 0;
         }
 
-        // We don't want to remove the balls immediately
-        // because the ball will disappear for one frame.
-        _pendingBallRemoval.AddRange(floating);
 
-        FloatingBallsFell?.Invoke(fallingBalls);
+        return fallingBalls;
     }
 
     public override void Update(GameTime gameTime)
     {
         shineAnimation.Update(gameTime);
-
-        foreach (Hex hex in _pendingBallRemoval)
-        {
-            hexMap[hex] = 0;
-        }
-        _pendingBallRemoval.Clear();
 
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;
