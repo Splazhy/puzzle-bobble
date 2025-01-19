@@ -36,7 +36,7 @@ public class GameBoard : GameObject
     private Texture2D ballSpriteSheet = null;
     private AnimatedTextureInstancer shineAnimation = null;
 
-    private HexRectMap<int> hexMap;
+    private HexMap<int> hexMap;
     private bool reduceWidthByHalfBall;
 
     private Hex debug_gridpos;
@@ -56,8 +56,8 @@ public class GameBoard : GameObject
 
     public override void LoadContent(ContentManager content)
     {
-        var level = Level<int>.Load("test");
-        hexMap = new HexRectMap<int>(level);
+        var level = Level.Load("test");
+        hexMap = level.ToHexRectMap();
 
         ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
 
@@ -73,8 +73,9 @@ public class GameBoard : GameObject
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
-            int ball = item.Value;
-            if (ball == 0) continue;
+            int? ballMaybe = item.Value;
+            if (!ballMaybe.HasValue) continue;
+            int ball = ballMaybe.Value;
 
             Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
             spriteBatch.Draw(
@@ -160,7 +161,7 @@ public class GameBoard : GameObject
     public bool IsBallAt(Hex hex)
     {
         if (!IsValidHex(hex)) return false;
-        return hexMap[hex] != 0;
+        return hexMap[hex].HasValue;
     }
 
     public bool IsBallSurronding(Hex hex)
@@ -182,8 +183,9 @@ public class GameBoard : GameObject
     public void ExplodeBalls(Hex hex)
     {
         if (!IsValidHex(hex)) return;
-        int specifiedBall = hexMap[hex];
-        if (specifiedBall == 0) return;
+        int? mapBall = hexMap[hex];
+        if (!mapBall.HasValue) return;
+        int specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
         pending.Enqueue(hex);
@@ -219,7 +221,7 @@ public class GameBoard : GameObject
 
         foreach (Hex connectedHex in connected)
         {
-            hexMap[connectedHex] = 0;
+            hexMap[connectedHex] = null;
         }
 
         // TODO: return connected balls for animation or etc.
@@ -228,7 +230,7 @@ public class GameBoard : GameObject
     public List<Ball> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] != 0));
+        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -266,7 +268,7 @@ public class GameBoard : GameObject
                 Scale = new Vector2(3, 3),
             });
 
-            hexMap[hex] = 0;
+            hexMap[hex] = null;
         }
 
 
