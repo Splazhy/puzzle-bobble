@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -7,6 +8,7 @@ public class AnimatedTexture2D
 {
     protected Texture2D spriteSheet;
     public readonly int hFrames;
+    public readonly int vFrames;
     public readonly float frameDuration;
     public readonly int frameWidth;
     public readonly int frameHeight;
@@ -15,19 +17,21 @@ public class AnimatedTexture2D
     private bool isPlaying;
     public bool IsFinished { get; private set; }
     private float timeSinceStart;
-    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, float frameDuration, bool isLooping = false)
+
+    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
     {
         this.spriteSheet = spriteSheet;
         this.hFrames = hFrames;
+        this.vFrames = vFrames;
         this.frameDuration = frameDuration;
         this.isLooping = isLooping;
         frameWidth = spriteSheet.Width / hFrames;
-        frameHeight = spriteSheet.Height;
+        frameHeight = spriteSheet.Height / vFrames;
         sourceRectangle = new Rectangle(0, 0, frameWidth, frameHeight);
     }
 
     public AnimatedTexture2D(AnimatedTexture2D template)
-        : this(template.spriteSheet, template.hFrames, template.frameDuration, template.isLooping)
+        : this(template.spriteSheet, template.hFrames, template.vFrames, template.frameDuration, template.isLooping)
     {
     }
 
@@ -49,6 +53,12 @@ public class AnimatedTexture2D
     public void SetLooping(bool isLooping)
     {
         this.isLooping = isLooping;
+    }
+
+    public void SetVFrame(int index)
+    {
+        Debug.Assert(index >= 0 && index < vFrames, "vframe index out of range");
+        sourceRectangle.Y = index * frameHeight;
     }
 
     public void Update(GameTime gameTime)

@@ -30,9 +30,11 @@ public class Ball : GameObject
         Idle,
         Moving,
         Falling,
+        Exploding,
     }
 
     private Texture2D? _spriteSheet;
+    private AnimatedTexture2D _explosionSpriteSheet;
     public Circle Circle
     {
         get
@@ -58,6 +60,8 @@ public class Ball : GameObject
     {
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _spriteSheet = content.Load<Texture2D>("Graphics/balls");
+        _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
+        _explosionSpriteSheet.SetVFrame((int)_color);
     }
 
     public override void Update(GameTime gameTime)
@@ -79,6 +83,12 @@ public class Ball : GameObject
                 }
                 Position += Velocity * deltaTime;
                 break;
+            case State.Exploding:
+                _explosionSpriteSheet.Play();
+                _explosionSpriteSheet.Update(gameTime);
+                if (_explosionSpriteSheet.IsFinished)
+                    Destroy();
+                break;
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
                 Position += Velocity * deltaTime;
@@ -90,16 +100,34 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.Draw(
-            _spriteSheet,
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-            new Rectangle((int)_color * 16, 0, 16, 16),
-            Microsoft.Xna.Framework.Color.White,
-            0.0f,
-            new Vector2(16 / 2, 16 / 2),
-            SpriteEffects.None,
-            0
-        );
+        switch (_state)
+        {
+            case State.Exploding:
+                _explosionSpriteSheet.Draw(
+                    spriteBatch,
+                    // FIXME: this position is not accurate (the y position is off by a bit)
+                    // might be due to floating point precision errors of GameBoard.
+                    new Vector2(ScreenPosition.X - 48, ScreenPosition.Y - 48),
+                    0.0f,
+                    Vector2.Zero,
+                    Scale.X, // we assume that scale is uniform
+                    Microsoft.Xna.Framework.Color.White
+                );
+                break;
+            default:
+                spriteBatch.Draw(
+                    _spriteSheet,
+                    // FIXME: this one has the same issue as above
+                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+                    new Rectangle((int)_color * 16, 0, 16, 16),
+                    Microsoft.Xna.Framework.Color.White,
+                    0.0f,
+                    new Vector2(16 / 2, 16 / 2),
+                    SpriteEffects.None,
+                    0
+                );
+                break;
+        }
     }
 
     public bool IsCollideWith(Ball other)

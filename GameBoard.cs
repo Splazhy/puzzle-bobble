@@ -19,6 +19,9 @@ public class GameBoard : GameObject
     private Random _rand;
     private const float FALLING_SPREAD = 50;
 
+    public event BallsExplodedHandler BallsExploded;
+    public delegate void BallsExplodedHandler(List<Ball> explodingBalls);
+
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
@@ -61,7 +64,7 @@ public class GameBoard : GameObject
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 0.01f, false
+            9, 1, 0.01f, false
         );
         shineAnimation = new AnimatedTextureInstancer(animation);
     }
@@ -178,15 +181,15 @@ public class GameBoard : GameObject
         hexMap[hex] = ball;
     }
 
-    public void ExplodeBalls(Hex hex)
+    public void ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(hex)) return;
-        int? mapBall = hexMap[hex];
+        if (!IsValidHex(sourceHex)) return;
+        int? mapBall = hexMap[sourceHex];
         if (!mapBall.HasValue) return;
         int specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
-        pending.Enqueue(hex);
+        pending.Enqueue(sourceHex);
         HashSet<Hex> connected = [];
 
         while (pending.Count > 0)
@@ -212,17 +215,28 @@ public class GameBoard : GameObject
             // We currently only call this method on settled moving ball,
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
-            var shinePosition = hexLayout.HexToDrawLocation(hex).Downcast() + ScreenPosition;
+            var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
             shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
             return;
         }
 
-        foreach (Hex connectedHex in connected)
+        List<Ball> explodingBalls = [];
+        foreach (Hex hex in connected)
         {
-            hexMap[connectedHex] = null;
+            explodingBalls.Add(new Ball((Ball.Color)hexMap[hex] - 1, Ball.State.Exploding)
+            {
+                Position = ConvertHexToCenter(hex),
+                Scale = new Vector2(3, 3),
+            });
+            hexMap[hex] = null;
         }
 
-        // TODO: return connected balls for animation or etc.
+        // We don't want to remove the balls immediately
+        // because the ball will disappear for one frame,
+        // causing visual hiccup.
+        _pendingBallRemoval.AddRange(connected);
+
+        BallsExploded?.Invoke(explodingBalls);
     }
 
     public List<Ball> RemoveFloatingBalls()
