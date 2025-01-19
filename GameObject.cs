@@ -33,11 +33,10 @@ public class GameObject
     // We treat GameObject contructor like Initialize method
     public GameObject(string name)
     {
-        // We don't want to override these values set by derived classes
-        // Position = Vector2.Zero;
-        // Rotation = 0.0f;
-        // Scale = Vector2.One;
-        // Velocity = Vector2.Zero;
+        Position = Vector2.Zero;
+        Rotation = 0.0f;
+        Scale = Vector2.One;
+        Velocity = Vector2.Zero;
         Name = name;
         IsActive = true;
         IsVisible = true;
