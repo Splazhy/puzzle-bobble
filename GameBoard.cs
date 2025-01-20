@@ -12,11 +12,7 @@ namespace PuzzleBobble;
 public class GameBoard : GameObject
 {
     private Game1 _game;
-    /// <summary>
-    /// For random falling velocity of falling balls
-    /// </summary>
-    private Random _rand;
-    private const float FALLING_SPREAD = 50;
+
 
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
@@ -46,7 +42,6 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
-        _rand = new Random();
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
     }
@@ -174,7 +169,9 @@ public class GameBoard : GameObject
         hexMap[hex] = ball;
     }
 
-    public List<Ball> ExplodeBalls(Hex sourceHex)
+    // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
+    // although haven't benchmarked it yet
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
     {
         if (!IsValidHex(sourceHex)) return [];
         BallData? mapBall = hexMap[sourceHex];
@@ -213,16 +210,12 @@ public class GameBoard : GameObject
             return [];
         }
 
-        List<Ball> explodingBalls = [];
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
         foreach (Hex hex in connected)
         {
             if (hexMap[hex] is BallData ball)
             {
-                explodingBalls.Add(new Ball(ball, Ball.State.Exploding)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Scale = new Vector2(3, 3),
-                });
+                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
             }
         }
@@ -230,7 +223,7 @@ public class GameBoard : GameObject
         return explodingBalls;
     }
 
-    public List<Ball> RemoveFloatingBalls()
+    public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
@@ -261,17 +254,12 @@ public class GameBoard : GameObject
 
         if (floating.Count == 0) return [];
 
-        List<Ball> fallingBalls = [];
+        List<KeyValuePair<Vector2, BallData>> fallingBalls = [];
         foreach (Hex hex in floating)
         {
             if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new Ball(ball, Ball.State.Falling)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
-                    Scale = new Vector2(3, 3),
-                });
+                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
             }
         }

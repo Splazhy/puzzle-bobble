@@ -54,6 +54,7 @@ public class Ball : GameObject
     {
         Data = data;
         _state = state;
+        Scale = new Vector2(3, 3);
     }
 
     public override void LoadContent(ContentManager content)

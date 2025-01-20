@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -16,6 +17,12 @@ public class GameScene : AbstractScene
     private ContentManager? _content;
 
     private GameBoard? _gameBoard;
+
+    /// <summary>
+    /// For random falling velocity of falling balls
+    /// </summary>
+    private Random _rand = new Random();
+    private const float FALLING_SPREAD = 50;
 
     public override void Initialize(Game game)
     {
@@ -86,9 +93,21 @@ public class GameScene : AbstractScene
 
                 _gameBoard.SetBallAt(ballClosestHex, movingBall.Data);
                 var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
-                _pendingGameObjects.AddRange(explodingBalls);
                 var fallBalls = _gameBoard.RemoveFloatingBalls();
-                _pendingGameObjects.AddRange(fallBalls);
+
+                _pendingGameObjects.AddRange(explodingBalls.ConvertAll(explodingBall =>
+                {
+                    var b = new Ball(explodingBall.Value, Ball.State.Exploding);
+                    b.Position = explodingBall.Key;
+                    return b;
+                }));
+                _pendingGameObjects.AddRange(fallBalls.ConvertAll(fallingBall =>
+                {
+                    var b = new Ball(fallingBall.Value, Ball.State.Falling);
+                    b.Position = fallingBall.Key;
+                    b.Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0);
+                    return b;
+                }));
 
                 movingBall.Destroy();
                 break;
