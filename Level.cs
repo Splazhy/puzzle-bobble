@@ -5,9 +5,9 @@ namespace PuzzleBobble;
 
 public class Level
 {
-    public readonly HexMap<int> Map;
+    public readonly HexMap<BallData> Map;
 
-    public Level(HexMap<int> map)
+    public Level(HexMap<BallData> map)
     {
         Map = map;
     }
@@ -15,7 +15,7 @@ public class Level
     public static Level Load(string levelName)
     {
         string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
-        HexMap<int> map = [];
+        HexMap<BallData> map = [];
         for (int y = 0; y < lines.Length; y++)
         {
             string[] cells = lines[y].Trim().Split(' ');
@@ -23,17 +23,17 @@ public class Level
             {
                 OffsetCoord offset = new OffsetCoord(x, y);
                 Hex hex = offset.ToHex();
-                int? value = cells[x] switch
+                BallData? value = cells[x] switch
                 {
                     "." => null,
-                    _ => (int)cells[x][0] - 97
+                    _ => new BallData((int)cells[x][0] - 97)
                 };
                 map[hex] = value;
             }
         }
         Debug.Assert(map.minOffsetCoord != null);
         Debug.Assert(map.maxOffsetCoord != null);
-        map.Constraint = HexMap<int>.Constraints.Rectangular(
+        map.Constraint = HexMap<BallData>.Constraints.Rectangular(
             map.minOffsetCoord.Value.col,
             map.minOffsetCoord.Value.row,
             map.maxOffsetCoord.Value.col,
@@ -43,7 +43,7 @@ public class Level
         return new Level(map);
     }
 
-    public HexMap<int> ToHexRectMap()
+    public HexMap<BallData> ToHexRectMap()
     {
         return Map;
     }

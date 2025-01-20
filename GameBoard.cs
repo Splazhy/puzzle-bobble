@@ -36,7 +36,7 @@ public class GameBoard : GameObject
     private Texture2D? ballSpriteSheet = null;
     private AnimatedTextureInstancer? shineAnimation = null;
 
-    private HexMap<int> hexMap = new HexMap<int>();
+    private HexMap<BallData> hexMap = new HexMap<BallData>();
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
@@ -67,20 +67,17 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        if (ballSpriteSheet is null) return;
+
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
-            int? ballMaybe = item.Value;
+            BallData? ballMaybe = item.Value;
             if (!ballMaybe.HasValue) continue;
-            int ball = ballMaybe.Value;
+            BallData ball = ballMaybe.Value;
 
             Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(ball * 16, 0, 16, 16),
-                Color.White
-            );
+            ball.DrawPosByCorner(spriteBatch, ballSpriteSheet, p + ScreenPosition);
         }
 
         shineAnimation?.Draw(spriteBatch, gameTime);
@@ -171,7 +168,7 @@ public class GameBoard : GameObject
         return false;
     }
 
-    public void SetBallAt(Hex hex, int ball)
+    public void SetBallAt(Hex hex, BallData ball)
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
@@ -179,10 +176,10 @@ public class GameBoard : GameObject
 
     public List<Ball> ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(sourceHex)) return[];
-        int? mapBall = hexMap[sourceHex];
+        if (!IsValidHex(sourceHex)) return [];
+        BallData? mapBall = hexMap[sourceHex];
         if (!mapBall.HasValue) return [];
-        int specifiedBall = mapBall.Value;
+        BallData specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
         pending.Enqueue(sourceHex);
@@ -219,9 +216,9 @@ public class GameBoard : GameObject
         List<Ball> explodingBalls = [];
         foreach (Hex hex in connected)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is BallData ball)
             {
-                explodingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Exploding)
+                explodingBalls.Add(new Ball(ball, Ball.State.Exploding)
                 {
                     Position = ConvertHexToCenter(hex),
                     Scale = new Vector2(3, 3),
@@ -267,9 +264,9 @@ public class GameBoard : GameObject
         List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Falling)
+                fallingBalls.Add(new Ball(ball, Ball.State.Falling)
                 {
                     Position = ConvertHexToCenter(hex),
                     Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),

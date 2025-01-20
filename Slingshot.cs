@@ -129,7 +129,7 @@ public class Slingshot : GameObject
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new Ball(_ballColor, Ball.State.Moving)
+            Ball newBall = new Ball(new BallData((int)_ballColor), Ball.State.Moving)
             {
                 Position = Position,
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,

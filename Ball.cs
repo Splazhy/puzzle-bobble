@@ -45,14 +45,14 @@ public class Ball : GameObject
             return new Circle(Position, 16 / 2 * Scale.X);
         }
     }
-    private Color _color; public Color GetColor() { return _color; }
+    public BallData Data { get; private set; }
     private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new Vector2(0, 9.8f * 100);
 
-    public Ball(Color ballType, State state) : base("ball")
+    public Ball(BallData data, State state) : base("ball")
     {
-        _color = ballType;
+        Data = data;
         _state = state;
     }
 
@@ -61,7 +61,7 @@ public class Ball : GameObject
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _spriteSheet = content.Load<Texture2D>("Graphics/balls");
         _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
-        _explosionSpriteSheet.SetVFrame((int)_color);
+        _explosionSpriteSheet.SetVFrame(Data.color);
         _explosionSpriteSheet.Play();
     }
 
@@ -117,17 +117,8 @@ public class Ball : GameObject
                 );
                 break;
             default:
-                spriteBatch.Draw(
-                    _spriteSheet,
-                    // FIXME: this one has the same issue as above
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-                    new Rectangle((int)_color * 16, 0, 16, 16),
-                    Microsoft.Xna.Framework.Color.White,
-                    0.0f,
-                    new Vector2(16 / 2, 16 / 2),
-                    SpriteEffects.None,
-                    0
-                );
+                if (_spriteSheet is null) break;
+                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition);
                 break;
         }
     }
