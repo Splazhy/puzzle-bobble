@@ -1,5 +1,7 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -33,8 +35,12 @@ public class Ball : GameObject
         Exploding,
     }
 
+    private Random _rand = new Random();
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? _explosionSpriteSheet;
+
+    private SoundEffectInstance? explodeSfx;
+
     public Circle Circle
     {
         get
@@ -60,9 +66,14 @@ public class Ball : GameObject
     {
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _spriteSheet = content.Load<Texture2D>("Graphics/balls");
-        _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
+        var randomPercent = _rand.NextSingle();
+        var randomDuration = 0.05f * randomPercent + 0.01f;
+        _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, randomDuration, false);
         _explosionSpriteSheet.SetVFrame((int)_color);
         _explosionSpriteSheet.Play();
+
+        explodeSfx = content.Load<SoundEffect>("Audio/Sfx/drop_002").CreateInstance();
+        explodeSfx.Pitch = 1.5f * randomPercent - 0.5f;
     }
 
     public override void Update(GameTime gameTime)
@@ -88,7 +99,10 @@ public class Ball : GameObject
                 if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)
+                {
+                    explodeSfx?.Play();
                     Destroy();
+                }
                 break;
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
