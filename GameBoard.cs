@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -18,9 +17,6 @@ public class GameBoard : GameObject
     /// </summary>
     private Random _rand;
     private const float FALLING_SPREAD = 50;
-
-    public event BallsExplodedHandler? BallsExploded;
-    public delegate void BallsExplodedHandler(List<Ball> explodingBalls);
 
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
@@ -181,11 +177,11 @@ public class GameBoard : GameObject
         hexMap[hex] = ball;
     }
 
-    public void ExplodeBalls(Hex sourceHex)
+    public List<Ball> ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(sourceHex)) return;
+        if (!IsValidHex(sourceHex)) return[];
         int? mapBall = hexMap[sourceHex];
-        if (!mapBall.HasValue) return;
+        if (!mapBall.HasValue) return [];
         int specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
@@ -217,7 +213,7 @@ public class GameBoard : GameObject
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
             shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
-            return;
+            return [];
         }
 
         List<Ball> explodingBalls = [];
@@ -234,7 +230,7 @@ public class GameBoard : GameObject
             }
         }
 
-        BallsExploded?.Invoke(explodingBalls);
+        return explodingBalls;
     }
 
     public List<Ball> RemoveFloatingBalls()

@@ -62,6 +62,7 @@ public class Ball : GameObject
         _spriteSheet = content.Load<Texture2D>("Graphics/balls");
         _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
         _explosionSpriteSheet.SetVFrame((int)_color);
+        _explosionSpriteSheet.Play();
     }
 
     public override void Update(GameTime gameTime)
@@ -85,7 +86,6 @@ public class Ball : GameObject
                 break;
             case State.Exploding:
                 if (_explosionSpriteSheet is null) break;
-                _explosionSpriteSheet.Play();
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)
                     Destroy();

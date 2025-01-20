@@ -21,7 +21,6 @@ public class GameScene : AbstractScene
     {
         Slingshot slingshot = new Slingshot(game);
         _gameBoard = new GameBoard(game);
-        _gameBoard.BallsExploded += balls => _pendingGameObjects.AddRange(balls);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
             slingshot,
@@ -86,7 +85,8 @@ public class GameScene : AbstractScene
                 if (!colliding) continue;
 
                 _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor());
-                _gameBoard.ExplodeBalls(ballClosestHex);
+                var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
+                _pendingGameObjects.AddRange(explodingBalls);
                 var fallBalls = _gameBoard.RemoveFloatingBalls();
                 _pendingGameObjects.AddRange(fallBalls);
 
