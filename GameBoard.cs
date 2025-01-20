@@ -11,7 +11,7 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
-    private Game1 _game;
+    private readonly Game1 _game;
 
 
     // a packed grid of balls becomes a hexagon grid
@@ -23,7 +23,7 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
-    private HexLayout hexLayout = new HexLayout(
+    private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
         new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
@@ -32,13 +32,13 @@ public class GameBoard : GameObject
     private Texture2D? ballSpriteSheet = null;
     private AnimatedTextureInstancer? shineAnimation = null;
 
-    private HexMap<BallData> hexMap = new HexMap<BallData>();
+    private HexMap<BallData> hexMap = new();
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
 
-    private List<Hex> debug_hexes = new List<Hex>();
-    private List<Vector2> debug_points = new List<Vector2>();
+    private readonly List<Hex> debug_hexes = [];
+    private readonly List<Vector2> debug_points = [];
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
@@ -81,7 +81,7 @@ public class GameBoard : GameObject
         {
             spriteBatch.DrawString(
                 _game.Font,
-                $"{debug_gridpos.q}, {debug_gridpos.r}",
+                $"{debug_gridpos.Q}, {debug_gridpos.R}",
                 Mouse.GetState().Position.ToVector2(),
                 Color.White
             );
@@ -228,9 +228,9 @@ public class GameBoard : GameObject
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
 
-        Queue<Hex> bfsQueue = new Queue<Hex>();
+        Queue<Hex> bfsQueue = new();
         // Balls from the top row can't be floating
-        foreach (var item in hexMap.Where(kv => kv.Key.r == 0))
+        foreach (var item in hexMap.Where(kv => kv.Key.R == 0))
         {
             Hex hex = item.Key;
             if (!IsBallAt(hex)) continue;

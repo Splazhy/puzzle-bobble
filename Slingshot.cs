@@ -10,11 +10,11 @@ public class Slingshot : GameObject
 {
     public class Guideline
     {
-        private Texture2D _texture;
-        private float _length;
-        private float _duration; // in seconds
+        private readonly Texture2D _texture;
+        private readonly float _length;
+        private readonly float _duration; // in seconds
         private float _progress; // 0.0f to 1.0f
-        private int _count;
+        private readonly int _count;
         private float _timePassed;
         private Vector2 _origin;
 
@@ -73,7 +73,7 @@ public class Slingshot : GameObject
     private Texture2D? _slingshotTexture;
     private Guideline? _guideline;
     private Texture2D? _ballSpriteSheet;
-    private float firerate; // shots per second
+    private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
     private Ball.Color _ballColor;
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
@@ -129,7 +129,7 @@ public class Slingshot : GameObject
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new Ball(new BallData((int)_ballColor), Ball.State.Moving)
+            Ball newBall = new(new BallData((int)_ballColor), Ball.State.Moving)
             {
                 Position = Position,
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,

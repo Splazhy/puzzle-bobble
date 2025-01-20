@@ -56,8 +56,10 @@ public class CreditsScene : AbstractScene
                 backBtn
             }
         };
-        _desktop = new Desktop();
-        _desktop.Root = panel;
+        _desktop = new Desktop
+        {
+            Root = panel
+        };
     }
 
     public override void Update(GameTime gameTime)

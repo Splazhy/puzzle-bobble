@@ -16,8 +16,8 @@ public class AnimatedTextureInstancer
         public Color color;
     }
 
-    private AnimatedTexture2D animatedTexture;
-    private List<AnimationInstance> instances = [];
+    private readonly AnimatedTexture2D animatedTexture;
+    private readonly List<AnimationInstance> instances = [];
 
     public AnimatedTextureInstancer(AnimatedTexture2D animatedTexture)
     {

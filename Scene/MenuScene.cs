@@ -23,7 +23,8 @@ public class MenuScene : AbstractScene
     public override void LoadContent(ContentManager content)
     {
 
-        Button startBtn = new Button
+        Button startBtn = new()
+
         {
             Content = new Label { Text = "Start" },
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -62,7 +63,8 @@ public class MenuScene : AbstractScene
         };
         testBtn.Click += (sender, args) => ChangeScene(Scenes.Craft);
 
-        VerticalStackPanel menu = new VerticalStackPanel
+        VerticalStackPanel menu = new()
+
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -76,8 +78,10 @@ public class MenuScene : AbstractScene
             }
         };
 
-        _desktop = new Desktop();
-        _desktop.Root = menu;
+        _desktop = new Desktop
+        {
+            Root = menu
+        };
     }
 
     public override void Update(GameTime gameTime)

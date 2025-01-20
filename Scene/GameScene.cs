@@ -21,12 +21,12 @@ public class GameScene : AbstractScene
     /// <summary>
     /// For random falling velocity of falling balls
     /// </summary>
-    private Random _rand = new Random();
+    private readonly Random _rand = new();
     private const float FALLING_SPREAD = 50;
 
     public override void Initialize(Game game)
     {
-        Slingshot slingshot = new Slingshot(game);
+        Slingshot slingshot = new(game);
         _gameBoard = new GameBoard(game);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
@@ -87,7 +87,7 @@ public class GameScene : AbstractScene
                 if (!_gameBoard.IsBallAt(neighborHex)) continue;
 
                 Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
+                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
                 bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
@@ -97,15 +97,19 @@ public class GameScene : AbstractScene
 
                 _pendingGameObjects.AddRange(explodingBalls.ConvertAll(explodingBall =>
                 {
-                    var b = new Ball(explodingBall.Value, Ball.State.Exploding);
-                    b.Position = explodingBall.Key;
+                    var b = new Ball(explodingBall.Value, Ball.State.Exploding)
+                    {
+                        Position = explodingBall.Key
+                    };
                     return b;
                 }));
                 _pendingGameObjects.AddRange(fallBalls.ConvertAll(fallingBall =>
                 {
-                    var b = new Ball(fallingBall.Value, Ball.State.Falling);
-                    b.Position = fallingBall.Key;
-                    b.Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0);
+                    var b = new Ball(fallingBall.Value, Ball.State.Falling)
+                    {
+                        Position = fallingBall.Key,
+                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0)
+                    };
                     return b;
                 }));
 

@@ -21,7 +21,7 @@ public class Level
             string[] cells = lines[y].Trim().Split(' ');
             for (int x = 0; x < cells.Length; x++)
             {
-                OffsetCoord offset = new OffsetCoord(x, y);
+                OffsetCoord offset = new(x, y);
                 Hex hex = offset.ToHex();
                 BallData? value = cells[x] switch
                 {
@@ -31,12 +31,12 @@ public class Level
                 map[hex] = value;
             }
         }
-        Debug.Assert(map.minOffsetCoord != null);
-        Debug.Assert(map.maxOffsetCoord != null);
+        Debug.Assert(map.MinOffsetCoord != null);
+        Debug.Assert(map.MaxOffsetCoord != null);
         map.Constraint = HexMap<BallData>.Constraints.Rectangular(
-            map.minOffsetCoord.Value.col,
-            map.minOffsetCoord.Value.row,
-            map.maxOffsetCoord.Value.col,
+            map.MinOffsetCoord.Value.Col,
+            map.MinOffsetCoord.Value.Row,
+            map.MaxOffsetCoord.Value.Col,
             null,
             true
         );

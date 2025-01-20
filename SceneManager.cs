@@ -8,47 +8,47 @@ namespace PuzzleBobble;
 
 public class SceneManager
 {
-    private Game _game;
-    public AbstractScene currentScene { get; private set; }
+    private readonly Game _game;
+    public AbstractScene CurrentScene { get; private set; }
 
     public SceneManager(Game game)
     {
         _game = game;
-        currentScene = Scenes.GAME;
-        currentScene.SceneChanged += ChangeScene;
+        CurrentScene = Scenes.GAME;
+        CurrentScene.SceneChanged += ChangeScene;
     }
 
     private void ChangeScene(AbstractScene oldScene, AbstractScene newScene)
     {
         // The scene invoking the event must be the current scene
-        Debug.Assert(currentScene == oldScene);
+        Debug.Assert(CurrentScene == oldScene);
 
-        currentScene.SceneChanged -= ChangeScene;
-        currentScene.Deinitialize();
-        currentScene = newScene;
-        currentScene.SceneChanged += ChangeScene;
+        CurrentScene.SceneChanged -= ChangeScene;
+        CurrentScene.Deinitialize();
+        CurrentScene = newScene;
+        CurrentScene.SceneChanged += ChangeScene;
 
-        currentScene.Initialize(_game);
-        currentScene.LoadContent(_game.Content);
+        CurrentScene.Initialize(_game);
+        CurrentScene.LoadContent(_game.Content);
     }
 
     public void Initialize(Game game)
     {
-        currentScene.Initialize(game);
+        CurrentScene.Initialize(game);
     }
 
     public void LoadContent(ContentManager content)
     {
-        currentScene.LoadContent(content);
+        CurrentScene.LoadContent(content);
     }
 
     public void Update(GameTime gameTime)
     {
-        currentScene.Update(gameTime);
+        CurrentScene.Update(gameTime);
     }
 
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        currentScene.Draw(spriteBatch, gameTime);
+        CurrentScene.Draw(spriteBatch, gameTime);
     }
 }

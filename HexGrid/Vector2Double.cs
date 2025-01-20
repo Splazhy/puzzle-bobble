@@ -19,7 +19,7 @@ public struct Vector2Double
         Y = v.Y;
     }
 
-    public Vector2 Downcast()
+    public readonly Vector2 Downcast()
     {
         return new Vector2((float)X, (float)Y);
     }

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+namespace PuzzleBobble;
 public struct BallData
 {
     public int color;
@@ -12,14 +13,14 @@ public struct BallData
 
     public static bool operator ==(BallData a, BallData b) => a.color == b.color;
     public static bool operator !=(BallData a, BallData b) => !(a == b);
-    public override bool Equals(object? obj) => obj is BallData data && this == data;
-    public override int GetHashCode() => color.GetHashCode();
+    public override readonly bool Equals(object? obj) => obj is BallData data && this == data;
+    public override readonly int GetHashCode() => color.GetHashCode();
 
 
     /// <summary>
     /// Draw the ball at the given screen position, with the ball centered at the position.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
+    public readonly void Draw(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
     {
         spriteBatch.Draw(
             spritesheet,
@@ -36,7 +37,7 @@ public struct BallData
     /// <summary>
     /// Draw the ball at the given screen position, with the ball's top-left corner at the position.
     /// </summary>
-    public void DrawPosByCorner(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
+    public readonly void DrawPosByCorner(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
     // find better way later ?
     {
         spriteBatch.Draw(

@@ -8,18 +8,20 @@ namespace PuzzleBobble;
 public class Game1 : Game
 {
     public SpriteFont? Font { get; private set; }
-    private GraphicsDeviceManager _graphics;
+    private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
-    private SceneManager _sceneManager;
-    private FrameCounter _frameCounter = new FrameCounter();
+    private readonly SceneManager _sceneManager;
+    private readonly FrameCounter _frameCounter = new();
     public Game1()
     {
-        _graphics = new GraphicsDeviceManager(this);
-        // _graphics.PreferredBackBufferWidth = 1280;
-        // _graphics.PreferredBackBufferHeight = 720;
+        _graphics = new GraphicsDeviceManager(this)
+        {
+            // _graphics.PreferredBackBufferWidth = 1280;
+            // _graphics.PreferredBackBufferHeight = 720;
 
-        // change framerate to vsync
-        _graphics.SynchronizeWithVerticalRetrace = true;
+            // change framerate to vsync
+            SynchronizeWithVerticalRetrace = true
+        };
         IsFixedTimeStep = false;
 
         _sceneManager = new SceneManager(this);

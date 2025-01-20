@@ -46,9 +46,9 @@ public class Ball : GameObject
         }
     }
     public BallData Data { get; private set; }
-    private State _state; public State GetState() { return _state; }
+    private readonly State _state; public State GetState() { return _state; }
 
-    private static readonly Vector2 GRAVITY = new Vector2(0, 9.8f * 100);
+    private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
 
     public Ball(BallData data, State state) : base("ball")
     {

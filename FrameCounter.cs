@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+namespace PuzzleBobble;
 public class FrameCounter
 {
     public long TotalFrames { get; private set; }
@@ -12,7 +13,7 @@ public class FrameCounter
 
     public const int MaximumSamples = 100;
 
-    private Queue<double> _sampleBuffer = new();
+    private readonly Queue<double> _sampleBuffer = new();
 
     public void Update(double deltaTime)
     {

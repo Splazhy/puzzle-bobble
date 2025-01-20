@@ -6,10 +6,10 @@ namespace PuzzleBobble.HexGrid;
 public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
     // sorry nullable reference types, too lazy. maybe later
 {
-    private Dictionary<Hex, T> _map = new Dictionary<Hex, T>();
+    private readonly Dictionary<Hex, T> _map = [];
 
-    public OffsetCoord? minOffsetCoord { get; private set; }
-    public OffsetCoord? maxOffsetCoord { get; private set; }
+    public OffsetCoord? MinOffsetCoord { get; private set; }
+    public OffsetCoord? MaxOffsetCoord { get; private set; }
 
     public Func<Hex, bool> Constraint = (hex) => true;
 
@@ -30,14 +30,14 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
             return (Hex hex) =>
             {
                 OffsetCoord offset = hex.ToOffsetCoord();
-                if (left is int l && offset.col < l) return false;
-                if (top is int t && offset.row < t) return false;
-                if (bottom is int b && b < offset.row) return false;
+                if (left is int l && offset.Col < l) return false;
+                if (top is int t && offset.Row < t) return false;
+                if (bottom is int b && b < offset.Row) return false;
                 if (right is int r)
                 {
-                    if (r < offset.col) return false;
+                    if (r < offset.Col) return false;
 
-                    if (reduceRightByHalfHex && offset.col == r && offset.row % 2 == 1) return false;
+                    if (reduceRightByHalfHex && offset.Col == r && offset.Row % 2 == 1) return false;
                 }
                 return true;
             };
@@ -54,13 +54,13 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
         {
             for (int x = 0; x < rectanglularData.GetLength(1); x++)
             {
-                OffsetCoord offset = new OffsetCoord(x, y);
+                OffsetCoord offset = new(x, y);
                 this[offset] = rectanglularData[y, x];
             }
         }
 
-        minOffsetCoord = new OffsetCoord(0, 0);
-        maxOffsetCoord = new OffsetCoord(rectanglularData.GetLength(1) - 1, rectanglularData.GetLength(0) - 1);
+        MinOffsetCoord = new OffsetCoord(0, 0);
+        MaxOffsetCoord = new OffsetCoord(rectanglularData.GetLength(1) - 1, rectanglularData.GetLength(0) - 1);
     }
 
     public HexMap(Dictionary<Hex, T> map)
@@ -105,15 +105,15 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
 
     private void ExpandBounds(OffsetCoord offset)
     {
-        if (minOffsetCoord is OffsetCoord min && maxOffsetCoord is OffsetCoord max)
+        if (MinOffsetCoord is OffsetCoord min && MaxOffsetCoord is OffsetCoord max)
         {
-            minOffsetCoord = min.Min(offset);
-            maxOffsetCoord = max.Max(offset);
+            MinOffsetCoord = min.Min(offset);
+            MaxOffsetCoord = max.Max(offset);
         }
         else
         {
-            minOffsetCoord = offset;
-            maxOffsetCoord = offset;
+            MinOffsetCoord = offset;
+            MaxOffsetCoord = offset;
         }
 
     }
@@ -130,13 +130,13 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
 
     public IEnumerator<KeyValuePair<Hex, T>> RectangleEntries()
     {
-        if (minOffsetCoord is OffsetCoord min && maxOffsetCoord is OffsetCoord max)
+        if (MinOffsetCoord is OffsetCoord min && MaxOffsetCoord is OffsetCoord max)
         {
-            for (int y = min.row; y <= max.row; y++)
+            for (int y = min.Row; y <= max.Row; y++)
             {
-                for (int x = min.col; x <= max.col; x++)
+                for (int x = min.Col; x <= max.Col; x++)
                 {
-                    OffsetCoord offset = new OffsetCoord(x, y);
+                    OffsetCoord offset = new(x, y);
                     Hex hex = offset.ToHex();
                     yield return new KeyValuePair<Hex, T>(hex, _map[hex]);
                 }
