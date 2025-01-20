@@ -33,20 +33,4 @@ public struct BallData
             0
         );
     }
-
-    /// <summary>
-    /// Draw the ball at the given screen position, with the ball's top-left corner at the position.
-    /// </summary>
-    public readonly void DrawPosByCorner(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
-    // find better way later ?
-    {
-        spriteBatch.Draw(
-            spritesheet,
-            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, (int)(16 * 3), (int)(16 * 3)),
-            new Rectangle(color * 16, 0, 16, 16),
-            Color.White
-        );
-    }
-
-
 }

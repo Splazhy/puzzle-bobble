@@ -26,7 +26,7 @@ public class GameBoard : GameObject
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
-        new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
+        new Vector2Double(0, 0)
     );
 
     private Texture2D? ballSpriteSheet = null;
@@ -68,8 +68,8 @@ public class GameBoard : GameObject
             if (!ballMaybe.HasValue) continue;
             BallData ball = ballMaybe.Value;
 
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            ball.DrawPosByCorner(spriteBatch, ballSpriteSheet, p + ScreenPosition);
+            Vector2 p = hexLayout.HexToPixel(hex).Downcast();
+            ball.Draw(spriteBatch, ballSpriteSheet, p + ScreenPosition);
         }
 
         shineAnimation?.Draw(spriteBatch, gameTime);
@@ -186,7 +186,7 @@ public class GameBoard : GameObject
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
-            shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
+            shineAnimation?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
             return [];
         }
 
