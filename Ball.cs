@@ -38,6 +38,7 @@ public class Ball : GameObject
 
     public const float FALLING_SPREAD = 50;
     public const float MAX_EXPLODE_DELAY = 0.2f;
+    public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
     private static Random _rand = new Random();
     private Texture2D? _spriteSheet;
@@ -78,10 +79,10 @@ public class Ball : GameObject
         switch (state)
         {
             case State.Exploding:
-                var randomPercent = _rand.NextSingle();
+                // var randomPercent = _rand.NextSingle();
                 if (explodeSfx is not null)
-                    explodeSfx.Pitch = 1.5f * randomPercent - 0.5f;
-                explosionAnimation?.Play(MAX_EXPLODE_DELAY * randomPercent);
+                    explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+                explosionAnimation?.Play(MAX_EXPLODE_DELAY * _rand.NextSingle());
                 break;
             case State.Settle:
                 shineAnimation?.Play();
@@ -108,7 +109,7 @@ public class Ball : GameObject
         );
         explosionAnimation.SetVFrame((int)_color);
 
-        explodeSfx = content.Load<SoundEffect>("Audio/Sfx/drop_002").CreateInstance();
+        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4+1)}").CreateInstance();
 
         shineAnimation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),

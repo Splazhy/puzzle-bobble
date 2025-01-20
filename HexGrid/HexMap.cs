@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 namespace PuzzleBobble.HexGrid;
 
-public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>>
+public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : notnull
     // sorry nullable reference types, too lazy. maybe later
     // ------------------------------------------------------------------
     // welcome nullable reference types :)

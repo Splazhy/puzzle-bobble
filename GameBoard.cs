@@ -30,7 +30,7 @@ public class GameBoard : GameObject
 
     private Texture2D? ballSpriteSheet = null;
 
-    private HexMap<Ball?> hexMap = new HexMap<Ball?>();
+    private HexMap<Ball> hexMap = new HexMap<Ball>();
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;

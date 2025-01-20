@@ -4,9 +4,9 @@ namespace PuzzleBobble;
 
 public class Level
 {
-    public readonly HexMap<Ball?> Map;
+    public readonly HexMap<Ball> Map;
 
-    public Level(HexMap<Ball?> map)
+    public Level(HexMap<Ball> map)
     {
         Map = map;
     }
@@ -14,7 +14,7 @@ public class Level
     public static Level Load(string levelName)
     {
         string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
-        HexMap<Ball?> map = [];
+        HexMap<Ball> map = [];
         for (int y = 0; y < lines.Length; y++)
         {
             string[] cells = lines[y].Trim().Split(' ');
@@ -42,7 +42,7 @@ public class Level
         return new Level(map);
     }
 
-    public HexMap<Ball?> ToHexRectMap()
+    public HexMap<Ball> ToHexRectMap()
     {
         return Map;
     }
