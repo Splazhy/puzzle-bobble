@@ -64,9 +64,7 @@ public class GameBoard : GameObject
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
-            BallData? ballMaybe = item.Value;
-            if (!ballMaybe.HasValue) continue;
-            BallData ball = ballMaybe.Value;
+            BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToPixel(hex).Downcast();
             ball.Draw(spriteBatch, ballSpriteSheet, p + ScreenPosition);
