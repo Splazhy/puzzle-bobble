@@ -34,9 +34,6 @@ public class GameBoard : GameObject
 
     private HexMap<BallData> hexMap = new();
 
-    private Hex debug_gridpos;
-    private Vector2? debug_mousepos;
-
     private readonly List<Hex> debug_hexes = [];
     private readonly List<Vector2> debug_points = [];
     public GameBoard(Game game) : base("gameboard")
@@ -76,23 +73,6 @@ public class GameBoard : GameObject
         }
 
         shineAnimation?.Draw(spriteBatch, gameTime);
-
-        if (debug_mousepos.HasValue)
-        {
-            spriteBatch.DrawString(
-                _game.Font,
-                $"{debug_gridpos.Q}, {debug_gridpos.R}",
-                Mouse.GetState().Position.ToVector2(),
-                Color.White
-            );
-            // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
-            // spriteBatch.Draw(
-            //     ballSpriteSheet,
-            //     new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-            //     new Rectangle(0, 0, 16, 16),
-            //     Color.White
-            // );
-        }
 
         foreach (Hex hex in debug_hexes)
         {
@@ -271,14 +251,6 @@ public class GameBoard : GameObject
     public override void Update(GameTime gameTime)
     {
         shineAnimation?.Update(gameTime);
-
-        MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X - (int)VirtualOrigin.X;
-        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
-
-        debug_mousepos = new Vector2(mouseX, mouseY);
-        debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
-
 
         base.Update(gameTime);
     }
