@@ -13,17 +13,19 @@ public class AnimatedTexture2D
     public readonly int frameWidth;
     public readonly int frameHeight;
     protected Rectangle sourceRectangle;
+    private readonly bool isFlipped;
     private bool isLooping;
     private bool isPlaying;
     public bool IsFinished { get; private set; }
     private float timeSinceStart;
 
-    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
+    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, int vFrames, float frameDuration, bool isLooping = false, bool isFlipped = false)
     {
         this.spriteSheet = spriteSheet;
         this.hFrames = hFrames;
         this.vFrames = vFrames;
         this.frameDuration = frameDuration;
+        this.isFlipped = isFlipped;
         this.isLooping = isLooping;
         frameWidth = spriteSheet.Width / hFrames;
         frameHeight = spriteSheet.Height / vFrames;
@@ -58,7 +60,10 @@ public class AnimatedTexture2D
     public void SetVFrame(int index)
     {
         Debug.Assert(index >= 0 && index < vFrames, "vframe index out of range");
-        sourceRectangle.Y = index * frameHeight;
+        if (isFlipped)
+            sourceRectangle.X = index * frameWidth;
+        else
+            sourceRectangle.Y = index * frameHeight;
     }
 
     public void Update(GameTime gameTime)
@@ -70,17 +75,43 @@ public class AnimatedTexture2D
         if (timeSinceStart > frameDuration)
         {
             timeSinceStart = 0;
-            sourceRectangle.X += frameWidth;
-            if (sourceRectangle.X >= spriteSheet.Width)
+
+            if (isFlipped)
+                sourceRectangle.Y += frameHeight;
+            else
+                sourceRectangle.X += frameWidth;
+
+            if (sourceRectangle.X >= spriteSheet.Width || sourceRectangle.Y >= spriteSheet.Height)
             {
-                sourceRectangle.X = 0;
+                if (isFlipped)
+                    sourceRectangle.Y = 0;
+                else
+                    sourceRectangle.X = 0;
                 if (!isLooping)
                 {
                     Stop();
                     IsFinished = true;
                 }
             }
+
         }
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
+    {
+        if (!isPlaying) return;
+
+        spriteBatch.Draw(
+            spriteSheet,
+            position,
+            sourceRectangle,
+            color,
+            rotation,
+            origin,
+            scale,
+            SpriteEffects.None,
+            0.0f
+        );
     }
 
     public void Draw(SpriteBatch spriteBatch, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)

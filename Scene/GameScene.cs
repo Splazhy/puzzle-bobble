@@ -20,10 +20,12 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game)
     {
         Slingshot slingshot = new Slingshot(game);
+        DeathLine deathline = new DeathLine(game);
         _gameBoard = new GameBoard(game);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
             slingshot,
+            deathline,
             _gameBoard,
         ];
         _pendingGameObjects = [];
@@ -71,6 +73,11 @@ public class GameScene : AbstractScene
             var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
             var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
             Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
+            if (_gameBoard.IsBallAt(ballClosestHex))
+            {
+                movingBall.SetState(Ball.State.Exploding);
+                return;
+            }
 
             foreach (var dir in Hex.directions)
             {

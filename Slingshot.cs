@@ -166,7 +166,7 @@ public class Slingshot : GameObject
             _ballSpriteSheet,
             new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
             new Rectangle((int)_ballColor * 16, 0, 16, 16),
-            Microsoft.Xna.Framework.Color.White,
+            Color.White,
             0.0f,
             new Vector2(16 / 2, 16 / 2),
             SpriteEffects.None,

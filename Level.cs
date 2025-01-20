@@ -36,7 +36,7 @@ public class Level
             map.minOffsetCoord.Value.col,
             map.minOffsetCoord.Value.row,
             map.maxOffsetCoord.Value.col,
-            null,
+            11,
             true
         );
         return new Level(map);

@@ -67,23 +67,14 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        foreach (var item in hexMap)
-        {
-            Hex hex = item.Key;
-            Ball? ballMaybe = item.Value;
-            if (ballMaybe is null) continue;
-            Ball ball = ballMaybe;
-            ball.Draw(spriteBatch, gameTime);
-        }
-
         if (debug_mousepos.HasValue)
         {
-            spriteBatch.DrawString(
-                _game.Font,
-                $"{debug_gridpos.q}, {debug_gridpos.r}",
-                Mouse.GetState().Position.ToVector2(),
-                Color.White
-            );
+            // spriteBatch.DrawString(
+            //     _game.Font,
+            //     $"{debug_gridpos.q}, {debug_gridpos.r}",
+            //     Mouse.GetState().Position.ToVector2(),
+            //     Color.White
+            // );
             // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
             // spriteBatch.Draw(
             //     ballSpriteSheet,
@@ -281,6 +272,12 @@ public class GameBoard : GameObject
 
         debug_mousepos = new Vector2(mouseX, mouseY);
         debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
+
+        // someone said that this is expensive
+        foreach (var kv in hexMap)
+        {
+            kv.Value.Position = ConvertHexToCenter(kv.Key);
+        }
 
 
         base.Update(gameTime);
