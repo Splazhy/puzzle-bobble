@@ -40,6 +40,9 @@ public class GameScene : AbstractScene
         _content = content;
         _gameObjects.ForEach(gameObject => gameObject.LoadContent(content));
         _font = content.Load<SpriteFont>("Fonts/Arial24");
+
+        if (_gameBoard is null) return;
+        _gameObjects.AddRange(_gameBoard.GetBalls());
     }
 
     public override void Update(GameTime gameTime)
@@ -51,17 +54,12 @@ public class GameScene : AbstractScene
 
         if (_gameBoard is null || _content is null) return;
 
+        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+
         var movingBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&
             ball.GetState() == Ball.State.Moving
         ).Cast<Ball>().ToList();
-
-        var idleBalls = _gameObjects.FindAll(gameObject =>
-            gameObject is Ball ball &&
-            ball.GetState() == Ball.State.Idle
-        ).Cast<Ball>().ToList();
-
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         movingBalls.ForEach(movingBall =>
@@ -77,21 +75,16 @@ public class GameScene : AbstractScene
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
-                if (!_gameBoard.IsBallAt(neighborHex)) continue;
+                if (_gameBoard.GetBallAt(neighborHex) is Ball neighborBall)
+                {
+                    if (!neighborBall.IsCollideWith(aheadCircle)) continue;
 
-                Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
-                if (!colliding) continue;
+                    _gameBoard.SetBallAt(ballClosestHex, movingBall);
+                    _ = _gameBoard.ExplodeBalls(ballClosestHex);
+                    _ = _gameBoard.RemoveFloatingBalls();
 
-                _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor());
-                var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
-                _pendingGameObjects.AddRange(explodingBalls);
-                var fallBalls = _gameBoard.RemoveFloatingBalls();
-                _pendingGameObjects.AddRange(fallBalls);
-
-                movingBall.Destroy();
-                break;
+                    break;
+                }
             }
         });
 

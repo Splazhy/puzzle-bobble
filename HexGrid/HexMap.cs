@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 namespace PuzzleBobble.HexGrid;
 
-public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
+public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>>
     // sorry nullable reference types, too lazy. maybe later
+    // ------------------------------------------------------------------
+    // welcome nullable reference types :)
 {
     private Dictionary<Hex, T> _map = new Dictionary<Hex, T>();
 
@@ -70,18 +71,19 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
 
     public bool IsHexInMap(Hex hex) => Constraint(hex);
     public Dictionary<Hex, T>.KeyCollection GetKeys() => _map.Keys;
+    public Dictionary<Hex, T>.ValueCollection GetValues() => _map.Values;
 
     public T? this[Hex hex]
     {
         get
         {
-            bool exist = _map.TryGetValue(hex, out T value);
-            if (!exist) return null;
+            bool exist = _map.TryGetValue(hex, out T? value);
+            if (!exist) return default;
             return value;
         }
         set
         {
-            if (value == null)
+            if (value is null)
             {
                 _map.Remove(hex);
                 return;

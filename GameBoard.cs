@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -13,11 +12,6 @@ namespace PuzzleBobble;
 public class GameBoard : GameObject
 {
     private Game1 _game;
-    /// <summary>
-    /// For random falling velocity of falling balls
-    /// </summary>
-    private Random _rand;
-    private const float FALLING_SPREAD = 50;
 
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
@@ -35,11 +29,8 @@ public class GameBoard : GameObject
     );
 
     private Texture2D? ballSpriteSheet = null;
-    private AnimatedTextureInstancer? shineAnimation = null;
 
-    private SoundEffect? settleSfx = null;
-
-    private HexMap<int> hexMap = new HexMap<int>();
+    private HexMap<Ball?> hexMap = new HexMap<Ball?>();
 
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
@@ -49,25 +40,29 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
-        _rand = new Random();
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
+    }
+
+    public List<Ball> GetBalls()
+    {
+        return [.. hexMap.GetValues().Where(ball => ball is not null).Cast<Ball>()];
     }
 
     public override void LoadContent(ContentManager content)
     {
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
-
-        ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
-
-        var animation = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 1, 0.01f, false
-        );
-        shineAnimation = new AnimatedTextureInstancer(animation);
-
-        settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
+        foreach (var kv in hexMap)
+        {
+            Hex hex = kv.Key;
+            Ball? ballMaybe = kv.Value;
+            if (ballMaybe is null) continue;
+            Ball ball = ballMaybe;
+            ball.Scale = new Vector2(BALL_SIZE / 16, BALL_SIZE / 16);
+            ball.Position = ConvertHexToCenter(hex);
+            ball.LoadContent(content);
+        }
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -75,20 +70,11 @@ public class GameBoard : GameObject
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
-            int? ballMaybe = item.Value;
-            if (!ballMaybe.HasValue) continue;
-            int ball = ballMaybe.Value;
-
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(ball * 16, 0, 16, 16),
-                Color.White
-            );
+            Ball? ballMaybe = item.Value;
+            if (ballMaybe is null) continue;
+            Ball ball = ballMaybe;
+            ball.Draw(spriteBatch, gameTime);
         }
-
-        shineAnimation?.Draw(spriteBatch, gameTime);
 
         if (debug_mousepos.HasValue)
         {
@@ -163,7 +149,13 @@ public class GameBoard : GameObject
     public bool IsBallAt(Hex hex)
     {
         if (!IsValidHex(hex)) return false;
-        return hexMap[hex].HasValue;
+        return hexMap[hex] is not null;
+    }
+
+    public Ball? GetBallAt(Hex hex)
+    {
+        if (!IsValidHex(hex)) return null;
+        return hexMap[hex];
     }
 
     public bool IsBallSurronding(Hex hex)
@@ -176,18 +168,20 @@ public class GameBoard : GameObject
         return false;
     }
 
-    public void SetBallAt(Hex hex, int ball)
+    public void SetBallAt(Hex hex, Ball ball)
     {
         if (!IsValidHex(hex)) return;
+        ball.Position = ConvertHexToCenter(hex);
+        ball.SetState(Ball.State.Idle);
         hexMap[hex] = ball;
     }
 
     public List<Ball> ExplodeBalls(Hex sourceHex)
     {
         if (!IsValidHex(sourceHex)) return[];
-        int? mapBall = hexMap[sourceHex];
-        if (!mapBall.HasValue) return [];
-        int specifiedBall = mapBall.Value;
+        Ball? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return [];
+        Ball specifiedBall = mapBall;
 
         Queue<Hex> pending = [];
         pending.Enqueue(sourceHex);
@@ -201,7 +195,11 @@ public class GameBoard : GameObject
             for (int i = 0; i < 6; i++)
             {
                 Hex neighbor = current.Neighbor(i);
-                if (IsValidHex(neighbor) && hexMap[neighbor] == specifiedBall && !connected.Contains(neighbor))
+                if (
+                    IsValidHex(neighbor) &&
+                    hexMap[neighbor] is Ball neighborBall &&
+                    neighborBall.GetColor() == specifiedBall.GetColor() &&
+                    !connected.Contains(neighbor))
                 {
                     pending.Enqueue(neighbor);
                 }
@@ -210,33 +208,18 @@ public class GameBoard : GameObject
 
         if (connected.Count < 3)
         {
-            // We want to play the shine animation when a ball is settled
-            // and that ball doesn't cause any explosion.
-            //
-            // We currently only call this method on settled moving ball,
-            // so we can assume that calling play shine animation here will
-            // yield the expected outcome.
-            var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
-            shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
-            if (settleSfx is not null)
-            {
-                var settleSfxInstance = settleSfx.CreateInstance();
-                settleSfxInstance.Pitch = 0.2f * _rand.NextSingle() - 0.2f;
-                settleSfxInstance.Play();
-            }
+            // Let this ball shine ( ◡̀_◡́)ᕤ
+            specifiedBall.SetState(Ball.State.Settle);
             return [];
         }
 
         List<Ball> explodingBalls = [];
         foreach (Hex hex in connected)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is Ball ball)
             {
-                explodingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Exploding)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Scale = new Vector2(3, 3),
-                });
+                ball.SetState(Ball.State.Exploding);
+                explodingBalls.Add(ball);
                 hexMap[hex] = null;
             }
         }
@@ -247,7 +230,7 @@ public class GameBoard : GameObject
     public List<Ball> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
+        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] is not null));
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -278,14 +261,10 @@ public class GameBoard : GameObject
         List<Ball> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is Ball ball)
             {
-                fallingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Falling)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
-                    Scale = new Vector2(3, 3),
-                });
+                ball.SetState(Ball.State.Falling);
+                fallingBalls.Add(ball);
                 hexMap[hex] = null;
             }
         }
@@ -296,8 +275,6 @@ public class GameBoard : GameObject
 
     public override void Update(GameTime gameTime)
     {
-        shineAnimation?.Update(gameTime);
-
         MouseState mouseState = Mouse.GetState();
         int mouseX = mouseState.X - (int)VirtualOrigin.X;
         int mouseY = mouseState.Y - (int)VirtualOrigin.Y;

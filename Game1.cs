@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -61,7 +60,7 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        if (_spriteBatch == null)
+        if (_spriteBatch is null)
         {
             return;
         }

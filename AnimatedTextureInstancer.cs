@@ -9,10 +9,9 @@ public class AnimatedTextureInstancer
     public struct AnimationInstance
     {
         public AnimatedTexture2D animatedTexture;
-        public Vector2 position;
+        public Rectangle destinationRectangle;
         public float rotation;
         public Vector2 origin;
-        public float scale;
         public Color color;
     }
 
@@ -24,17 +23,16 @@ public class AnimatedTextureInstancer
         this.animatedTexture = animatedTexture;
     }
 
-    public void PlayAt(Vector2 position, float rotation, Vector2 origin, float scale, Color color)
+    public void PlayAt(Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
     {
         var newAnimatedTexture = new AnimatedTexture2D(animatedTexture);
         instances.Add(new AnimationInstance
         {
             animatedTexture = newAnimatedTexture,
-            position = position,
+            destinationRectangle = destinationRectangle,
+            color = color,
             rotation = rotation,
             origin = origin,
-            scale = scale,
-            color = color,
         });
         newAnimatedTexture.Play();
     }
@@ -56,11 +54,10 @@ public class AnimatedTextureInstancer
         {
             instance.animatedTexture.Draw(
                 spriteBatch,
-                instance.position,
+                instance.destinationRectangle,
+                instance.color,
                 instance.rotation,
-                instance.origin,
-                instance.scale,
-                instance.color
+                instance.origin
             );
         }
     }
