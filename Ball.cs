@@ -108,8 +108,6 @@ public class Ball : GameObject
                 if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Draw(
                     spriteBatch,
-                    // FIXME: this position is not accurate (the y position is off by a bit)
-                    // might be due to floating point precision errors of GameBoard.
                     new Vector2(ScreenPosition.X - 48, ScreenPosition.Y - 48),
                     0.0f,
                     Vector2.Zero,
