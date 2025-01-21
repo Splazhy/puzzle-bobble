@@ -12,6 +12,7 @@ public class Game1 : Game
     private SpriteBatch? _spriteBatch;
     private readonly SceneManager _sceneManager;
     private readonly FrameCounter _frameCounter = new();
+    private Vector2 _screenCenter;
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this)
@@ -29,7 +30,7 @@ public class Game1 : Game
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
 
-        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
 
         Window.ClientSizeChanged += Window_ClientSizeChanged;
 
@@ -55,7 +56,7 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        _sceneManager.Update(gameTime);
+        _sceneManager.Update(gameTime, _screenCenter);
         _frameCounter.Update(gameTime.ElapsedGameTime.TotalSeconds);
 
         base.Update(gameTime);
@@ -75,7 +76,7 @@ public class Game1 : Game
         _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
 
-        _sceneManager.Draw(_spriteBatch, gameTime);
+        _sceneManager.Draw(_spriteBatch, gameTime, _screenCenter);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -86,7 +87,7 @@ public class Game1 : Game
         Window.ClientSizeChanged -= Window_ClientSizeChanged;
 
         // TODO: code that needs to be run on window size change
-        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }

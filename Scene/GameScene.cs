@@ -50,7 +50,7 @@ public class GameScene : AbstractScene
         _font = content.Load<SpriteFont>("Fonts/Arial24");
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
@@ -69,7 +69,7 @@ public class GameScene : AbstractScene
             ball.GetState() == Ball.State.Idle
         ).Cast<Ball>().ToList();
 
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime, parentTranslate));
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         movingBalls.ForEach(movingBall =>
@@ -101,7 +101,7 @@ public class GameScene : AbstractScene
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
                         Position = explodingBall.Key,
-                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
+                        // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
                     };
                     return b;
                 }));
@@ -128,9 +128,9 @@ public class GameScene : AbstractScene
         _pendingGameObjects.Clear();
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime));
+        _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime, parentTranslate));
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
     }
 }

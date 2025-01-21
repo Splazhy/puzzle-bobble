@@ -62,7 +62,7 @@ public class CreditsScene : AbstractScene
         };
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
@@ -70,7 +70,7 @@ public class CreditsScene : AbstractScene
         }
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         _desktop?.Render();
     }

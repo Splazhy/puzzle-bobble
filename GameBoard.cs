@@ -55,9 +55,11 @@ public class GameBoard : GameObject
         shineAnimation = new AnimatedTextureInstancer(animation);
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         if (ballSpriteSheet is null) return;
+
+        var scrPos = parentTranslate + Position;
 
         foreach (var item in hexMap)
         {
@@ -65,7 +67,7 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, ballSpriteSheet, p + ScreenPosition);
+            ball.Draw(spriteBatch, ballSpriteSheet, scrPos + p);
         }
 
         shineAnimation?.Draw(spriteBatch, gameTime);
@@ -145,7 +147,7 @@ public class GameBoard : GameObject
             // We currently only call this method on settled moving ball,
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
-            var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast() + ScreenPosition;
+            var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast();
             shineAnimation?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
             return [];
         }
@@ -208,11 +210,9 @@ public class GameBoard : GameObject
         return fallingBalls;
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         shineAnimation?.Update(gameTime);
-
-        base.Update(gameTime);
     }
 
 }

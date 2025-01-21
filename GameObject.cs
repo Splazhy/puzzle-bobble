@@ -6,14 +6,6 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
-    // maybe find a better way to do this
-    public static Vector2 VirtualOrigin = Vector2.Zero;
-    public Vector2 ScreenPosition
-    {
-        get { return Position + VirtualOrigin; }
-        set { Position = value - VirtualOrigin; }
-    }
-
     public Vector2 Position { get; set; }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
@@ -47,12 +39,12 @@ public class GameObject
     {
     }
 
-    public virtual void Update(GameTime gameTime)
+    public virtual void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
     }
 
-    public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
     }
 

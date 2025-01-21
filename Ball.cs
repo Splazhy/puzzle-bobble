@@ -66,7 +66,7 @@ public class Ball : GameObject
         _explosionSpriteSheet.Play();
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
@@ -101,15 +101,16 @@ public class Ball : GameObject
         }
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
+        var scrPos = parentTranslate + Position;
         switch (_state)
         {
             case State.Exploding:
                 if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Draw(
                     spriteBatch,
-                    new Vector2(ScreenPosition.X - 48, ScreenPosition.Y - 48),
+                    scrPos + new Vector2(-48, -48),
                     0.0f,
                     Vector2.Zero,
                     Scale.X, // we assume that scale is uniform
@@ -118,7 +119,7 @@ public class Ball : GameObject
                 break;
             default:
                 if (_spriteSheet is null) break;
-                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition);
+                Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }
     }

@@ -100,7 +100,7 @@ public class Slingshot : GameObject
         _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         // TODO: Implement `IsJustPressed` method for new InputManager class
         // This code executes multiple times per a short key press,
@@ -114,10 +114,7 @@ public class Slingshot : GameObject
         _guideline?.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X - (int)VirtualOrigin.X;
-        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
-
-        Vector2 direction = new Vector2(mouseX, mouseY) - Position;
+        Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - (Position + parentTranslate);
 
         // +90 degrees to adjust for texture orientation
         direction.Rotate(MathF.PI / 2.0f);
@@ -142,17 +139,18 @@ public class Slingshot : GameObject
         }
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         if (_slingshotTexture is null || _ballSpriteSheet is null || _guideline is null)
         {
             return;
         }
-        _guideline.Draw(spriteBatch, ScreenPosition, Rotation - MathF.PI / 2, Scale);
+        var scrPos = parentTranslate + Position;
+        _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
 
         spriteBatch.Draw(
             _slingshotTexture,
-            ScreenPosition,
+            scrPos,
             null,
             Color.White,
             0.0f,
@@ -162,7 +160,7 @@ public class Slingshot : GameObject
             0
         );
 
-        _ballData.Draw(spriteBatch, _ballSpriteSheet, ScreenPosition);
+        _ballData.Draw(spriteBatch, _ballSpriteSheet, scrPos);
     }
 
 }

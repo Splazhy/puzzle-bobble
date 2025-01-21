@@ -42,13 +42,13 @@ public class SceneManager
         CurrentScene.LoadContent(content);
     }
 
-    public void Update(GameTime gameTime)
+    public void Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        CurrentScene.Update(gameTime);
+        CurrentScene.Update(gameTime, parentTranslate);
     }
 
-    public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        CurrentScene.Draw(spriteBatch, gameTime);
+        CurrentScene.Draw(spriteBatch, gameTime, parentTranslate);
     }
 }

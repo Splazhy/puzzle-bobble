@@ -20,6 +20,6 @@ public abstract class AbstractScene
     public abstract void Initialize(Game game);
     public abstract void Deinitialize();
     public abstract void LoadContent(ContentManager content);
-    public abstract void Update(GameTime gameTime);
-    public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime);
+    public abstract void Update(GameTime gameTime, Vector2 parentTranslate);
+    public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate);
 }
