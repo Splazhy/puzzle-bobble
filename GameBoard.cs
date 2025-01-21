@@ -30,6 +30,13 @@ public class GameBoard : GameObject
 
     private Texture2D? ballSpriteSheet = null;
 
+    // For these textures below to reference from,
+    // they must stay in place while the gameboard moves down.
+    private Vector2 startPosition;
+    private Texture2D? background = null;
+    private Texture2D? leftBorder = null;
+    private Texture2D? rightBorder = null;
+
     private HexMap<Ball> hexMap = new HexMap<Ball>();
 
     private Hex debug_gridpos;
@@ -42,6 +49,7 @@ public class GameBoard : GameObject
         _game = (Game1)game;
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
+        startPosition = Position;
     }
 
     public List<Ball> GetBalls()
@@ -51,6 +59,11 @@ public class GameBoard : GameObject
 
     public override void LoadContent(ContentManager content)
     {
+        ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+        background = content.Load<Texture2D>("Graphics/board_bg");
+        leftBorder = content.Load<Texture2D>("Graphics/border_left");
+        rightBorder = content.Load<Texture2D>("Graphics/border_right");
+
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
         foreach (var kv in hexMap)
@@ -65,6 +78,19 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        // i'm starting to hate nullable reference types now >:(
+        if (background is null) return;
+        if (leftBorder is null) return;
+        if (rightBorder is null) return;
+
+        var startScreenPosition = startPosition + VirtualOrigin;
+        // `14 * 6`
+        // 14 is the height of each row (16 - 2 dithered pixels)
+        // 6 is the number of rows
+        spriteBatch.Draw(background, startScreenPosition, null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(startScreenPosition.X - leftBorder.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(startScreenPosition.X + background.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+
         if (debug_mousepos.HasValue)
         {
             // spriteBatch.DrawString(
@@ -167,7 +193,7 @@ public class GameBoard : GameObject
 
     public List<Ball> ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(sourceHex)) return[];
+        if (!IsValidHex(sourceHex)) return [];
         Ball? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
         Ball specifiedBall = mapBall;

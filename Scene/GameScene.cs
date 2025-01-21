@@ -24,9 +24,9 @@ public class GameScene : AbstractScene
         _gameBoard = new GameBoard(game);
         slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
         _gameObjects = [
-            slingshot,
-            deathline,
             _gameBoard,
+            deathline,
+            slingshot,
         ];
         _pendingGameObjects = [];
     }
