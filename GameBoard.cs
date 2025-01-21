@@ -46,7 +46,7 @@ public class GameBoard : GameObject
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
 
-        ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),

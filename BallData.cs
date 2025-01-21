@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace PuzzleBobble;
@@ -33,4 +34,11 @@ public struct BallData
             0
         );
     }
+
+    public static Texture2D LoadBallSpritesheet(ContentManager content)
+    {
+        return content.Load<Texture2D>("Graphics/balls");
+    }
+
+    // TODO: other spritesheets
 }

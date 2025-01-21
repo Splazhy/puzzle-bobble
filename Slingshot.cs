@@ -96,7 +96,7 @@ public class Slingshot : GameObject
     public override void LoadContent(ContentManager content)
     {
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
-        _ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+        _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
         _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
     }
 
