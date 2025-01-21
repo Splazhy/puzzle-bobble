@@ -86,6 +86,7 @@ public class Ball : GameObject
                 Position += Velocity * deltaTime;
                 break;
             case State.Exploding:
+                Position += Velocity * deltaTime;
                 if (_explosionSpriteSheet is null) break;
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)

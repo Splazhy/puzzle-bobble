@@ -23,6 +23,7 @@ public class GameScene : AbstractScene
     /// </summary>
     private readonly Random _rand = new();
     private const float FALLING_SPREAD = 50;
+    private const float EXPLOSION_SPREAD = 50;
 
     public override void Initialize(Game game)
     {
@@ -99,7 +100,8 @@ public class GameScene : AbstractScene
                 {
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
-                        Position = explodingBall.Key
+                        Position = explodingBall.Key,
+                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
                     };
                     return b;
                 }));
@@ -108,7 +110,7 @@ public class GameScene : AbstractScene
                     var b = new Ball(fallingBall.Value, Ball.State.Falling)
                     {
                         Position = fallingBall.Key,
-                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0)
+                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
                     };
                     return b;
                 }));
