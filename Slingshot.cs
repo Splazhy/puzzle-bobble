@@ -75,7 +75,7 @@ public class Slingshot : GameObject
     private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
-    private Ball.Color _ballColor;
+    private BallData _ballData = new(0);
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
@@ -129,7 +129,7 @@ public class Slingshot : GameObject
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new(new BallData((int)_ballColor), Ball.State.Moving)
+            Ball newBall = new(_ballData, Ball.State.Moving)
             {
                 Position = Position,
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
@@ -138,7 +138,7 @@ public class Slingshot : GameObject
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
-            _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
+            _ballData = new((_ballData.color + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
         }
     }
 
@@ -162,16 +162,7 @@ public class Slingshot : GameObject
             0
         );
 
-        spriteBatch.Draw(
-            _ballSpriteSheet,
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, 48, 48),
-            new Rectangle((int)_ballColor * 16, 0, 16, 16),
-            Microsoft.Xna.Framework.Color.White,
-            0.0f,
-            new Vector2(16 / 2, 16 / 2),
-            SpriteEffects.None,
-            0
-        );
+        _ballData.Draw(spriteBatch, _ballSpriteSheet, ScreenPosition);
     }
 
 }
