@@ -30,7 +30,7 @@ public class GameBoard : GameObject
     );
 
     private Texture2D? ballSpriteSheet = null;
-    private AnimatedTextureInstancer? shineAnimation = null;
+    private AnimatedTexturePlayer? shineAnimPlayer = null;
 
     private HexMap<BallData> hexMap = new();
 
@@ -52,7 +52,7 @@ public class GameBoard : GameObject
             content.Load<Texture2D>("Graphics/ball_shine"),
             9, 1, 0.01f, false
         );
-        shineAnimation = new AnimatedTextureInstancer(animation);
+        shineAnimPlayer = new AnimatedTexturePlayer(animation);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
@@ -70,7 +70,7 @@ public class GameBoard : GameObject
             ball.Draw(spriteBatch, ballSpriteSheet, scrPos + p);
         }
 
-        shineAnimation?.Draw(spriteBatch, gameTime);
+        shineAnimPlayer?.Draw(spriteBatch, gameTime, parentTranslate + Position);
 
     }
 
@@ -148,7 +148,7 @@ public class GameBoard : GameObject
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast();
-            shineAnimation?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
+            shineAnimPlayer?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
             return [];
         }
 
@@ -212,7 +212,7 @@ public class GameBoard : GameObject
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        shineAnimation?.Update(gameTime);
+        shineAnimPlayer?.Update(gameTime);
     }
 
 }

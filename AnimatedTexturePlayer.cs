@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PuzzleBobble;
 
-public class AnimatedTextureInstancer
+public class AnimatedTexturePlayer
 {
     public struct AnimationInstance
     {
@@ -19,7 +19,7 @@ public class AnimatedTextureInstancer
     private readonly AnimatedTexture2D animatedTexture;
     private readonly List<AnimationInstance> instances = [];
 
-    public AnimatedTextureInstancer(AnimatedTexture2D animatedTexture)
+    public AnimatedTexturePlayer(AnimatedTexture2D animatedTexture)
     {
         this.animatedTexture = animatedTexture;
     }
@@ -50,13 +50,13 @@ public class AnimatedTextureInstancer
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         foreach (var instance in instances)
         {
             instance.animatedTexture.Draw(
                 spriteBatch,
-                instance.position,
+                parentTranslate + instance.position,
                 instance.rotation,
                 instance.origin,
                 instance.scale,
