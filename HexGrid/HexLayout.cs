@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 namespace PuzzleBobble.HexGrid;
 
 // https://www.redblobgames.com/grids/hexagons/implementation.html
-public struct HexLayout
+public readonly struct HexLayout
 {
     public readonly HexOrientation orientation;
     public readonly Vector2Double size;
