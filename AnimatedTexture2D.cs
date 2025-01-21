@@ -30,6 +30,8 @@ public class AnimatedTexture2D
         this.isLooping = isLooping;
         frameWidth = spriteSheetClip.Width / hFrames;
         frameHeight = spriteSheetClip.Height / vFrames;
+        Debug.Assert(spriteSheetClip.Width % hFrames == 0, "clippped spritesheet width should be divisible by the number of horizontal frames.");
+        Debug.Assert(spriteSheetClip.Height % vFrames == 0, "clippped spritesheet height should be divisible by the number of vertical frames.");
         sourceRectangle = new Rectangle(spriteSheetClip.X, spriteSheetClip.Y, frameWidth, frameHeight);
     }
 
