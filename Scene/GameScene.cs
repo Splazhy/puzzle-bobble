@@ -83,6 +83,10 @@ public class GameScene : AbstractScene
                     var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
                     var fallingBalls = _gameBoard.RemoveFloatingBalls();
 
+                    // HACK: remove the ball from the list to prevent
+                    // double Update() call on the same ball.
+                    explodingBalls.Remove(movingBall);
+
                     Root.AddChildrenDeferred(explodingBalls);
                     Root.AddChildrenDeferred(fallingBalls);
 

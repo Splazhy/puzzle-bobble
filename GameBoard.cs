@@ -118,7 +118,7 @@ public class GameBoard : GameObject
 
     public Vector2 ConvertHexToCenter(Hex hex)
     {
-        return hexLayout.HexToPixel(hex).Downcast();
+        return hexLayout.HexToPixel(hex).Downcast() + Position;
     }
 
     public bool IsValidHex(Hex hex)
@@ -151,8 +151,9 @@ public class GameBoard : GameObject
     public void SetBallAt(Hex hex, Ball ball)
     {
         if (!IsValidHex(hex)) return;
+        // MUST set position before adding to children
         ball.Position = ConvertHexToCenter(hex);
-        ball.Reparent(this);
+        AddChildDeferred(ball);
         ball.SetState(Ball.State.Idle);
         hexMap[hex] = ball;
     }

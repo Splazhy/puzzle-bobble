@@ -60,8 +60,10 @@ public class GameObject
     public virtual void Update(GameTime gameTime)
     {
         Children.RemoveAll(child => child.Destroyed);
-        Children.RemoveAll(child => child.Parent != this);
+        var i = Children.RemoveAll(child => child.Parent != this);
+        // if (i > 0) System.Console.WriteLine($"{i} children removed from {Name}");
         Children.AddRange(_childrenToAdd);
+        // if (_childrenToAdd.Count > 0) System.Console.WriteLine($"{_childrenToAdd.Count} children added to {Name}");
         _childrenToAdd.Clear();
 
         foreach (var child in Children)
@@ -90,14 +92,9 @@ public class GameObject
         Destroyed = true;
     }
 
-    public void Reparent(GameObject newParent)
-    {
-        Parent = newParent;
-        Parent.AddChildDeferred(this);
-    }
-
     public void AddChild(GameObject child)
     {
+        child.Position = child.GlobalPosition - GlobalPosition;
         child.Parent = this;
         Children.Add(child);
     }
@@ -106,6 +103,7 @@ public class GameObject
     {
         foreach (var child in children)
         {
+            child.Position = child.GlobalPosition - GlobalPosition;
             child.Parent = this;
             Children.Add(child);
         }
