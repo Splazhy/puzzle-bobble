@@ -26,7 +26,7 @@ public class GameBoard : GameObject
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
-        new Vector2Double(0, 0)
+        new Vector2Double(HEX_INRADIUS * -7, HEX_SIZE) // -(HEX_WIDTH / 2 + HEX_WIDTH * 3) and HEX_HEIGHT / 2
     );
 
     private Texture2D? ballSpriteSheet = null;
@@ -38,7 +38,7 @@ public class GameBoard : GameObject
     {
         _game = (Game1)game;
 
-        Position = new Vector2((float)(HEX_WIDTH * -4), -300);
+        Position = new Vector2(0, -300);
     }
 
     public override void LoadContent(ContentManager content)
