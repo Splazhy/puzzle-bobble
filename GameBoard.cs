@@ -66,7 +66,7 @@ public class GameBoard : GameObject
             Hex hex = item.Key;
             BallData ball = item.Value;
 
-            Vector2 p = hexLayout.HexToPixel(hex).Downcast();
+            Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
             ball.Draw(spriteBatch, ballSpriteSheet, p + ScreenPosition);
         }
 
@@ -74,7 +74,7 @@ public class GameBoard : GameObject
 
         foreach (Hex hex in debug_hexes)
         {
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
+            Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
             spriteBatch.Draw(
                 ballSpriteSheet,
                 new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
@@ -117,7 +117,7 @@ public class GameBoard : GameObject
 
     public Vector2 ConvertHexToCenter(Hex hex)
     {
-        return hexLayout.HexToPixel(hex).Downcast() + Position;
+        return hexLayout.HexToCenterPixel(hex).Downcast() + Position;
     }
 
     public bool IsValidHex(Hex hex)
@@ -183,7 +183,7 @@ public class GameBoard : GameObject
             // We currently only call this method on settled moving ball,
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
-            var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
+            var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast() + ScreenPosition;
             shineAnimation?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
             return [];
         }

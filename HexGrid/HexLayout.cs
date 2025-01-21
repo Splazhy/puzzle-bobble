@@ -15,14 +15,14 @@ public struct HexLayout
         origin = origin_;
     }
 
-    public readonly Vector2Double HexToPixel(Hex h)
+    public readonly Vector2Double HexToCenterPixel(Hex h)
     {
         double x = (orientation.f0 * h.Q + orientation.f1 * h.R) * size.X;
         double y = (orientation.f2 * h.Q + orientation.f3 * h.R) * size.Y;
         return new Vector2Double(x + origin.X, y + origin.Y);
     }
 
-    public readonly Vector2Double HexToDrawLocation(Hex h)
+    public readonly Vector2Double HexToOriginPixel(Hex h)
     {
         double x = (orientation.f0 * h.Q + orientation.f1 * h.R) * size.X;
         double y = (orientation.f2 * h.Q + orientation.f3 * h.R) * size.Y;
