@@ -46,7 +46,7 @@ public class GameBoard : GameObject
 
     public List<Ball> GetBalls()
     {
-        return [.. hexMap.GetValues().Where(ball => ball is not null).Cast<Ball>()];
+        return [.. hexMap.GetValues()];
     }
 
     public override void LoadContent(ContentManager content)
@@ -56,9 +56,7 @@ public class GameBoard : GameObject
         foreach (var kv in hexMap)
         {
             Hex hex = kv.Key;
-            Ball? ballMaybe = kv.Value;
-            if (ballMaybe is null) continue;
-            Ball ball = ballMaybe;
+            Ball ball = kv.Value;
             ball.Scale = new Vector2(BALL_SIZE / 16, BALL_SIZE / 16);
             ball.Position = ConvertHexToCenter(hex);
             ball.LoadContent(content);
@@ -221,7 +219,7 @@ public class GameBoard : GameObject
     public List<Ball> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv] is not null));
+        floating.UnionWith(hexMap.GetKeys());
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
@@ -264,6 +262,7 @@ public class GameBoard : GameObject
         return fallingBalls;
     }
 
+    bool spaceWasDown = false;
     public override void Update(GameTime gameTime)
     {
         MouseState mouseState = Mouse.GetState();
@@ -272,6 +271,13 @@ public class GameBoard : GameObject
 
         debug_mousepos = new Vector2(mouseX, mouseY);
         debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
+
+        // move down by 3/4 of the hex height (aka one row)
+        if (Keyboard.GetState().IsKeyDown(Keys.Space) && !spaceWasDown)
+        {
+            Position += new Vector2(0, (float)HEX_HEIGHT * (3.0f / 4.0f));
+        }
+        spaceWasDown = Keyboard.GetState().IsKeyDown(Keys.Space);
 
         // someone said that this is expensive
         foreach (var kv in hexMap)
