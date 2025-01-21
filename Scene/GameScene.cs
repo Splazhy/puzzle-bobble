@@ -63,13 +63,21 @@ public class GameScene : AbstractScene
 
             // use ahead position to check for collision so player won't see the ball
             // overlapping with balls on the grid as much (visual polish).
-            var aheadPosition = movingBall.GlobalPosition + movingBall.Velocity * deltaTime;
-            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
-            Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
+            var targetPosition = movingBall.GlobalPosition + movingBall.Velocity * deltaTime;
+            var targetCircle = new Circle(targetPosition, movingBall.Circle.radius);
+            Hex ballClosestHex = _gameBoard.ComputeClosestHex(targetPosition);
             if (_gameBoard.IsBallAt(ballClosestHex))
             {
-                movingBall.SetState(Ball.State.Exploding);
-                return;
+                // fallback to current position if ahead position is invalid
+                // this exists to handle the case where the ball bounces too close into a ball.
+                targetPosition = movingBall.GlobalPosition;
+                targetCircle = movingBall.Circle;
+                ballClosestHex = _gameBoard.ComputeClosestHex(targetPosition);
+                if (_gameBoard.IsBallAt(ballClosestHex))
+                {
+                    movingBall.SetState(Ball.State.Exploding);
+                    return;
+                }
             }
 
             foreach (var dir in Hex.directions)
@@ -77,7 +85,7 @@ public class GameScene : AbstractScene
                 Hex neighborHex = ballClosestHex + dir;
                 if (_gameBoard.GetBallAt(neighborHex) is Ball neighborBall)
                 {
-                    if (!neighborBall.IsCollideWith(aheadCircle)) continue;
+                    if (!neighborBall.IsCollideWith(targetCircle)) continue;
 
                     _gameBoard.SetBallAt(ballClosestHex, movingBall);
                     var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);

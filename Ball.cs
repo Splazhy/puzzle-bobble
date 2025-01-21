@@ -47,6 +47,7 @@ public class Ball : GameObject
 
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? settleSfx;
+    private SoundEffectInstance? bounceSfx;
 
     public Circle Circle
     {
@@ -111,15 +112,15 @@ public class Ball : GameObject
             7, 12, 0.02f, false
         );
         explosionAnimation.SetVFrame((int)_color);
-
-        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4+1)}").CreateInstance();
+        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
 
         shineAnimation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
             9, 1, 0.01f, false
         );
-
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002").CreateInstance();
+
+        bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
 
         base.LoadContent(content);
     }
@@ -138,14 +139,16 @@ public class Ball : GameObject
                 shineAnimation.Update(gameTime);
                 break;
             case State.Moving:
-                // TODO: fix this to take gameboard bounds into account
-                if (Position.X - Circle.radius < -600 || 600 < Position.X + Circle.radius)
-                {
+                if (
+                    (Position.X - Circle.radius < -192 && Velocity.X < 0) ||
+                    (192 < Position.X + Circle.radius && 0 < Velocity.X)
+                ) {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                }
-                if (Position.Y - Circle.radius < -600 || 600 < Position.Y + Circle.radius)
-                {
-                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
+                    if (bounceSfx is not null)
+                    {
+                        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+                        bounceSfx.Play();
+                    }
                 }
                 Position += Velocity * deltaTime;
                 break;
@@ -159,6 +162,17 @@ public class Ball : GameObject
                 }
                 break;
             case State.Falling:
+                if (
+                    (Position.X - Circle.radius < -192 && Velocity.X < 0) ||
+                    (192 < Position.X + Circle.radius && 0 < Velocity.X)
+                ) {
+                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
+                    if (bounceSfx is not null)
+                    {
+                        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+                        bounceSfx.Play();
+                    }
+                }
                 Velocity += GRAVITY * deltaTime;
                 Position += Velocity * deltaTime;
                 if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
