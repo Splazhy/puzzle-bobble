@@ -20,11 +20,13 @@ public class DeathLine : GameObject
             content.Load<Texture2D>("Graphics/deathline"),
             1, 12, 0.025f, true, true);
         _spriteSheet.Play();
+        base.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime)
     {
         _spriteSheet?.Update(gameTime);
+        base.Update(gameTime);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -37,5 +39,6 @@ public class DeathLine : GameObject
             new Vector2(_spriteSheet.frameWidth / 2, 0),
             Scale.X
         );
+        base.Draw(spriteBatch, gameTime);
     }
 }

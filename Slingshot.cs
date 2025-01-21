@@ -97,11 +97,14 @@ public class Slingshot : GameObject
         _timeSinceLastFired = 1 / firerate;
     }
 
+    private ContentManager? _content;
     public override void LoadContent(ContentManager content)
     {
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
         _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
+
+        _content = content;
     }
 
     public override void Update(GameTime gameTime)
@@ -120,8 +123,8 @@ public class Slingshot : GameObject
         _guideline?.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X - (int)VirtualOrigin.X;
-        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
+        int mouseX = mouseState.X - (int)Game1.WindowCenter.X;
+        int mouseY = mouseState.Y - (int)Game1.WindowCenter.Y;
 
         Vector2 direction = new Vector2(mouseX, mouseY) - Position;
 
@@ -141,7 +144,16 @@ public class Slingshot : GameObject
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
                 Scale = Scale,
             };
+            // I'm thinking `BallFactory` class
+            // then maybe `AbstractBallFactory` class
+            // then maybe `AbstractBallFactorySingleton` class
+            // then maybe `AbstractBallFactorySingletonBuilder` class
+            // then burn the whole project to the ground
+            if (_content is null) return;
+            newBall.LoadContent(_content);
+
             BallFired?.Invoke(newBall);
+
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
             _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);

@@ -6,6 +6,7 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
+    public static Vector2 WindowCenter { get; private set; }
     public SpriteFont? Font { get; private set; }
     private GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
@@ -26,7 +27,7 @@ public class Game1 : Game
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
 
-        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
 
         Window.ClientSizeChanged += Window_ClientSizeChanged;
 
@@ -83,7 +84,7 @@ public class Game1 : Game
         Window.ClientSizeChanged -= Window_ClientSizeChanged;
 
         // TODO: code that needs to be run on window size change
-        GameObject.VirtualOrigin = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }

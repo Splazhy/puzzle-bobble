@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -10,8 +9,6 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private List<GameObject> _gameObjects = [];
-    private List<GameObject> _pendingGameObjects = [];
     private SpriteFont? _font;
     private ContentManager? _content;
 
@@ -22,29 +19,25 @@ public class GameScene : AbstractScene
         Slingshot slingshot = new Slingshot(game);
         DeathLine deathline = new DeathLine(game);
         _gameBoard = new GameBoard(game);
-        slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
-        _gameObjects = [
+        slingshot.BallFired += ball => Root.AddChildDeferred(ball);
+        Root.AddChildren([
             _gameBoard,
             deathline,
             slingshot,
-        ];
-        _pendingGameObjects = [];
+        ]);
     }
 
     public override void Deinitialize()
     {
-        _gameObjects.Clear();
-        _pendingGameObjects.Clear();
+        Root.ClearChildren();
     }
 
     public override void LoadContent(ContentManager content)
     {
         _content = content;
-        _gameObjects.ForEach(gameObject => gameObject.LoadContent(content));
         _font = content.Load<SpriteFont>("Fonts/Arial24");
 
-        if (_gameBoard is null) return;
-        _gameObjects.AddRange(_gameBoard.GetBalls());
+        Root.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime)
@@ -56,9 +49,9 @@ public class GameScene : AbstractScene
 
         if (_gameBoard is null || _content is null) return;
 
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
+        Root.Update(gameTime);
 
-        var movingBalls = _gameObjects.FindAll(gameObject =>
+        var movingBalls = Root.Children.FindAll(gameObject =>
             gameObject is Ball ball &&
             ball.GetState() == Ball.State.Moving
         ).Cast<Ball>().ToList();
@@ -70,7 +63,7 @@ public class GameScene : AbstractScene
 
             // use ahead position to check for collision so player won't see the ball
             // overlapping with balls on the grid as much (visual polish).
-            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
+            var aheadPosition = movingBall.GlobalPosition + movingBall.Velocity * deltaTime;
             var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
             Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
             if (_gameBoard.IsBallAt(ballClosestHex))
@@ -87,25 +80,22 @@ public class GameScene : AbstractScene
                     if (!neighborBall.IsCollideWith(aheadCircle)) continue;
 
                     _gameBoard.SetBallAt(ballClosestHex, movingBall);
-                    _ = _gameBoard.ExplodeBalls(ballClosestHex);
-                    _ = _gameBoard.RemoveFloatingBalls();
+                    var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
+                    var fallingBalls = _gameBoard.RemoveFloatingBalls();
+
+                    Root.AddChildrenDeferred(explodingBalls);
+                    Root.AddChildrenDeferred(fallingBalls);
 
                     break;
                 }
             }
         });
 
-        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // NOTE: we need to load content for every new game objects,
-        // not sure if this is a design flaw or not.
-        _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
-        _gameObjects.AddRange(_pendingGameObjects);
-        _pendingGameObjects.Clear();
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime));
+        Root.Draw(spriteBatch, gameTime);
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
     }
 }

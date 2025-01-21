@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,8 +7,9 @@ namespace PuzzleBobble.Scene;
 
 public abstract class AbstractScene
 {
-    public event SceneChangedHandler? SceneChanged;
+    public GameObject Root = new GameObject("scene_root");
 
+    public event SceneChangedHandler? SceneChanged;
     public delegate void SceneChangedHandler(AbstractScene oldScene, AbstractScene newScene);
 
     protected virtual void ChangeScene(AbstractScene newScene)

@@ -55,7 +55,7 @@ public class Ball : GameObject
             Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
             // We use sprite sheet now, so this assertion is no longer valid
             // Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
-            return new Circle(Position, 16 / 2 * Scale.X);
+            return new Circle(GlobalPosition, 16 / 2 * Scale.X);
         }
     }
     private Color _color;
@@ -78,6 +78,9 @@ public class Ball : GameObject
 
         switch (state)
         {
+            case State.Idle:
+                Velocity = Vector2.Zero;
+                break;
             case State.Exploding:
                 // var randomPercent = _rand.NextSingle();
                 if (explodeSfx is not null)
@@ -117,6 +120,8 @@ public class Ball : GameObject
         );
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002").CreateInstance();
+
+        base.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime)
@@ -160,6 +165,8 @@ public class Ball : GameObject
                     Destroy();
                 break;
         }
+
+        base.Update(gameTime);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -170,8 +177,6 @@ public class Ball : GameObject
                 if (explosionAnimation is null) break;
                 explosionAnimation.Draw(
                     spriteBatch,
-                    // FIXME: this position is not accurate (the y position is off by a bit)
-                    // might be due to floating point precision errors of GameBoard.
                     new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
@@ -192,10 +197,13 @@ public class Ball : GameObject
                 drawBall(spriteBatch, gameTime);
                 break;
         }
+
+        base.Draw(spriteBatch, gameTime);
     }
 
     private void drawBall(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        var ScreenPosition = GlobalPosition + Game1.WindowCenter;
         spriteBatch.Draw(
             _spriteSheet,
             new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),

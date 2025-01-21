@@ -42,8 +42,6 @@ public class GameBoard : GameObject
     private Hex debug_gridpos;
     private Vector2? debug_mousepos;
 
-    private List<Hex> debug_hexes = new List<Hex>();
-    private List<Vector2> debug_points = new List<Vector2>();
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
@@ -72,8 +70,10 @@ public class GameBoard : GameObject
             Ball ball = kv.Value;
             ball.Scale = new Vector2(BALL_SIZE / 16, BALL_SIZE / 16);
             ball.Position = ConvertHexToCenter(hex);
-            ball.LoadContent(content);
+            AddChild(ball);
         }
+
+        base.LoadContent(content);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -83,7 +83,7 @@ public class GameBoard : GameObject
         if (leftBorder is null) return;
         if (rightBorder is null) return;
 
-        var startScreenPosition = startPosition + VirtualOrigin;
+        var startScreenPosition = startPosition + Game1.WindowCenter;
         // `14 * 6`
         // 14 is the height of each row (16 - 2 dithered pixels)
         // 6 is the number of rows
@@ -91,14 +91,16 @@ public class GameBoard : GameObject
         spriteBatch.Draw(leftBorder, new Vector2(startScreenPosition.X - leftBorder.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
         spriteBatch.Draw(rightBorder, new Vector2(startScreenPosition.X + background.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
 
+        base.Draw(spriteBatch, gameTime);
+
         if (debug_mousepos.HasValue)
         {
-            // spriteBatch.DrawString(
-            //     _game.Font,
-            //     $"{debug_gridpos.q}, {debug_gridpos.r}",
-            //     Mouse.GetState().Position.ToVector2(),
-            //     Color.White
-            // );
+            spriteBatch.DrawString(
+                _game.Font,
+                $"{debug_gridpos.q}, {debug_gridpos.r}",
+                Mouse.GetState().Position.ToVector2(),
+                Color.White
+            );
             // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
             // spriteBatch.Draw(
             //     ballSpriteSheet,
@@ -107,44 +109,7 @@ public class GameBoard : GameObject
             //     Color.White
             // );
         }
-
-        foreach (Hex hex in debug_hexes)
-        {
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(0, 0, 16, 16),
-                Color.White
-            );
-
-        }
-        debug_hexes.Clear();
-
-        foreach (Vector2 point in debug_points)
-        {
-            Vector2 p = point;
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X - 4), (int)(p.Y + ScreenPosition.Y - 4), 9, 9),
-                new Rectangle(16 * 11, 16 * 11, 16, 16),
-                Color.White
-            );
-
-        }
-        debug_points.Clear();
     }
-
-    public void DebugDrawHex(Hex hex)
-    {
-        debug_hexes.Add(hex);
-    }
-
-    public void DebugDrawPoint(Vector2 point)
-    {
-        debug_points.Add(point - Position);
-    }
-
 
     public Hex ComputeClosestHex(Vector2 pos)
     {
@@ -153,7 +118,7 @@ public class GameBoard : GameObject
 
     public Vector2 ConvertHexToCenter(Hex hex)
     {
-        return hexLayout.HexToPixel(hex).Downcast() + Position;
+        return hexLayout.HexToPixel(hex).Downcast();
     }
 
     public bool IsValidHex(Hex hex)
@@ -187,6 +152,7 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         ball.Position = ConvertHexToCenter(hex);
+        ball.Reparent(this);
         ball.SetState(Ball.State.Idle);
         hexMap[hex] = ball;
     }
@@ -284,7 +250,6 @@ public class GameBoard : GameObject
             }
         }
 
-
         return fallingBalls;
     }
 
@@ -292,8 +257,8 @@ public class GameBoard : GameObject
     public override void Update(GameTime gameTime)
     {
         MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X - (int)VirtualOrigin.X;
-        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
+        int mouseX = mouseState.X - (int)Game1.WindowCenter.X;
+        int mouseY = mouseState.Y - (int)Game1.WindowCenter.Y;
 
         debug_mousepos = new Vector2(mouseX, mouseY);
         debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
@@ -304,13 +269,6 @@ public class GameBoard : GameObject
             Position += new Vector2(0, (float)HEX_HEIGHT * (3.0f / 4.0f));
         }
         spaceWasDown = Keyboard.GetState().IsKeyDown(Keys.Space);
-
-        // someone said that this is expensive
-        foreach (var kv in hexMap)
-        {
-            kv.Value.Position = ConvertHexToCenter(kv.Key);
-        }
-
 
         base.Update(gameTime);
     }

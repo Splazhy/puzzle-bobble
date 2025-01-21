@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,15 +7,20 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
-    // maybe find a better way to do this
-    public static Vector2 VirtualOrigin = Vector2.Zero;
+    public GameObject? Parent = null;
+    public List<GameObject> Children = [];
+    private List<GameObject> _childrenToAdd = [];
+
+    public Vector2 Position; // Local position
+
+    public Vector2 GlobalPosition
+    {
+        get { if (Parent is null) return Position; else return Position + Parent.Position; }
+    }
     public Vector2 ScreenPosition
     {
-        get { return Position + VirtualOrigin; }
-        set { Position = value - VirtualOrigin; }
+        get { return GlobalPosition + Game1.WindowCenter; }
     }
-
-    public Vector2 Position { get; set; }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
 
@@ -45,19 +51,96 @@ public class GameObject
 
     public virtual void LoadContent(ContentManager content)
     {
+        foreach (var child in Children)
+        {
+            child.LoadContent(content);
+        }
     }
 
     public virtual void Update(GameTime gameTime)
     {
-        Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Children.RemoveAll(child => child.Destroyed);
+        Children.RemoveAll(child => child.Parent != this);
+        Children.AddRange(_childrenToAdd);
+        _childrenToAdd.Clear();
+
+        foreach (var child in Children)
+        {
+            child.Update(gameTime);
+        }
     }
 
     public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        foreach (var child in Children)
+        {
+            child.Draw(spriteBatch, gameTime);
+        }
     }
 
+    /// <summary>
+    /// This also destroys all children of the object.
+    /// </summary>
     public void Destroy()
     {
+        foreach (var child in Children)
+        {
+            child.Destroy();
+        }
         Destroyed = true;
     }
+
+    public void Reparent(GameObject newParent)
+    {
+        Parent = newParent;
+        Parent.AddChildDeferred(this);
+    }
+
+    public void AddChild(GameObject child)
+    {
+        child.Parent = this;
+        Children.Add(child);
+    }
+
+    public void AddChildren(IEnumerable<GameObject> children)
+    {
+        foreach (var child in children)
+        {
+            child.Parent = this;
+            Children.Add(child);
+        }
+    }
+
+    /// <summary>
+    /// Call this if the object is created in update loop
+    /// </summary>
+    public void AddChildDeferred(GameObject child)
+    {
+        child.Position = child.GlobalPosition - GlobalPosition;
+        child.Parent = this;
+        _childrenToAdd.Add(child);
+    }
+
+    /// <summary>
+    /// Call this if the objects are created in update loop
+    /// </summary>
+    public void AddChildrenDeferred(IEnumerable<GameObject> children)
+    {
+        foreach (var child in children)
+        {
+            child.Position = child.GlobalPosition - GlobalPosition;
+            child.Parent = this;
+            _childrenToAdd.Add(child);
+        }
+    }
+
+    public void ClearChildren()
+    {
+        foreach (var child in Children)
+        {
+            child.Destroy();
+        }
+        Children.Clear();
+    }
+
 }
