@@ -27,10 +27,10 @@ A game with mechanics heavily inspired by the classic **Puzzle Bobble** game. Th
 
 This project uses the following NuGet packages:
 
-- [MonoGame.Framework.DesktopGL](https://www.nuget.org/packages/MonoGame.Framework.DesktopGL) (Version 3.8.2.1105) A cross-platform gaming framework based on XNA for creating 2D and 3D games.
-- [MonoGame.Content.Builder.Task](https://www.nuget.org/packages/MonoGame.Content.Builder.Task) (Version 3.8.2.1105) A tool for building and managing game content in MonoGame projects.
-- [Myra](https://www.nuget.org/packages/Myra) (Version 1.5.9) A UI library for MonoGame, providing widgets and controls for building interfaces.
-- [Nopipeline.Task](https://www.nuget.org/packages/Nopipeline.Task) (Version 2.3.0) A tool for managing pipeline-free workflows in game development.
+- [MonoGame.Framework.DesktopGL](https://www.nuget.org/packages/MonoGame.Framework.DesktopGL) (Version 3.8.2.1105) The MonoGame runtime supporting Windows, Linux and macOS using SDL2 and OpenGL.
+- [MonoGame.Content.Builder.Task](https://www.nuget.org/packages/MonoGame.Content.Builder.Task) (Version 3.8.2.1105) MSBuild task to automatically build content for MonoGame.
+- [Myra](https://www.nuget.org/packages/Myra) (Version 1.5.9) UI Library for MonoGame, FNA and Stride.
+- [Nopipeline.Task](https://www.nuget.org/packages/Nopipeline.Task) (Version 2.3.0) A Content Pipeline addon for Monogame which fully replaces Pipeline UI.
 
 ## License
 
@@ -38,7 +38,7 @@ This project uses the following NuGet packages:
 The code in this repository is licensed under the [MIT License](./LICENSE).
 
 ### Art Assets
-The art assets in the `Content/Graphics/` folder are licensed under a modified [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
+The art assets in the `Content/Graphics/` folder are licensed under the [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
 
 ## References
 
