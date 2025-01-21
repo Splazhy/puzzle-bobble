@@ -7,6 +7,7 @@ namespace PuzzleBobble;
 public class AnimatedTexture2D
 {
     protected Texture2D spriteSheet;
+    protected Rectangle spriteSheetClip;
     public readonly int hFrames;
     public readonly int vFrames;
     public readonly float frameDuration;
@@ -18,20 +19,27 @@ public class AnimatedTexture2D
     public bool IsFinished { get; private set; }
     private float timeSinceStart;
 
-    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
+    public AnimatedTexture2D(Texture2D spriteSheet, Rectangle spriteSheetClip, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
     {
         this.spriteSheet = spriteSheet;
+        this.spriteSheetClip = spriteSheetClip;
+
         this.hFrames = hFrames;
         this.vFrames = vFrames;
         this.frameDuration = frameDuration;
         this.isLooping = isLooping;
-        frameWidth = spriteSheet.Width / hFrames;
-        frameHeight = spriteSheet.Height / vFrames;
-        sourceRectangle = new Rectangle(0, 0, frameWidth, frameHeight);
+        frameWidth = spriteSheetClip.Width / hFrames;
+        frameHeight = spriteSheetClip.Height / vFrames;
+        sourceRectangle = new Rectangle(spriteSheetClip.X, spriteSheetClip.Y, frameWidth, frameHeight);
     }
 
     public AnimatedTexture2D(AnimatedTexture2D template)
-        : this(template.spriteSheet, template.hFrames, template.vFrames, template.frameDuration, template.isLooping)
+        : this(template.spriteSheet, template.spriteSheetClip, template.hFrames, template.vFrames, template.frameDuration, template.isLooping)
+    {
+    }
+
+    public AnimatedTexture2D(Texture2D spriteSheet, int hFrames, int vFrames, float frameDuration, bool isLooping = false) :
+        this(spriteSheet, new Rectangle(0, 0, spriteSheet.Width, spriteSheet.Height), hFrames, vFrames, frameDuration, isLooping)
     {
     }
 
@@ -55,12 +63,6 @@ public class AnimatedTexture2D
         this.isLooping = isLooping;
     }
 
-    public void SetVFrame(int index)
-    {
-        Debug.Assert(index >= 0 && index < vFrames, "vframe index out of range");
-        sourceRectangle.Y = index * frameHeight;
-    }
-
     public void Update(GameTime gameTime)
     {
         if (!isPlaying) return;
@@ -71,13 +73,18 @@ public class AnimatedTexture2D
         {
             timeSinceStart = 0;
             sourceRectangle.X += frameWidth;
-            if (sourceRectangle.X >= spriteSheet.Width)
+            if (sourceRectangle.X >= spriteSheetClip.X + spriteSheetClip.Width)
             {
-                sourceRectangle.X = 0;
-                if (!isLooping)
+                sourceRectangle.X = spriteSheetClip.X;
+                sourceRectangle.Y += frameHeight;
+                if (sourceRectangle.Y >= spriteSheetClip.Y + spriteSheetClip.Height)
                 {
-                    Stop();
-                    IsFinished = true;
+                    sourceRectangle.Y = spriteSheetClip.Y;
+                    if (!isLooping)
+                    {
+                        Stop();
+                        IsFinished = true;
+                    }
                 }
             }
         }

@@ -61,8 +61,9 @@ public class Ball : GameObject
     {
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _spriteSheet = BallData.LoadBallSpritesheet(content);
-        _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
-        _explosionSpriteSheet.SetVFrame(Data.color);
+
+        var explosionSheet = content.Load<Texture2D>("Graphics/balls_explode");
+        _explosionSpriteSheet = new AnimatedTexture2D(explosionSheet, new Rectangle(0, Data.color * (explosionSheet.Height / 12), explosionSheet.Width, explosionSheet.Height / 12), 7, 1, 0.02f, false);
         _explosionSpriteSheet.Play();
     }
 
