@@ -15,7 +15,7 @@ public class GameObject
 
     public Vector2 GlobalPosition
     {
-        get { if (Parent is null) return Position; else return Position + Parent.Position; }
+        get { if (Parent is null) return Position; else return Position + Parent.GlobalPosition; }
     }
     public Vector2 ScreenPosition
     {
