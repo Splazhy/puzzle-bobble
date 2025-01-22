@@ -11,17 +11,18 @@ public class MenuScene : AbstractScene
     private Game? _game;
     private Desktop? _desktop;
 
+    public MenuScene() : base("scene_menu")
+    {
+    }
+
     public override void Initialize(Game game)
     {
         _game = game;
     }
 
-    public override void Deinitialize()
-    {
-    }
-
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
 
         Button startBtn = new()
 
@@ -82,10 +83,6 @@ public class MenuScene : AbstractScene
         {
             Root = menu
         };
-    }
-
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
-    {
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

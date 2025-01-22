@@ -4,8 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PuzzleBobble.Scene;
 
-public abstract class AbstractScene
+public abstract class AbstractScene : GameObject
 {
+    protected AbstractScene(string name) : base(name)
+    {
+    }
+
     public event SceneChangedHandler? SceneChanged;
 
     public delegate void SceneChangedHandler(AbstractScene oldScene, AbstractScene newScene);
@@ -18,8 +22,9 @@ public abstract class AbstractScene
     }
 
     public abstract void Initialize(Game game);
-    public abstract void Deinitialize();
-    public abstract void LoadContent(ContentManager content);
-    public abstract void Update(GameTime gameTime, Vector2 parentTranslate);
-    public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate);
+    public virtual void Deinitialize()
+    {
+        children.Clear();
+        pendingChildren.Clear();
+    }
 }

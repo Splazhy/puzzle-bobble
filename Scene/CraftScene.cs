@@ -11,18 +11,18 @@ public class CraftScene : AbstractScene
 {
     private Desktop? _desktop;
 
-    public override void Initialize(Game game)
+    public CraftScene() : base("scene_craft")
     {
-
     }
 
-    public override void Deinitialize()
+    public override void Initialize(Game game)
     {
 
     }
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         // Grid
         var mainGrid = new Grid
         {
@@ -166,11 +166,6 @@ public class CraftScene : AbstractScene
         {
             Root = mainGrid
         };
-    }
-
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
-    {
-
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

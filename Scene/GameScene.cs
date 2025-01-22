@@ -12,11 +12,7 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private List<GameObject> _gameObjects = [];
-    private List<GameObject> _pendingGameObjects = [];
     private SpriteFont? _font;
-    private ContentManager? _content;
-
     private GameBoard? _gameBoard;
 
     /// <summary>
@@ -26,58 +22,43 @@ public class GameScene : AbstractScene
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
+    public GameScene() : base("scene_game")
+    {
+    }
+
     public override void Initialize(Game game)
     {
         Slingshot slingshot = new(game);
         _gameBoard = new GameBoard(game);
         slingshot.BallFired += ball => _gameBoard.AddBallFromSlingshot(ball);
-        _gameObjects = [
+        children = [
             slingshot,
             _gameBoard,
         ];
-        _pendingGameObjects = [];
-    }
-
-    public override void Deinitialize()
-    {
-        _gameObjects.Clear();
-        _pendingGameObjects.Clear();
     }
 
     public override void LoadContent(ContentManager content)
     {
-        _content = content;
-        _gameObjects.ForEach(gameObject => gameObject.LoadContent(content));
+        base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
     }
 
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
             ChangeScene(Scenes.MENU);
         }
 
-        Debug.Assert(_gameBoard is not null && _content is not null);
+        UpdateChildren(gameTime, parentTranslate);
+        UpdatePendingAndDestroyedChildren();
 
-        var movingBalls = _gameObjects.FindAll(gameObject =>
-            gameObject is Ball ball &&
-            ball.GetState() == Ball.State.Moving
-        ).Cast<Ball>().ToList();
-
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime, parentTranslate));
-
-        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // NOTE: we need to load content for every new game objects,
-        // not sure if this is a design flaw or not.
-        _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
-        _gameObjects.AddRange(_pendingGameObjects);
-        _pendingGameObjects.Clear();
+        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime, parentTranslate));
+        DrawChildren(spriteBatch, gameTime, parentTranslate);
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
     }
 }

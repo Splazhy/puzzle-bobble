@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,16 +13,17 @@ public class CreditsScene : AbstractScene
 {
     private Desktop? _desktop;
 
-    public override void Initialize(Game game)
+    public CreditsScene() : base("scene_credits")
     {
     }
 
-    public override void Deinitialize()
+    public override void Initialize(Game game)
     {
     }
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         string[] names = [
             "65050067 Kandanai Chaiyo",
             "65050251 Nutchapol Salawej",
@@ -62,12 +64,14 @@ public class CreditsScene : AbstractScene
         };
     }
 
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
             ChangeScene(Scenes.MENU);
         }
+
+        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

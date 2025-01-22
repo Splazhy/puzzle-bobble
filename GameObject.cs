@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,6 +24,11 @@ public class GameObject
 
     public bool Destroyed { get; private set; }
 
+    protected List<GameObject> children = [];
+    protected List<GameObject> pendingChildren = [];
+    protected ContentManager? content;
+
+
     // We treat GameObject contructor like Initialize method
     public GameObject(string name)
     {
@@ -37,11 +44,51 @@ public class GameObject
 
     public virtual void LoadContent(ContentManager content)
     {
+        this.content = content;
+        foreach (var child in children)
+        {
+            child.LoadContent(content);
+        }
     }
 
-    public virtual void Update(GameTime gameTime, Vector2 parentTranslate)
+    public virtual List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    {
+        return [];
+    }
+
+    protected void UpdatePosition(GameTime gameTime)
     {
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    protected void UpdateChildren(GameTime gameTime, Vector2 parentTranslate)
+    {
+
+        foreach (var child in children)
+        {
+            var newObjs = child.Update(gameTime, parentTranslate + Position);
+            pendingChildren.AddRange(newObjs);
+        }
+    }
+
+    protected void UpdatePendingAndDestroyedChildren()
+    {
+        Debug.Assert(content is not null);
+
+        children.RemoveAll(obj => obj.Destroyed);
+        // NOTE: we need to load content for every new game objects,
+        // not sure if this is a design flaw or not.
+        pendingChildren.ForEach(obj => obj.LoadContent(content));
+        children.AddRange(pendingChildren);
+        pendingChildren.Clear();
+    }
+
+    protected void DrawChildren(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    {
+        foreach (var child in children)
+        {
+            child.Draw(spriteBatch, gameTime, parentTranslate + Position);
+        }
     }
 
     public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

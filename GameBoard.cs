@@ -42,11 +42,6 @@ public class GameBoard : GameObject
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
-    private readonly List<Ball> _dynamicBalls = [];
-    private readonly List<Ball> _pendingBalls = [];
-
-    private ContentManager? _content;
-
     public GameBoard(Game game) : base("gameboard")
     {
         _game = (Game1)game;
@@ -57,7 +52,7 @@ public class GameBoard : GameObject
 
     public override void LoadContent(ContentManager content)
     {
-        _content = content;
+        base.LoadContent(content);
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
 
@@ -85,7 +80,7 @@ public class GameBoard : GameObject
             ball.Draw(spriteBatch, ballSpriteSheet, scrPos + p);
         }
 
-        _dynamicBalls.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime, scrPos));
+        DrawChildren(spriteBatch, gameTime, parentTranslate);
 
         shineAnimPlayer?.Draw(spriteBatch, gameTime, parentTranslate + Position);
 
@@ -226,83 +221,78 @@ public class GameBoard : GameObject
         return fallingBalls;
     }
 
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         shineAnimPlayer?.Update(gameTime);
 
-        _dynamicBalls.ForEach(gameObject => gameObject.Update(gameTime, parentTranslate));
+        UpdateChildren(gameTime, parentTranslate);
 
-        var movingBalls = _dynamicBalls.FindAll(gameObject =>
-            gameObject is Ball ball &&
+        var movingBalls = children.OfType<Ball>().Where(ball =>
             ball.GetState() == Ball.State.Moving
-        ).Cast<Ball>().ToList();
+        );
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        movingBalls.ForEach(movingBall =>
+        foreach (var movingBall in movingBalls)
+        {
+            // FIXME: when ball goes too fast, it could overwrite another ball
+
+            // use ahead position to check for collision so player won't see the ball
+            // overlapping with balls on the grid as much (visual polish).
+            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
+            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
+            Hex ballClosestHex = ComputeClosestHex(aheadPosition);
+
+            foreach (var dir in Hex.directions)
             {
-                // FIXME: when ball goes too fast, it could overwrite another ball
+                Hex neighborHex = ballClosestHex + dir;
+                if (!IsBallAt(neighborHex)) continue;
 
-                // use ahead position to check for collision so player won't see the ball
-                // overlapping with balls on the grid as much (visual polish).
-                var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
-                var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
-                Hex ballClosestHex = ComputeClosestHex(aheadPosition);
+                Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
+                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
+                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
+                if (!colliding) continue;
 
-                foreach (var dir in Hex.directions)
+                SetBallAt(ballClosestHex, movingBall.Data);
+                var explodingBalls = ExplodeBalls(ballClosestHex);
+                var fallBalls = RemoveFloatingBalls();
+
+                pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
                 {
-                    Hex neighborHex = ballClosestHex + dir;
-                    if (!IsBallAt(neighborHex)) continue;
-
-                    Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                    Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                    bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
-                    if (!colliding) continue;
-
-                    SetBallAt(ballClosestHex, movingBall.Data);
-                    var explodingBalls = ExplodeBalls(ballClosestHex);
-                    var fallBalls = RemoveFloatingBalls();
-
-                    _pendingBalls.AddRange(explodingBalls.ConvertAll(explodingBall =>
+                    var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
-                        var b = new Ball(explodingBall.Value, Ball.State.Exploding)
-                        {
-                            Position = explodingBall.Key,
-                            // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
-                        };
-                        return b;
-                    }));
-                    _pendingBalls.AddRange(fallBalls.ConvertAll(fallingBall =>
+                        Position = explodingBall.Key,
+                        // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
+                    };
+                    return b;
+                }));
+                pendingChildren.AddRange(fallBalls.ConvertAll(fallingBall =>
+                {
+                    var b = new Ball(fallingBall.Value, Ball.State.Falling)
                     {
-                        var b = new Ball(fallingBall.Value, Ball.State.Falling)
-                        {
-                            Position = fallingBall.Key,
-                            Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
-                        };
-                        return b;
-                    }));
+                        Position = fallingBall.Key,
+                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
+                    };
+                    return b;
+                }));
 
-                    movingBall.Destroy();
-                    break;
-                }
-            });
+                movingBall.Destroy();
+                break;
+            }
+        }
+        ;
 
-        _dynamicBalls.RemoveAll(gameObject => gameObject.Destroyed);
 
-        Debug.Assert(_content is not null);
-        // NOTE: we need to load content for every new game objects,
-        // not sure if this is a design flaw or not.
-        _pendingBalls.ForEach(gameObject => gameObject.LoadContent(_content));
-        _dynamicBalls.AddRange(_pendingBalls);
-        _pendingBalls.Clear();
+        UpdatePendingAndDestroyedChildren();
+        return [];
     }
 
     public void AddBallFromSlingshot(Ball ball)
     {
         ball.Position -= Position;
-        _pendingBalls.Add(ball);
+        pendingChildren.Add(ball);
     }
 
 }

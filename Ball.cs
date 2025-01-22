@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -59,6 +60,7 @@ public class Ball : GameObject
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
         _spriteSheet = BallData.LoadBallSpritesheet(content);
 
@@ -67,7 +69,7 @@ public class Ball : GameObject
         _explosionSpriteSheet.Play();
     }
 
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
@@ -76,7 +78,7 @@ public class Ball : GameObject
                 break;
             case State.Moving:
                 // TODO: fix this to take gameboard bounds into account
-                Position += Velocity * deltaTime;
+                UpdatePosition(gameTime);
                 float right = 600 - Circle.radius;
                 if (0 < Velocity.X && right < Position.X)
                 {
@@ -103,7 +105,7 @@ public class Ball : GameObject
                 }
                 break;
             case State.Exploding:
-                Position += Velocity * deltaTime;
+                UpdatePosition(gameTime);
                 Debug.Assert(_explosionSpriteSheet is not null);
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)
@@ -111,11 +113,12 @@ public class Ball : GameObject
                 break;
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
-                Position += Velocity * deltaTime;
+                UpdatePosition(gameTime);
                 if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
                     Destroy();
                 break;
         }
+        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

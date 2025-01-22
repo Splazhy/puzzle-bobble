@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -96,12 +97,13 @@ public class Slingshot : GameObject
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
         _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
     }
 
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         // TODO: Implement `IsJustPressed` method for new InputManager class
         // This code executes multiple times per a short key press,
@@ -138,6 +140,8 @@ public class Slingshot : GameObject
             // Cycle through ball colors, just a fun experimentation
             _ballData = new((_ballData.color + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
         }
+
+        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
