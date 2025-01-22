@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -149,7 +150,7 @@ public class Slingshot : GameObject
             // then maybe `AbstractBallFactorySingleton` class
             // then maybe `AbstractBallFactorySingletonBuilder` class
             // then burn the whole project to the ground
-            if (_content is null) return;
+            Debug.Assert(_content is not null, "ContentManager is not initialized.");
             newBall.LoadContent(_content);
 
             BallFired?.Invoke(newBall);
@@ -163,10 +164,10 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        if (_slingshotTexture is null || _ballSpriteSheet is null || _guideline is null)
-        {
-            return;
-        }
+        Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
+        Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
+        Debug.Assert(_guideline is not null, "Guideline is not loaded.");
+
         _guideline.Draw(spriteBatch, ScreenPosition, Rotation - MathF.PI / 2, Scale);
 
         spriteBatch.Draw(

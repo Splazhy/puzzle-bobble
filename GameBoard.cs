@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -78,10 +79,10 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        // i'm starting to hate nullable reference types now >:(
-        if (background is null) return;
-        if (leftBorder is null) return;
-        if (rightBorder is null) return;
+        // better than nothing I guess ( ͡° ͜ʖ ͡°)
+        Debug.Assert(background is not null, "Background is not loaded.");
+        Debug.Assert(leftBorder is not null, "Left border is not loaded.");
+        Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var startScreenPosition = startPosition + Game1.WindowCenter;
         // `14 * 6`

@@ -83,14 +83,16 @@ public class Ball : GameObject
                 Velocity = Vector2.Zero;
                 break;
             case State.Exploding:
-                // var randomPercent = _rand.NextSingle();
-                if (explodeSfx is not null)
-                    explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
-                explosionAnimation?.Play(MAX_EXPLODE_DELAY * _rand.NextSingle());
+                Debug.Assert(explodeSfx is not null, "Explode sound effect is not loaded.");
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
+                explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+                explosionAnimation.Play(MAX_EXPLODE_DELAY * _rand.NextSingle());
                 break;
             case State.Settle:
-                shineAnimation?.Play();
-                settleSfx?.Play();
+                Debug.Assert(settleSfx is not null, "Settle sound effect is not loaded.");
+                Debug.Assert(shineAnimation is not null, "Shine animation is not loaded.");
+                settleSfx.Play();
+                shineAnimation.Play();
                 break;
             case State.Falling:
                 Velocity = new Vector2(
@@ -133,7 +135,7 @@ public class Ball : GameObject
             case State.Idle:
                 break;
             case State.Settle:
-                if (shineAnimation is null) break;
+                Debug.Assert(shineAnimation is not null, "Shine animation is not loaded.");
                 if (shineAnimation.IsFinished)
                     SetState(State.Idle);
                 shineAnimation.Update(gameTime);
@@ -144,16 +146,14 @@ public class Ball : GameObject
                     (192 < Position.X + Circle.radius && 0 < Velocity.X)
                 ) {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    if (bounceSfx is not null)
-                    {
-                        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
-                        bounceSfx.Play();
-                    }
+                    Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+                    bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+                    bounceSfx.Play();
                 }
                 Position += Velocity * deltaTime;
                 break;
             case State.Exploding:
-                if (explosionAnimation is null) break;
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Update(gameTime);
                 if (explosionAnimation.IsFinished)
                 {
@@ -167,11 +167,9 @@ public class Ball : GameObject
                     (192 < Position.X + Circle.radius && 0 < Velocity.X)
                 ) {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    if (bounceSfx is not null)
-                    {
-                        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
-                        bounceSfx.Play();
-                    }
+                    Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+                    bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+                    bounceSfx.Play();
                 }
                 Velocity += GRAVITY * deltaTime;
                 Position += Velocity * deltaTime;
@@ -188,7 +186,7 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Exploding:
-                if (explosionAnimation is null) break;
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Draw(
                     spriteBatch,
                     new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
