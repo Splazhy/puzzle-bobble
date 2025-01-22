@@ -41,7 +41,7 @@ public class Slingshot : GameObject
             }
         }
 
-        // 192 -> gameborder border
+        // 192 -> gameboard border
         // 24 -> ball radius
         private static float LeftBorder { get { return Game1.WindowCenter.X - 192 + 24; } }
         private static float RightBorder { get { return Game1.WindowCenter.X + 192 - 24; } }
