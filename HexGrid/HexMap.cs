@@ -128,6 +128,11 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
         return GetEnumerator();
     }
 
+    public IEnumerator<T> GetValues()
+    {
+        return _map.Values.GetEnumerator();
+    }
+
     public IEnumerator<KeyValuePair<Hex, T>> RectangleEntries()
     {
         if (MinOffsetCoord is OffsetCoord min && MaxOffsetCoord is OffsetCoord max)

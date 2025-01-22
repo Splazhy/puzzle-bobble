@@ -77,7 +77,7 @@ public class Slingshot : GameObject
     private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
-    private BallData _ballData = new(0);
+    public BallData? Data = null;
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
@@ -125,11 +125,11 @@ public class Slingshot : GameObject
         Rotation = MathF.Atan2(direction.Y, direction.X);
         Rotation = MathHelper.Clamp(Rotation, MIN_ROTATION, MAX_ROTATION);
 
-        if (mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
+        if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
         {
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new(_ballData, Ball.State.Moving)
+            Ball newBall = new(bd, Ball.State.Moving)
             {
                 Position = Position,
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
@@ -138,7 +138,7 @@ public class Slingshot : GameObject
             BallFired?.Invoke(newBall);
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
-            _ballData = new((_ballData.color + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
+            Data = null;
         }
 
         return [];
@@ -163,7 +163,7 @@ public class Slingshot : GameObject
             0
         );
 
-        _ballData.Draw(spriteBatch, _ballSpriteSheet, scrPos);
+        Data?.Draw(spriteBatch, _ballSpriteSheet, scrPos);
     }
 
 }

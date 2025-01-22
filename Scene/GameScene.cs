@@ -13,6 +13,7 @@ namespace PuzzleBobble.Scene;
 public class GameScene : AbstractScene
 {
     private SpriteFont? _font;
+    private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
 
     /// <summary>
@@ -28,11 +29,11 @@ public class GameScene : AbstractScene
 
     public override void Initialize(Game game)
     {
-        Slingshot slingshot = new(game);
+        _slingshot = new(game);
         _gameBoard = new GameBoard(game);
-        slingshot.BallFired += ball => _gameBoard.AddBallFromSlingshot(ball);
+        _slingshot.BallFired += ball => _gameBoard.AddBallFromSlingshot(ball);
         children = [
-            slingshot,
+            _slingshot,
             _gameBoard,
         ];
     }
@@ -51,6 +52,18 @@ public class GameScene : AbstractScene
         }
 
         UpdateChildren(gameTime, parentTranslate);
+        Debug.Assert(_gameBoard != null && _slingshot != null);
+        if (_slingshot.Data == null)
+        {
+            // TODO: move this into BallData or smth
+            var bs = _gameBoard.GetBallStats();
+            var colors = bs.ColorCounts.Keys.ToList();
+            if (0 < colors.Count)
+            {
+                var color = colors[_rand.Next(colors.Count)];
+                _slingshot.Data = new BallData(color);
+            }
+        }
         UpdatePendingAndDestroyedChildren();
 
         return [];

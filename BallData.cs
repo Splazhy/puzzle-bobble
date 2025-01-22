@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBobble.HexGrid;
 
 namespace PuzzleBobble;
 public struct BallData
@@ -41,4 +43,24 @@ public struct BallData
     }
 
     // TODO: other spritesheets
+
+    public class BallStats
+    {
+        public readonly Dictionary<int, int> ColorCounts = [];
+
+        public void Add(IEnumerator<BallData> balls)
+        {
+            while (balls.MoveNext())
+            {
+                if (ColorCounts.TryGetValue(balls.Current.color, out int value))
+                {
+                    ColorCounts[balls.Current.color] = ++value;
+                }
+                else
+                {
+                    ColorCounts[balls.Current.color] = 1;
+                }
+            }
+        }
+    }
 }

@@ -47,7 +47,7 @@ public class GameBoard : GameObject
         _game = (Game1)game;
 
         Position = new Vector2(0, -300);
-        Velocity = new Vector2(0, 50);
+        Velocity = new Vector2(0, 0);
     }
 
     public override void LoadContent(ContentManager content)
@@ -291,6 +291,16 @@ public class GameBoard : GameObject
     {
         ball.Position -= Position;
         pendingChildren.Add(ball);
+    }
+
+    public BallData.BallStats GetBallStats()
+    {
+        BallData.BallStats stats = new();
+        stats.Add(hexMap.GetValues());
+        stats.Add(children.Concat(pendingChildren).OfType<Ball>().Where(ball =>
+            ball.GetState() == Ball.State.Moving
+        ).Select(ball => ball.Data).GetEnumerator());
+        return stats;
     }
 
 }
