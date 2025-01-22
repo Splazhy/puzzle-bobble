@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,20 +19,21 @@ public class DeathLine : GameObject
     {
         _spriteSheet = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/deathline"),
-            1, 12, 0.025f, true, true);
+            1, 12, 0.025f, true);
         _spriteSheet.Play();
     }
 
-    public override void Update(GameTime gameTime)
+    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
         _spriteSheet?.Update(gameTime);
+        return [];
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         _spriteSheet?.Draw(
             spriteBatch,
-            ScreenPosition,
+            parentTranslate + Position,
             Color.White,
             0.0f,
             new Vector2(_spriteSheet.frameWidth / 2, 0),

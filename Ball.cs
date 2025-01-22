@@ -94,7 +94,6 @@ public class Ball : GameObject
                 );
                 break;
         }
-        _state = state;
     }
 
     public override void LoadContent(ContentManager content)
@@ -107,7 +106,7 @@ public class Ball : GameObject
         explosionAnimation = new AnimatedTexture2D(explosionSheet, new Rectangle(0, Data.color * (explosionSheet.Height / 12), explosionSheet.Width, explosionSheet.Height / 12), 7, 1, 0.02f, false);
         explosionAnimation.Play();
 
-        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4+1)}").CreateInstance();
+        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
 
         shineAnimation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -180,6 +179,7 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
+        Debug.Assert(_spriteSheet is not null);
         var scrPos = parentTranslate + Position;
         switch (_state)
         {
@@ -189,40 +189,26 @@ public class Ball : GameObject
                     spriteBatch,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
+                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(32 / 2, 32 / 2)
                 );
                 break;
             case State.Settle:
-                drawBall(spriteBatch, gameTime);
+                Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 shineAnimation?.Draw(
                     spriteBatch,
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(16 / 2, 16 / 2)
                 );
                 break;
             default:
-                drawBall(spriteBatch, gameTime);
+                Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }
-    }
-
-    private void drawBall(SpriteBatch spriteBatch, GameTime gameTime)
-    {
-        spriteBatch.Draw(
-            _spriteSheet,
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-            new Rectangle((int)_color * 16, 0, 16, 16),
-            Microsoft.Xna.Framework.Color.White,
-            0.0f,
-            new Vector2(16 / 2, 16 / 2),
-            SpriteEffects.None,
-            0
-        );
     }
 
     public bool IsCollideWith(Ball other)

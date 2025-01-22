@@ -31,15 +31,12 @@ public class GameBoard : GameObject
 
     private Texture2D? ballSpriteSheet = null;
 
-    // For these textures below to reference from,
-    // they must stay in place while the gameboard moves down.
-    private Vector2 startPosition;
     private Texture2D? background = null;
     private Texture2D? leftBorder = null;
     private Texture2D? rightBorder = null;
 
     private AnimatedTexturePlayer? shineAnimPlayer = null;
-    private HexMap<Ball> hexMap = new HexMap<Ball>();
+    private HexMap<BallData> hexMap = [];
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -53,11 +50,6 @@ public class GameBoard : GameObject
         _game = (Game1)game;
 
         Position = new Vector2(0, -300);
-    }
-
-    public List<Ball> GetBalls()
-    {
-        return [.. hexMap.GetValues()];
     }
 
     public override void LoadContent(ContentManager content)
@@ -179,7 +171,7 @@ public class GameBoard : GameObject
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast();
-            shineAnimPlayer?.PlayAt(shinePosition, 0, new Vector2(8, 8), 3, Color.White);
+            shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16, 16), 0, new Vector2(8, 8), 3, Color.White);
             return [];
         }
 
@@ -315,7 +307,7 @@ public class GameBoard : GameObject
     public BallData.BallStats GetBallStats()
     {
         BallData.BallStats stats = new();
-        stats.Add(hexMap.GetValues());
+        stats.Add(hexMap.GetValues().GetEnumerator());
         stats.Add(children.Concat(pendingChildren).OfType<Ball>().Where(ball =>
             ball.GetState() == Ball.State.Moving
         ).Select(ball => ball.Data).GetEnumerator());

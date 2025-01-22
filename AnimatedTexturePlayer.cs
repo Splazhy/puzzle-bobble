@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -66,4 +67,10 @@ public class AnimatedTexturePlayer
             );
         }
     }
+
+    internal void PlayAt(Rectangle rectangle, int v1, Vector2 vector2, int v2, Color white)
+    {
+        throw new NotImplementedException();
+    }
+
 }

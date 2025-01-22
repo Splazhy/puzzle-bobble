@@ -30,13 +30,13 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game)
     {
         _slingshot = new(game);
+        DeathLine deathline = new(game);
         _gameBoard = new GameBoard(game);
         _slingshot.BallFired += ball => _gameBoard.AddBallFromSlingshot(ball);
         children = [
             _slingshot,
             _gameBoard,
             deathline,
-            slingshot,
         ];
     }
 
@@ -46,7 +46,6 @@ public class GameScene : AbstractScene
         _font = content.Load<SpriteFont>("Fonts/Arial24");
 
         if (_gameBoard is null) return;
-        _gameObjects.AddRange(_gameBoard.GetBalls());
     }
 
     public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)

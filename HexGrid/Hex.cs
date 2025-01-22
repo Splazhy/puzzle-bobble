@@ -60,5 +60,5 @@ public readonly struct Hex
         return new OffsetCoord(col, row);
     }
 
-    public override string ToString() => $"Hex({q}, {r}, {s})";
+    public override string ToString() => $"Hex({Q}, {R}, {S})";
 }
