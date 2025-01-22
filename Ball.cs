@@ -76,15 +76,31 @@ public class Ball : GameObject
                 break;
             case State.Moving:
                 // TODO: fix this to take gameboard bounds into account
-                if (Position.X - Circle.radius < -600 || 600 < Position.X + Circle.radius)
+                Position += Velocity * deltaTime;
+                float right = 600 - Circle.radius;
+                if (0 < Velocity.X && right < Position.X)
                 {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
+                    Position = new Vector2(right - (Position.X - right), Position.Y); // reflect position across X=right
                 }
-                if (Position.Y - Circle.radius < -600 || 600 < Position.Y + Circle.radius)
+                float left = -600 + Circle.radius;
+                if (Velocity.X < 0 && Position.X < left)
+                {
+                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
+                    Position = new Vector2(left - (Position.X - left), Position.Y); // reflect position across X=left
+                }
+                float top = 600 - Circle.radius;
+                if (0 < Velocity.Y && top < Position.Y)
                 {
                     Velocity = new Vector2(Velocity.X, -Velocity.Y);
+                    Position = new Vector2(Position.X, top - (Position.Y - top)); // reflect position across Y=top
                 }
-                Position += Velocity * deltaTime;
+                float bottom = -600 + Circle.radius;
+                if (Velocity.Y < 0 && Position.Y < bottom)
+                {
+                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
+                    Position = new Vector2(Position.X, bottom - (Position.Y - bottom)); // reflect position across Y=bottom
+                }
                 break;
             case State.Exploding:
                 Position += Velocity * deltaTime;
