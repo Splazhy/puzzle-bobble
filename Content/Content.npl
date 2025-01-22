@@ -42,6 +42,14 @@
 			"path": "Levels/*.txt",
 			"recursive": "True",
 			"action": "copy",
+		},
+		"audio":
+		{
+			"path": "Audio/*.ogg",
+			"recursive": "True",
+			"action": "build",
+			"importer": "OggImporter",
+			"processor": "SoundEffectProcessor"
 		}
 	}
 }

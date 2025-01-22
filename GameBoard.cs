@@ -14,7 +14,6 @@ public class GameBoard : GameObject
 {
     private readonly Game1 _game;
 
-
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
@@ -31,9 +30,16 @@ public class GameBoard : GameObject
     );
 
     private Texture2D? ballSpriteSheet = null;
-    private AnimatedTexturePlayer? shineAnimPlayer = null;
 
-    private HexMap<BallData> hexMap = new();
+    // For these textures below to reference from,
+    // they must stay in place while the gameboard moves down.
+    private Vector2 startPosition;
+    private Texture2D? background = null;
+    private Texture2D? leftBorder = null;
+    private Texture2D? rightBorder = null;
+
+    private AnimatedTexturePlayer? shineAnimPlayer = null;
+    private HexMap<Ball> hexMap = new HexMap<Ball>();
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -47,16 +53,23 @@ public class GameBoard : GameObject
         _game = (Game1)game;
 
         Position = new Vector2(0, -300);
-        Velocity = new Vector2(0, 0);
+    }
+
+    public List<Ball> GetBalls()
+    {
+        return [.. hexMap.GetValues()];
     }
 
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
+        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
+        background = content.Load<Texture2D>("Graphics/board_bg");
+        leftBorder = content.Load<Texture2D>("Graphics/border_left");
+        rightBorder = content.Load<Texture2D>("Graphics/border_right");
+
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
-
-        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -68,6 +81,9 @@ public class GameBoard : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
         Debug.Assert(ballSpriteSheet is not null);
+        Debug.Assert(background is not null);
+        Debug.Assert(leftBorder is not null);
+        Debug.Assert(rightBorder is not null);
 
         var scrPos = parentTranslate + Position;
 
@@ -84,6 +100,9 @@ public class GameBoard : GameObject
 
         shineAnimPlayer?.Draw(spriteBatch, gameTime, parentTranslate + Position);
 
+        spriteBatch.Draw(background, parentTranslate, null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(parentTranslate.X - leftBorder.Width * 3, parentTranslate.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(parentTranslate.X + background.Width * 3, parentTranslate.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
     }
 
     public Hex ComputeClosestHex(Vector2 pos)
@@ -129,7 +148,7 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(sourceHex)) return [];
         BallData? mapBall = hexMap[sourceHex];
-        if (!mapBall.HasValue) return [];
+        if (mapBall is null) return [];
         BallData specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
@@ -180,7 +199,7 @@ public class GameBoard : GameObject
     public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
+        floating.UnionWith(hexMap.GetKeys());
 
         Queue<Hex> bfsQueue = new();
         // Balls from the top row can't be floating

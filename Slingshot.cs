@@ -84,6 +84,10 @@ public class Slingshot : GameObject
     public static readonly float MIN_ROTATION = MathF.PI * -80.0f / 180.0f;
     public static readonly float MAX_ROTATION = MathF.PI * 80.0f / 180.0f;
 
+    private const float MAX_RECOIL = 30.0f;
+    private const float RECOIL_RECOVERY = 100.0f;
+    private float visualRecoilOffset = 0.0f;
+
     public event BallFiredHandler? BallFired;
     public delegate void BallFiredHandler(Ball ball);
 
@@ -112,7 +116,9 @@ public class Slingshot : GameObject
         // if (Keyboard.GetState().IsKeyDown(Keys.H))
         //     IsActive = !IsActive;
 
-        _timeSinceLastFired += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _timeSinceLastFired += deltaTime;
+        visualRecoilOffset = Math.Max(0.0f, visualRecoilOffset - RECOIL_RECOVERY * deltaTime);
 
         _guideline?.Update(gameTime);
 
@@ -157,7 +163,9 @@ public class Slingshot : GameObject
             null,
             Color.White,
             0.0f,
-            new Vector2(_slingshotTexture.Width / 2, _slingshotTexture.Height / 2),
+            // anchors the texture from the top by 10 pixels no matter the height
+            // so that the ball positioned in the center nicely.
+            new Vector2(_slingshotTexture.Width / 2, 10),
             Scale,
             SpriteEffects.None,
             0

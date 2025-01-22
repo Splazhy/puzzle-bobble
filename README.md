@@ -37,8 +37,10 @@ This project uses the following NuGet packages:
 ### Code
 The code in this repository is licensed under the [MIT License](./LICENSE).
 
-### Art Assets
-The art assets in the `Content/Graphics/` folder are licensed under a modified [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
+### Assets
+The art assets in the `Content/Graphics/` folder are licensed under [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
+
+The audio assets in the `Content/Audio/Sfx` folder are created/distributed by [Kenney](www.kenney.nl), licensed under [Creative Commons Zero, CC0](http://creativecommons.org/publicdomain/zero/1.0/). Thanks Kenney!
 
 ## References
 

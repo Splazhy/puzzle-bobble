@@ -45,13 +45,13 @@ public class AnimatedTexture2D
     {
     }
 
-    public void Play()
+    public void Play(float delay = 0.0f)
     {
         if (isPlaying) return;
 
         isPlaying = true;
         sourceRectangle.X = 0;
-        timeSinceStart = 0;
+        timeSinceStart = -delay;
     }
 
     public void Stop()
@@ -89,13 +89,40 @@ public class AnimatedTexture2D
                     }
                 }
             }
+
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch, Vector2 position, float rotation, Vector2 origin, float scale, Color color)
+    public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
     {
         if (!isPlaying) return;
 
-        spriteBatch.Draw(spriteSheet, position, sourceRectangle, color, rotation, origin, scale, SpriteEffects.None, 0);
+        spriteBatch.Draw(
+            spriteSheet,
+            position,
+            sourceRectangle,
+            color,
+            rotation,
+            origin,
+            scale,
+            SpriteEffects.None,
+            0.0f
+        );
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
+    {
+        if (!isPlaying) return;
+
+        spriteBatch.Draw(
+            spriteSheet,
+            destinationRectangle,
+            sourceRectangle,
+            color,
+            rotation,
+            origin,
+            SpriteEffects.None,
+            0.0f
+        );
     }
 }

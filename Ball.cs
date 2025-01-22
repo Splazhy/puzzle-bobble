@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -32,10 +34,21 @@ public class Ball : GameObject
         Moving,
         Falling,
         Exploding,
+        Settle,
     }
 
+    public const float FALLING_SPREAD = 50;
+    public const float MAX_EXPLODE_DELAY = 0.2f;
+    public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
+
+    private static Random _rand = new Random();
     private Texture2D? _spriteSheet;
-    private AnimatedTexture2D? _explosionSpriteSheet;
+    private AnimatedTexture2D? explosionAnimation;
+    private AnimatedTexture2D? shineAnimation;
+
+    private SoundEffectInstance? explodeSfx;
+    private SoundEffectInstance? settleSfx;
+
     public Circle Circle
     {
         get
@@ -58,6 +71,32 @@ public class Ball : GameObject
         Scale = new Vector2(3, 3);
     }
 
+    public void SetState(State state)
+    {
+        if (_state == state) return;
+
+        switch (state)
+        {
+            case State.Exploding:
+                // var randomPercent = _rand.NextSingle();
+                if (explodeSfx is not null)
+                    explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+                explosionAnimation?.Play(MAX_EXPLODE_DELAY * _rand.NextSingle());
+                break;
+            case State.Settle:
+                shineAnimation?.Play();
+                settleSfx?.Play();
+                break;
+            case State.Falling:
+                Velocity = new Vector2(
+                    (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD,
+                    -_rand.NextSingle() * FALLING_SPREAD
+                );
+                break;
+        }
+        _state = state;
+    }
+
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
@@ -65,8 +104,17 @@ public class Ball : GameObject
         _spriteSheet = BallData.LoadBallSpritesheet(content);
 
         var explosionSheet = content.Load<Texture2D>("Graphics/balls_explode");
-        _explosionSpriteSheet = new AnimatedTexture2D(explosionSheet, new Rectangle(0, Data.color * (explosionSheet.Height / 12), explosionSheet.Width, explosionSheet.Height / 12), 7, 1, 0.02f, false);
-        _explosionSpriteSheet.Play();
+        explosionAnimation = new AnimatedTexture2D(explosionSheet, new Rectangle(0, Data.color * (explosionSheet.Height / 12), explosionSheet.Width, explosionSheet.Height / 12), 7, 1, 0.02f, false);
+        explosionAnimation.Play();
+
+        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4+1)}").CreateInstance();
+
+        shineAnimation = new AnimatedTexture2D(
+            content.Load<Texture2D>("Graphics/ball_shine"),
+            9, 1, 0.01f, false
+        );
+
+        settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002").CreateInstance();
     }
 
     public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
@@ -75,6 +123,12 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Idle:
+                break;
+            case State.Settle:
+                if (shineAnimation is null) break;
+                if (shineAnimation.IsFinished)
+                    SetState(State.Idle);
+                shineAnimation.Update(gameTime);
                 break;
             case State.Moving:
                 // TODO: fix this to take gameboard bounds into account
@@ -106,10 +160,13 @@ public class Ball : GameObject
                 break;
             case State.Exploding:
                 UpdatePosition(gameTime);
-                Debug.Assert(_explosionSpriteSheet is not null);
-                _explosionSpriteSheet.Update(gameTime);
-                if (_explosionSpriteSheet.IsFinished)
+                Debug.Assert(explosionAnimation is not null);
+                explosionAnimation.Update(gameTime);
+                if (explosionAnimation.IsFinished)
+                {
+                    explodeSfx?.Play();
                     Destroy();
+                }
                 break;
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
@@ -127,25 +184,54 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Exploding:
-                Debug.Assert(_explosionSpriteSheet is not null);
-                _explosionSpriteSheet.Draw(
+                Debug.Assert(explosionAnimation is not null);
+                explosionAnimation.Draw(
                     spriteBatch,
-                    scrPos + new Vector2(-48, -48),
+                    // FIXME: this position is not accurate (the y position is off by a bit)
+                    // might be due to floating point precision errors of GameBoard.
+                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
+                    Microsoft.Xna.Framework.Color.White,
                     0.0f,
-                    Vector2.Zero,
-                    Scale.X, // we assume that scale is uniform
-                    Microsoft.Xna.Framework.Color.White
+                    new Vector2(32 / 2, 32 / 2)
+                );
+                break;
+            case State.Settle:
+                drawBall(spriteBatch, gameTime);
+                shineAnimation?.Draw(
+                    spriteBatch,
+                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+                    Microsoft.Xna.Framework.Color.White,
+                    0.0f,
+                    new Vector2(16 / 2, 16 / 2)
                 );
                 break;
             default:
-                Debug.Assert(_spriteSheet is not null);
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
+                drawBall(spriteBatch, gameTime);
                 break;
         }
+    }
+
+    private void drawBall(SpriteBatch spriteBatch, GameTime gameTime)
+    {
+        spriteBatch.Draw(
+            _spriteSheet,
+            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+            new Rectangle((int)_color * 16, 0, 16, 16),
+            Microsoft.Xna.Framework.Color.White,
+            0.0f,
+            new Vector2(16 / 2, 16 / 2),
+            SpriteEffects.None,
+            0
+        );
     }
 
     public bool IsCollideWith(Ball other)
     {
         return Circle.Intersects(other.Circle) > 0;
+    }
+
+    public bool IsCollideWith(Circle other)
+    {
+        return Circle.Intersects(other) > 0;
     }
 }

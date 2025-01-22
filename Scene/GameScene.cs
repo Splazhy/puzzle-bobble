@@ -35,6 +35,8 @@ public class GameScene : AbstractScene
         children = [
             _slingshot,
             _gameBoard,
+            deathline,
+            slingshot,
         ];
     }
 
@@ -42,6 +44,9 @@ public class GameScene : AbstractScene
     {
         base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
+
+        if (_gameBoard is null) return;
+        _gameObjects.AddRange(_gameBoard.GetBalls());
     }
 
     public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
