@@ -79,6 +79,12 @@ public class GameBoard : GameObject
 
         var scrPos = parentTranslate + Position;
 
+        var pX = parentTranslate.X;
+        var fourHexWidth = (int)(HEX_WIDTH * 4);
+        spriteBatch.Draw(background, new Vector2(pX - fourHexWidth, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(pX - fourHexWidth - leftBorder.Width * 3, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(pX + fourHexWidth, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
@@ -90,11 +96,8 @@ public class GameBoard : GameObject
 
         DrawChildren(spriteBatch, gameTime, parentTranslate);
 
-        shineAnimPlayer?.Draw(spriteBatch, gameTime, parentTranslate + Position);
-
-        spriteBatch.Draw(background, parentTranslate, null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(parentTranslate.X - leftBorder.Width * 3, parentTranslate.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(parentTranslate.X + background.Width * 3, parentTranslate.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        Debug.Assert(shineAnimPlayer is not null);
+        shineAnimPlayer.Draw(spriteBatch, gameTime, parentTranslate + Position);
     }
 
     public Hex ComputeClosestHex(Vector2 pos)
@@ -171,7 +174,7 @@ public class GameBoard : GameObject
             // so we can assume that calling play shine animation here will
             // yield the expected outcome.
             var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast();
-            shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16, 16), 0, new Vector2(8, 8), 3, Color.White);
+            shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
             return [];
         }
 

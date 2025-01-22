@@ -34,9 +34,9 @@ public class GameScene : AbstractScene
         _gameBoard = new GameBoard(game);
         _slingshot.BallFired += ball => _gameBoard.AddBallFromSlingshot(ball);
         children = [
-            _slingshot,
             _gameBoard,
             deathline,
+            _slingshot,
         ];
     }
 
