@@ -41,29 +41,53 @@ public class Slingshot : GameObject
             }
         }
 
+        // 192 -> gameborder border
+        // 24 -> ball radius
+        private static float LeftBorder { get { return Game1.WindowCenter.X - 192 + 24; } }
+        private static float RightBorder { get { return Game1.WindowCenter.X + 192 - 24; } }
         public void Draw(SpriteBatch spriteBatch, Vector2 startPoint, float rotation, Vector2 scale)
         {
-            var endPoint = new Vector2(
-                startPoint.X + _length * MathF.Cos(rotation),
-                startPoint.Y + _length * MathF.Sin(rotation)
-            );
-
+            var direction = Vector2.Normalize( new Vector2(MathF.Cos(rotation), MathF.Sin(rotation)));
             for (int i = 0; i < _count; i++)
             {
                 var subProgress = (_progress + (float)i / _count) % 1.0f;
-                var subPosition = new Vector2(
-                    startPoint.X + subProgress * (endPoint.X - startPoint.X),
-                    startPoint.Y + subProgress * (endPoint.Y - startPoint.Y)
-                );
                 var actualScale = scale * (1.0f - subProgress);
+                var lengthLeft = _length * subProgress;
+                var tmpDirection = direction;
+                var s = startPoint;
+                Vector2 subPosition;
+                while (true)
+                {
+                    var e = s + (tmpDirection * lengthLeft);
+                    var slope = (e.Y - s.Y) / (e.X - s.X);
+                    Vector2? bouncePoint = null;
+
+                    if (e.X > s.X && e.X > RightBorder)
+                    {
+                        bouncePoint = new Vector2(RightBorder, slope * (RightBorder - s.X) + s.Y);
+                    }
+                    else if (e.X < s.X && e.X < LeftBorder)
+                    {
+                        bouncePoint = new Vector2(LeftBorder, slope * (LeftBorder - s.X) + s.Y);
+                    }
+
+                    lengthLeft -= Vector2.Distance(s, bouncePoint ?? e);
+                    s = bouncePoint ?? e;
+                    tmpDirection = new Vector2(-tmpDirection.X, tmpDirection.Y);
+                    if (bouncePoint is null || lengthLeft <= 0)
+                    {
+                        subPosition = e;
+                        break;
+                    }
+                }
                 spriteBatch.Draw(
                     _texture,
                     subPosition,
                     null,
-                    Color.White,
+                    Color.White * (0.25f * (1.0f - subProgress)),
                     0,
                     _origin,
-                    actualScale,
+                    scale,
                     SpriteEffects.None,
                     0
                 );
@@ -103,7 +127,10 @@ public class Slingshot : GameObject
     {
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
-        _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
+        _guideline = new Guideline(
+            content.Load<Texture2D>("Graphics/guideline_full"),
+            24, 1200.0f, 15.0f
+        );
 
         _content = content;
     }
@@ -157,8 +184,7 @@ public class Slingshot : GameObject
 
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
-            // _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
-            _ballColor = (Ball.Color)(((int)_ballColor + 1) % 3);
+            _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
             visualRecoilOffset = MAX_RECOIL;
         }
     }

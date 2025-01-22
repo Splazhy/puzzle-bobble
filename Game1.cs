@@ -66,7 +66,7 @@ public class Game1 : Game
 
         GraphicsDevice.Clear(Color.RosyBrown);
 
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
         // TODO: hide/show these using debug options
         _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
