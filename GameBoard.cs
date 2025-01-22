@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -57,7 +58,7 @@ public class GameBoard : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        if (ballSpriteSheet is null) return;
+        Debug.Assert(ballSpriteSheet is not null);
 
         var scrPos = parentTranslate + Position;
 

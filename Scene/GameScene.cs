@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -57,7 +58,7 @@ public class GameScene : AbstractScene
             ChangeScene(Scenes.MENU);
         }
 
-        if (_gameBoard is null || _content is null) return;
+        Debug.Assert(_gameBoard is not null && _content is not null);
 
         var movingBalls = _gameObjects.FindAll(gameObject =>
             gameObject is Ball ball &&

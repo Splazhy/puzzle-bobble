@@ -88,7 +88,7 @@ public class Ball : GameObject
                 break;
             case State.Exploding:
                 Position += Velocity * deltaTime;
-                if (_explosionSpriteSheet is null) break;
+                Debug.Assert(_explosionSpriteSheet is not null);
                 _explosionSpriteSheet.Update(gameTime);
                 if (_explosionSpriteSheet.IsFinished)
                     Destroy();
@@ -108,7 +108,7 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Exploding:
-                if (_explosionSpriteSheet is null) break;
+                Debug.Assert(_explosionSpriteSheet is not null);
                 _explosionSpriteSheet.Draw(
                     spriteBatch,
                     scrPos + new Vector2(-48, -48),
@@ -119,7 +119,7 @@ public class Ball : GameObject
                 );
                 break;
             default:
-                if (_spriteSheet is null) break;
+                Debug.Assert(_spriteSheet is not null);
                 Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }

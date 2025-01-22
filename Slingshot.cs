@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -141,10 +142,8 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        if (_slingshotTexture is null || _ballSpriteSheet is null || _guideline is null)
-        {
-            return;
-        }
+        Debug.Assert(_slingshotTexture is not null && _ballSpriteSheet is not null && _guideline is not null);
+
         var scrPos = parentTranslate + Position;
         _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
 

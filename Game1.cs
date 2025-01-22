@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -64,10 +65,7 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        if (_spriteBatch == null)
-        {
-            return;
-        }
+        Debug.Assert(_spriteBatch is not null);
 
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
