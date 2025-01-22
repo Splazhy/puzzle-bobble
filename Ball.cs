@@ -142,8 +142,8 @@ public class Ball : GameObject
                 break;
             case State.Moving:
                 if (
-                    (Position.X - Circle.radius < -192 && Velocity.X < 0) ||
-                    (192 < Position.X + Circle.radius && 0 < Velocity.X)
+                    (GlobalPosition.X - Circle.radius < -192 && Velocity.X < 0) ||
+                    (192 < GlobalPosition.X + Circle.radius && 0 < Velocity.X)
                 ) {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
                     Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
@@ -163,8 +163,8 @@ public class Ball : GameObject
                 break;
             case State.Falling:
                 if (
-                    (Position.X - Circle.radius < -192 && Velocity.X < 0) ||
-                    (192 < Position.X + Circle.radius && 0 < Velocity.X)
+                    (GlobalPosition.X - Circle.radius < -192 && Velocity.X < 0) ||
+                    (192 < GlobalPosition.X + Circle.radius && 0 < Velocity.X)
                 ) {
                     Velocity = new Vector2(-Velocity.X, Velocity.Y);
                     Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
