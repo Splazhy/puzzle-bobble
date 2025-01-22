@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 namespace PuzzleBobble.HexGrid;
 
 public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
@@ -13,6 +14,11 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
 
     public OffsetCoord? MinOffsetCoord { get; private set; }
     public OffsetCoord? MaxOffsetCoord { get; private set; }
+
+    public int MaxR { get; private set; }
+    public int MinR { get; private set; }
+
+    private readonly Dictionary<int, int> _rCounts = [];
 
     public Func<Hex, bool> Constraint = (hex) => true;
 
@@ -88,10 +94,12 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
             if (value is null)
             {
                 _map.Remove(hex);
+                DecreaseRowCount(hex.R);
                 return;
             }
             _map[hex] = (T)value;
             ExpandBounds(hex.ToOffsetCoord());
+            IncreaseRowCount(hex.R);
         }
     }
 
@@ -120,6 +128,61 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
             MaxOffsetCoord = offset;
         }
 
+    }
+
+    private void DecreaseRowCount(int r)
+    {
+        bool exist = _rCounts.TryGetValue(r, out int count);
+        if (!exist) return;
+        if (1 < count)
+        {
+            _rCounts[r] = count - 1;
+            return;
+        }
+
+        _rCounts.Remove(r);
+        if (_rCounts.Count == 0)
+        {
+            MaxR = 0;
+            MinR = 0;
+            return;
+        }
+        if (r == MaxR)
+        {
+            MaxR = _rCounts.Keys.Max();
+        }
+        if (r == MinR)
+        {
+            MinR = _rCounts.Keys.Min();
+        }
+    }
+
+    private void IncreaseRowCount(int r)
+    {
+        bool exist = _rCounts.TryGetValue(r, out int count);
+        if (exist)
+        {
+            _rCounts[r] = count + 1;
+            return;
+        }
+
+        if (_rCounts.Count == 0)
+        {
+            _rCounts[r] = 1;
+            MaxR = r;
+            MinR = r;
+            return;
+        }
+
+        _rCounts[r] = 1;
+        if (MaxR < r)
+        {
+            MaxR = r;
+        }
+        if (r < MinR)
+        {
+            MinR = r;
+        }
     }
 
     public IEnumerator<KeyValuePair<Hex, T>> GetEnumerator()
