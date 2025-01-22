@@ -239,11 +239,9 @@ public class GameBoard : GameObject
         {
             // FIXME: when ball goes too fast, it could overwrite another ball
 
-            // use ahead position to check for collision so player won't see the ball
-            // overlapping with balls on the grid as much (visual polish).
-            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
-            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
-            Hex ballClosestHex = ComputeClosestHex(aheadPosition);
+            // balls have already applied velocity into their position
+            var circle = movingBall.Circle;
+            Hex ballClosestHex = ComputeClosestHex(movingBall.Position);
 
             foreach (var dir in Hex.directions)
             {
@@ -252,7 +250,7 @@ public class GameBoard : GameObject
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
+                bool colliding = circle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
                 SetBallAt(ballClosestHex, movingBall.Data);
