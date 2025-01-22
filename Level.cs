@@ -17,6 +17,7 @@ public class Level
 
     public void Stack(Level level)
     {
+        Debug.Assert(level != this, "Cannot stack level with itself");
         TopRow -= level.RowCount;
         FarLeftCol += level.RowCount / 2;
         RowCount += level.RowCount;
@@ -25,7 +26,7 @@ public class Level
             var hex = kv.Key;
             var ball = kv.Value;
             var newR = hex.r + TopRow;
-            Map[new Hex(hex.q+FarLeftCol, hex.r + TopRow)] = ball;
+            Map[new Hex(hex.q + FarLeftCol, hex.r + TopRow)] = ball;
         }
     }
 
