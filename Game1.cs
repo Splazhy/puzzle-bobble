@@ -8,7 +8,7 @@ namespace PuzzleBobble;
 public class Game1 : Game
 {
     public static Vector2 WindowCenter { get; private set; }
-    public SpriteFont? Font { get; private set; }
+    public static SpriteFont? Font { get; private set; }
     private GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
     private SceneManager _sceneManager;

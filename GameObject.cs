@@ -24,7 +24,7 @@ public class GameObject
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
 
-    public Vector2 Velocity { get; set; }
+    public Vector2 Velocity;
 
     public readonly string Name;
 

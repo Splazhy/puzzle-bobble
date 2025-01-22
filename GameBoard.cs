@@ -12,8 +12,6 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
-    private Game1 _game;
-
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
@@ -47,12 +45,10 @@ public class GameBoard : GameObject
 
     public GameBoard(Game game) : base("gameboard")
     {
-        _game = (Game1)game;
-
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
         startPosition = Position;
 
-        Velocity = new Vector2(0, 30.0f);
+        // Velocity = new Vector2(0, 30.0f);
     }
 
     public List<Ball> GetBalls()
@@ -67,11 +63,7 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("3-4-connectHaft");
-        for (int i = 0; i < 20; i++)
-        {
-            level.Stack(Level.Load("3-4-connectHaft"));
-        }
+        var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
         TopRow = level.TopRow;
         foreach (var kv in hexMap)
@@ -106,7 +98,7 @@ public class GameBoard : GameObject
         if (debug_mousepos.HasValue)
         {
             spriteBatch.DrawString(
-                _game.Font,
+                Game1.Font,
                 $"{debug_gridpos.q}, {debug_gridpos.r}",
                 Mouse.GetState().Position.ToVector2(),
                 Color.White
