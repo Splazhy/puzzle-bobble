@@ -246,7 +246,7 @@ public class GameBoard : GameObject
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex)) continue;
+                if (!IsBallAt(neighborHex) && 0 <= neighborHex.R) continue;
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
