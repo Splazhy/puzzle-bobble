@@ -97,8 +97,9 @@ public class GameScene : AbstractScene
                     // double Update() call on the same ball.
                     explodingBalls.Remove(movingBall);
 
-                    Root.AddChildrenDeferred(explodingBalls);
-                    Root.AddChildrenDeferred(fallingBalls);
+                    // uncomment these 2 lines if you want explosion position to stay in place.
+                    // Root.AddChildrenDeferred(explodingBalls);
+                    // Root.AddChildrenDeferred(fallingBalls);
 
                     break;
                 }

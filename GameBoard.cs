@@ -23,6 +23,8 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
+    public int TopRow;
+
     private HexLayout hexLayout = new HexLayout(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
@@ -49,6 +51,8 @@ public class GameBoard : GameObject
 
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
         startPosition = Position;
+
+        Velocity = new Vector2(0, 30.0f);
     }
 
     public List<Ball> GetBalls()
@@ -63,8 +67,13 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("test");
+        var level = Level.Load("3-4-connectHaft");
+        for (int i = 0; i < 20; i++)
+        {
+            level.Stack(Level.Load("3-4-connectHaft"));
+        }
         hexMap = level.ToHexRectMap();
+        TopRow = level.TopRow;
         foreach (var kv in hexMap)
         {
             Hex hex = kv.Key;
@@ -215,9 +224,12 @@ public class GameBoard : GameObject
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys());
 
+        // No balls on the board
+        if (floating.Count == 0) return [];
+
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
-        foreach (var item in hexMap.Where(kv => kv.Key.r == 0))
+        foreach (var item in hexMap.Where(kv => kv.Key.r == TopRow))
         {
             Hex hex = item.Key;
             if (!IsBallAt(hex)) continue;
@@ -271,6 +283,8 @@ public class GameBoard : GameObject
             Position += new Vector2(0, (float)HEX_HEIGHT * (3.0f / 4.0f));
         }
         spaceWasDown = Keyboard.GetState().IsKeyDown(Keys.Space);
+
+        Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         base.Update(gameTime);
     }

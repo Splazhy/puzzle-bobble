@@ -64,7 +64,7 @@ public class Game1 : Game
     {
         Debug.Assert(_spriteBatch is not null, "SpriteBatch is not loaded.");
 
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(Color.RosyBrown);
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         // TODO: hide/show these using debug options
