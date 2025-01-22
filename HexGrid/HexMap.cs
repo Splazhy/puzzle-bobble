@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 namespace PuzzleBobble.HexGrid;
 
-public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : notnull
+public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
     // sorry nullable reference types, too lazy. maybe later
     // ------------------------------------------------------------------
     // welcome nullable reference types :)
+    // ------------------------------------------------------------------
+    // deported
 {
     private readonly Dictionary<Hex, T> _map = [];
 
@@ -77,7 +79,7 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : notnull
     {
         get
         {
-            bool exist = _map.TryGetValue(hex, out T? value);
+            bool exist = _map.TryGetValue(hex, out T value);
             if (!exist) return default;
             return value;
         }
