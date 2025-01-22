@@ -95,10 +95,8 @@ public class Ball : GameObject
                 shineAnimation.Play();
                 break;
             case State.Falling:
-                Velocity = new Vector2(
-                    (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD,
-                    -_rand.NextSingle() * FALLING_SPREAD
-                );
+                Velocity.X = (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD;
+                Velocity.Y = -_rand.NextSingle() * FALLING_SPREAD;
                 break;
         }
         _state = state;
@@ -141,16 +139,7 @@ public class Ball : GameObject
                 shineAnimation.Update(gameTime);
                 break;
             case State.Moving:
-                if (
-                    (GlobalPosition.X - Circle.radius < -192 && Velocity.X < 0) ||
-                    (192 < GlobalPosition.X + Circle.radius && 0 < Velocity.X)
-                ) {
-                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
-                    bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
-                    bounceSfx.Play();
-                }
-                Position += Velocity * deltaTime;
+                moveAndBounce(deltaTime);
                 break;
             case State.Exploding:
                 Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
@@ -162,17 +151,8 @@ public class Ball : GameObject
                 }
                 break;
             case State.Falling:
-                if (
-                    (GlobalPosition.X - Circle.radius < -192 && Velocity.X < 0) ||
-                    (192 < GlobalPosition.X + Circle.radius && 0 < Velocity.X)
-                ) {
-                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
-                    bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
-                    bounceSfx.Play();
-                }
                 Velocity += GRAVITY * deltaTime;
-                Position += Velocity * deltaTime;
+                moveAndBounce(deltaTime);
                 if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
                     Destroy();
                 break;
@@ -226,6 +206,30 @@ public class Ball : GameObject
             SpriteEffects.None,
             0
         );
+    }
+
+    private void moveAndBounce(float deltaTime)
+    {
+        Position += Velocity * deltaTime;
+        float right = 192 - Circle.radius;
+        if (right < GlobalPosition.X && 0 < Velocity.X)
+        {
+            Velocity.X = -Velocity.X;
+            var exceed = GlobalPosition.X - right;
+            Position.X -= exceed * 2;
+            Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+            bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+            bounceSfx.Play();
+        }
+        float left = -192 + Circle.radius;
+        if (GlobalPosition.X < left && Velocity.X < 0) {
+            Velocity.X = -Velocity.X;
+            var exceed = left - GlobalPosition.X;
+            Position.X += exceed * 2;
+            Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+            bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+            bounceSfx.Play();
+        }
     }
 
     public bool IsCollideWith(Ball other)
