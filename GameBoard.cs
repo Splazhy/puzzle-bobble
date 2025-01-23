@@ -237,7 +237,7 @@ public class GameBoard : GameObject
 
     public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        UpdatePosition(gameTime);
 
         shineAnimPlayer?.Update(gameTime);
 
