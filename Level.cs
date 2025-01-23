@@ -4,30 +4,42 @@ namespace PuzzleBobble;
 
 public class Level
 {
-    public int TopRow { get; private set; } = 0;
-    public int FarLeftCol { get; private set; } = 0;
-    public int RowCount { get; private set; }
-
     public readonly HexMap<BallData> Map;
 
-    public Level(int rowCount, HexMap<BallData> map)
+    public Level(HexMap<BallData> map)
     {
-        RowCount = rowCount;
         Map = map;
     }
 
-    public void Stack(Level level)
+    public void StackDown(Level other)
     {
-        Debug.Assert(level != this, "Cannot stack level with itself");
-        TopRow -= level.RowCount;
-        FarLeftCol += level.RowCount / 2;
-        RowCount += level.RowCount;
-        foreach (var kv in level.Map)
+        Debug.Assert(other != this, "Cannot stack level with itself");
+
+        int translateR = Map.MaxR + 1 - other.Map.MinR;
+
+        foreach (var kv in other.Map)
         {
             var hex = kv.Key;
             var ball = kv.Value;
-            var newR = hex.R + TopRow;
-            Map[new Hex(hex.Q + FarLeftCol, hex.R + TopRow)] = ball;
+
+            var offset = hex.ToOffsetCoord();
+            Map[offset + new OffsetCoord(0, translateR)] = ball;
+        }
+    }
+
+    public void StackUp(Level other)
+    {
+        Debug.Assert(other != this, "Cannot stack level with itself");
+
+        int translateR = Map.MinR - other.Map.MaxR - 1;
+
+        foreach (var kv in other.Map)
+        {
+            var hex = kv.Key;
+            var ball = kv.Value;
+
+            var offset = hex.ToOffsetCoord();
+            Map[offset + new OffsetCoord(0, translateR)] = ball;
         }
     }
 
@@ -35,7 +47,6 @@ public class Level
     {
         string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
         HexMap<BallData> map = [];
-        int rowCnt = lines.Length;
         for (int y = 0; y < lines.Length; y++)
         {
             string[] cells = lines[y].Trim().Split(' ');
@@ -60,7 +71,7 @@ public class Level
             null,
             true
         );
-        return new Level(rowCnt, map);
+        return new Level(map);
     }
 
     public HexMap<BallData> ToHexRectMap()

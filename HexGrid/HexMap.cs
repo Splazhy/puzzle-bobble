@@ -143,8 +143,6 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
         _rCounts.Remove(r);
         if (_rCounts.Count == 0)
         {
-            MaxR = 0;
-            MinR = 0;
             return;
         }
         if (r == MaxR)

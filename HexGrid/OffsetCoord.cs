@@ -28,4 +28,7 @@ public struct OffsetCoord
     {
         return new OffsetCoord(Math.Min(Col, other.Col), Math.Min(Row, other.Row));
     }
+
+    public static OffsetCoord operator +(OffsetCoord a, OffsetCoord b) => new(a.Col + b.Col, a.Row + b.Row);
+    public static OffsetCoord operator -(OffsetCoord a, OffsetCoord b) => new(a.Col - b.Col, a.Row - b.Row);
 }

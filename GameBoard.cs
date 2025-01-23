@@ -22,7 +22,16 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
-    public int TopRow;
+
+    private int _topRow;
+    public int TopRow
+    {
+        get
+        {
+            _topRow = Math.Min(_topRow, hexMap.MinR);
+            return _topRow;
+        }
+    }
 
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
@@ -65,7 +74,6 @@ public class GameBoard : GameObject
 
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
-        TopRow = level.TopRow;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -267,7 +275,7 @@ public class GameBoard : GameObject
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex) && 0 <= neighborHex.R) continue;
+                if (!IsBallAt(neighborHex) && TopRow <= neighborHex.R) continue;
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
