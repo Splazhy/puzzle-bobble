@@ -78,7 +78,7 @@ public class GameBoard : GameObject
         base.LoadContent(content);
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
@@ -86,9 +86,7 @@ public class GameBoard : GameObject
         Debug.Assert(leftBorder is not null, "Left border is not loaded.");
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
-        var scrPos = parentTranslate + Position;
-
-        var pX = parentTranslate.X;
+        var pX = ParentTranslate.X;
         spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
         spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
         spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
@@ -99,13 +97,13 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, ballSpriteSheet, scrPos + p);
+            ball.Draw(spriteBatch, ballSpriteSheet, ScreenPosition + p);
         }
 
-        DrawChildren(spriteBatch, gameTime, parentTranslate);
+        DrawChildren(spriteBatch, gameTime);
 
         Debug.Assert(shineAnimPlayer is not null);
-        shineAnimPlayer.Draw(spriteBatch, gameTime, parentTranslate + Position);
+        shineAnimPlayer.Draw(spriteBatch, gameTime);
     }
 
     public Hex ComputeClosestHex(Vector2 pos)
@@ -240,11 +238,12 @@ public class GameBoard : GameObject
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         UpdatePosition(gameTime);
 
-        shineAnimPlayer?.Update(gameTime);
+        shineAnimPlayer?.Update(gameTime, ScreenPosition);
 
-        UpdateChildren(gameTime, parentTranslate);
+        UpdateChildren(gameTime);
 
         var allBalls = children.OfType<Ball>();
 

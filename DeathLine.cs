@@ -26,14 +26,15 @@ public class DeathLine : GameObject
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         _spriteSheet?.Update(gameTime);
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         _spriteSheet?.Draw(
             spriteBatch,
-            parentTranslate + Position,
+            ParentTranslate + Position,
             Color.White,
             0.0f,
             new Vector2(_spriteSheet.frameWidth / 2, 0),

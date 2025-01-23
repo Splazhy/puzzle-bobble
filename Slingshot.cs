@@ -48,7 +48,7 @@ public class Slingshot : GameObject
         private static float RightBorder { get { return Game1.WindowCenter.X + 192 - 24; } }
         public void Draw(SpriteBatch spriteBatch, Vector2 startPoint, float rotation, Vector2 scale)
         {
-            var direction = Vector2.Normalize( new Vector2(MathF.Cos(rotation), MathF.Sin(rotation)));
+            var direction = Vector2.Normalize(new Vector2(MathF.Cos(rotation), MathF.Sin(rotation)));
             for (int i = 0; i < _count; i++)
             {
                 var subProgress = (_progress + (float)i / _count) % 1.0f;
@@ -139,6 +139,7 @@ public class Slingshot : GameObject
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         // TODO: Implement `IsJustPressed` method for new InputManager class
         // This code executes multiple times per a short key press,
         // resulting in undesired behavior.
@@ -153,7 +154,7 @@ public class Slingshot : GameObject
         _guideline?.Update(gameTime);
 
         MouseState mouseState = Mouse.GetState();
-        Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - (Position + parentTranslate);
+        Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - (Position + ParentTranslate);
 
         // +90 degrees to adjust for texture orientation
         direction.Rotate(MathF.PI / 2.0f);
@@ -187,13 +188,13 @@ public class Slingshot : GameObject
         }
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
         Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
         Debug.Assert(_guideline is not null, "Guideline is not loaded.");
 
-        var scrPos = parentTranslate + Position;
+        var scrPos = ParentTranslate + Position;
         _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
         spriteBatch.Draw(
             _slingshotTexture,

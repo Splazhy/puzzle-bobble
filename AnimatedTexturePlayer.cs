@@ -15,6 +15,7 @@ public class AnimatedTexturePlayer
         public Vector2 origin;
         public Color color;
     }
+    public Vector2 ParentTranslate;
 
     private readonly AnimatedTexture2D animatedTexture;
     private readonly List<AnimationInstance> instances = [];
@@ -38,8 +39,10 @@ public class AnimatedTexturePlayer
         newAnimatedTexture.Play();
     }
 
-    public void Update(GameTime gameTime)
+    public void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        ParentTranslate = parentTranslate;
+
         var instancesToRemove = instances.FindAll(instance => instance.animatedTexture.IsFinished);
         instances.RemoveAll(instance => instancesToRemove.Contains(instance));
 
@@ -49,15 +52,15 @@ public class AnimatedTexturePlayer
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         foreach (var instance in instances)
         {
             instance.animatedTexture.Draw(
                 spriteBatch,
                 new Rectangle(
-                    instance.destinationRectangle.X + (int)parentTranslate.X,
-                    instance.destinationRectangle.Y + (int)parentTranslate.Y,
+                    instance.destinationRectangle.X + (int)ParentTranslate.X,
+                    instance.destinationRectangle.Y + (int)ParentTranslate.Y,
                     instance.destinationRectangle.Width,
                     instance.destinationRectangle.Height
                 ),

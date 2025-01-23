@@ -168,7 +168,7 @@ public class CraftScene : AbstractScene
         };
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         _desktop?.Render();
     }

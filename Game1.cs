@@ -75,7 +75,7 @@ public class Game1 : Game
         _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
 
-        _sceneManager.Draw(_spriteBatch, gameTime, _screenCenter);
+        _sceneManager.Draw(_spriteBatch, gameTime);
         _spriteBatch.End();
 
         base.Draw(gameTime);

@@ -8,7 +8,9 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
+    public Vector2 ParentTranslate { get; set; }
     public Vector2 Position { get; set; }
+    public Vector2 ScreenPosition => Position + ParentTranslate;
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
 
@@ -32,6 +34,7 @@ public class GameObject
     // We treat GameObject contructor like Initialize method
     public GameObject(string name)
     {
+        ParentTranslate = Vector2.Zero;
         Position = Vector2.Zero;
         Rotation = 0.0f;
         Scale = Vector2.One;
@@ -53,6 +56,7 @@ public class GameObject
 
     public virtual void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        ParentTranslate = parentTranslate;
     }
 
     protected void UpdatePosition(GameTime gameTime)
@@ -60,12 +64,11 @@ public class GameObject
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
     }
 
-    protected void UpdateChildren(GameTime gameTime, Vector2 parentTranslate)
+    protected void UpdateChildren(GameTime gameTime)
     {
-
         foreach (var child in children)
         {
-            child.Update(gameTime, parentTranslate + Position);
+            child.Update(gameTime, ScreenPosition);
         }
     }
 
@@ -77,22 +80,26 @@ public class GameObject
 
         // NOTE: we need to load content for every new game objects,
         // not sure if this is a design flaw or not.
-        pendingChildren.ForEach(obj => obj.LoadContent(content));
+        pendingChildren.ForEach(obj =>
+        {
+            obj.LoadContent(content);
+            obj.ParentTranslate = ScreenPosition;
+        });
         children.AddRange(pendingChildren);
         pendingChildren.Clear();
 
         // if (pendingChildren.Count > 0) System.Console.WriteLine($"{pendingChildren.Count} children added to {Name}");
     }
 
-    protected void DrawChildren(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    protected void DrawChildren(SpriteBatch spriteBatch, GameTime gameTime)
     {
         foreach (var child in children)
         {
-            child.Draw(spriteBatch, gameTime, parentTranslate + Position);
+            child.Draw(spriteBatch, gameTime);
         }
     }
 
-    public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
     }
 

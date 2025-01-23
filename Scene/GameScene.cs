@@ -50,12 +50,13 @@ public class GameScene : AbstractScene
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
             ChangeScene(new MenuScene());
         }
 
-        UpdateChildren(gameTime, parentTranslate);
+        UpdateChildren(gameTime);
         Debug.Assert(_gameBoard != null && _slingshot != null);
         if (_slingshot.Data == null)
         {
@@ -71,9 +72,9 @@ public class GameScene : AbstractScene
         UpdatePendingAndDestroyedChildren();
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        DrawChildren(spriteBatch, gameTime, parentTranslate);
+        DrawChildren(spriteBatch, gameTime);
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
     }
 }

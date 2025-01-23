@@ -46,8 +46,8 @@ public class SceneManager
         CurrentScene.Update(gameTime, parentTranslate);
     }
 
-    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        CurrentScene.Draw(spriteBatch, gameTime, parentTranslate);
+        CurrentScene.Draw(spriteBatch, gameTime);
     }
 }

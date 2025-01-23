@@ -93,6 +93,7 @@ public class Ball : GameObject
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
         {
@@ -151,10 +152,10 @@ public class Ball : GameObject
         bounceSfx.Play();
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_spriteSheet is not null);
-        var scrPos = parentTranslate + Position;
+        var scrPos = ParentTranslate + Position;
         switch (_state)
         {
             case State.Exploding:
