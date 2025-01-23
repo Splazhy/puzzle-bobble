@@ -169,14 +169,6 @@ public class GameBoard : GameObject
 
         if (connected.Count < 3)
         {
-            // We want to play the shine animation when a ball is settled
-            // and that ball doesn't cause any explosion.
-            //
-            // We currently only call this method on settled moving ball,
-            // so we can assume that calling play shine animation here will
-            // yield the expected outcome.
-            var shinePosition = hexLayout.HexToCenterPixel(sourceHex).Downcast();
-            shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
             return [];
         }
 
@@ -301,6 +293,18 @@ public class GameBoard : GameObject
                     };
                     return b;
                 }));
+
+                if (explodingBalls.Count == 0)
+                {
+                    // We want to play the shine animation when a ball is settled
+                    // and that ball doesn't cause any explosion.
+                    //
+                    // We currently only call this method on settled moving ball,
+                    // so we can assume that calling play shine animation here will
+                    // yield the expected outcome.
+                    var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
+                    shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                }
 
                 ball.Destroy();
                 break;
