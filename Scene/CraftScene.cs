@@ -50,7 +50,7 @@ public class CraftScene : AbstractScene
             Left = 366,
             VerticalAlignment = VerticalAlignment.Bottom
         };
-        BackBtn.Click += (sender, args) => ChangeScene(Scenes.MENU);
+        BackBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
         var CraftBtn = new Button
         {

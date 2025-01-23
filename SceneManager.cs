@@ -14,7 +14,7 @@ public class SceneManager
     public SceneManager(Game game)
     {
         _game = game;
-        CurrentScene = Scenes.GAME;
+        CurrentScene = new GameScene();
         CurrentScene.SceneChanged += ChangeScene;
     }
 
@@ -24,7 +24,6 @@ public class SceneManager
         Debug.Assert(CurrentScene == oldScene);
 
         CurrentScene.SceneChanged -= ChangeScene;
-        CurrentScene.Deinitialize();
         CurrentScene = newScene;
         CurrentScene.SceneChanged += ChangeScene;
 

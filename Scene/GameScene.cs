@@ -52,7 +52,7 @@ public class GameScene : AbstractScene
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
-            ChangeScene(Scenes.MENU);
+            ChangeScene(new MenuScene());
         }
 
         UpdateChildren(gameTime, parentTranslate);

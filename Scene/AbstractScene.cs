@@ -22,9 +22,4 @@ public abstract class AbstractScene : GameObject
     }
 
     public abstract void Initialize(Game game);
-    public virtual void Deinitialize()
-    {
-        children.Clear();
-        pendingChildren.Clear();
-    }
 }

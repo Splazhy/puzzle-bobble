@@ -31,7 +31,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        startBtn.Click += (sender, args) => ChangeScene(Scenes.GAME);
+        startBtn.Click += (sender, args) => ChangeScene(new GameScene());
 
         var optionsBtn = new Button
         {
@@ -46,7 +46,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        creditsBtn.Click += (sender, args) => ChangeScene(Scenes.CREDITS);
+        creditsBtn.Click += (sender, args) => ChangeScene(new CreditsScene());
 
         var quitBtn = new Button
         {
@@ -62,7 +62,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        testBtn.Click += (sender, args) => ChangeScene(Scenes.Craft);
+        testBtn.Click += (sender, args) => ChangeScene(new CraftScene());
 
         VerticalStackPanel menu = new()
 

@@ -47,7 +47,7 @@ public class CreditsScene : AbstractScene
             Margin = new Thickness(0, 20),
             Padding = new Thickness(20, 10),
         };
-        backBtn.Click += (sender, args) => ChangeScene(Scenes.MENU);
+        backBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
         var panel = new VerticalStackPanel
         {
@@ -68,7 +68,7 @@ public class CreditsScene : AbstractScene
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
-            ChangeScene(Scenes.MENU);
+            ChangeScene(new MenuScene());
         }
 
         return [];
