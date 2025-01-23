@@ -5,74 +5,65 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PuzzleBobble;
 
-public class AnimatedTexturePlayer : GameObject
+public class AnimatedTexturePlayer
 {
-    public struct AnimationInstance
+    public class AnimationInstance : GameObject
     {
-        public AnimatedTexture2D animatedTexture;
-        public Rectangle destinationRectangle;
-        public float rotation;
-        public Vector2 origin;
-        public Color color;
-    }
+        private readonly AnimatedTexture2D _animatedTexture;
+        public Vector2 Size;
+        public Vector2 Origin;
+        public Color Color;
 
-    private readonly AnimatedTexture2D animatedTexture;
-    private readonly List<AnimationInstance> instances = [];
-
-    public AnimatedTexturePlayer(AnimatedTexture2D animatedTexture) : base("animatedTexturePlayer")
-    {
-        this.animatedTexture = animatedTexture;
-    }
-
-    public void PlayAt(Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
-    {
-        var newAnimatedTexture = new AnimatedTexture2D(animatedTexture);
-        instances.Add(new AnimationInstance
+        public AnimationInstance(AnimatedTexture2D animatedTexture) : base("animationInstance")
         {
-            animatedTexture = newAnimatedTexture,
-            destinationRectangle = destinationRectangle,
-            color = color,
-            rotation = rotation,
-            origin = origin,
-        });
-        newAnimatedTexture.Play();
-    }
-
-    public override void Update(GameTime gameTime, Vector2 parentTranslate)
-    {
-        base.Update(gameTime, parentTranslate);
-
-        var instancesToRemove = instances.FindAll(instance => instance.animatedTexture.IsFinished);
-        instances.RemoveAll(instance => instancesToRemove.Contains(instance));
-
-        foreach (var instance in instances)
-        {
-            instance.animatedTexture.Update(gameTime);
+            _animatedTexture = animatedTexture;
         }
-    }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
-    {
-        foreach (var instance in instances)
+        public override void Update(GameTime gameTime, Vector2 parentTranslate)
         {
-            instance.animatedTexture.Draw(
+            base.Update(gameTime, parentTranslate);
+            if (_animatedTexture.IsFinished)
+            {
+                Destroy();
+            }
+            _animatedTexture.Update(gameTime);
+        }
+
+        public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+        {
+            _animatedTexture.Draw(
                 spriteBatch,
                 new Rectangle(
-                    instance.destinationRectangle.X + (int)ParentTranslate.X,
-                    instance.destinationRectangle.Y + (int)ParentTranslate.Y,
-                    instance.destinationRectangle.Width,
-                    instance.destinationRectangle.Height
+                    (int)(Position.X + ParentTranslate.X),
+                    (int)(Position.Y + ParentTranslate.Y),
+                    (int)Size.X,
+                    (int)Size.Y
                 ),
-                instance.color,
-                instance.rotation,
-                instance.origin
+                Color,
+                Rotation,
+                Origin
             );
         }
     }
 
-    internal void PlayAt(Rectangle rectangle, int v1, Vector2 vector2, int v2, Color white)
+    private readonly AnimatedTexture2D animatedTexture;
+
+    public AnimatedTexturePlayer(AnimatedTexture2D animatedTexture)
     {
-        throw new NotImplementedException();
+        this.animatedTexture = animatedTexture;
     }
 
+    public AnimationInstance PlayAt(Vector2 position, Vector2 size, Color color, float rotation, Vector2 origin)
+    {
+        var newAnimatedTexture = new AnimatedTexture2D(animatedTexture);
+        newAnimatedTexture.Play();
+        return new AnimationInstance(newAnimatedTexture)
+        {
+            Position = position,
+            Size = size,
+            Color = color,
+            Rotation = rotation,
+            Origin = origin,
+        };
+    }
 }

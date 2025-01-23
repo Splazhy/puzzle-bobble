@@ -101,9 +101,6 @@ public class GameBoard : GameObject
         }
 
         DrawChildren(spriteBatch, gameTime);
-
-        Debug.Assert(shineAnimPlayer is not null);
-        shineAnimPlayer.Draw(spriteBatch, gameTime);
     }
 
     public Hex ComputeClosestHex(Vector2 pos)
@@ -241,8 +238,6 @@ public class GameBoard : GameObject
         base.Update(gameTime, parentTranslate);
         UpdatePosition(gameTime);
 
-        shineAnimPlayer?.Update(gameTime, ScreenPosition);
-
         UpdateChildren(gameTime);
 
         var allBalls = children.OfType<Ball>();
@@ -304,6 +299,7 @@ public class GameBoard : GameObject
 
                 if (explodingBalls.Count == 0)
                 {
+                    Debug.Assert(shineAnimPlayer is not null && settleSfx is not null);
                     // We want to play the shine animation when a ball is settled
                     // and that ball doesn't cause any explosion.
                     //
@@ -311,8 +307,9 @@ public class GameBoard : GameObject
                     // so we can assume that calling play shine animation here will
                     // yield the expected outcome.
                     var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
-                    settleSfx?.Play();
+                    var shineObj = shineAnimPlayer.PlayAt(shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    pendingChildren.Add(shineObj);
+                    settleSfx.Play();
                 }
 
                 ball.Destroy();

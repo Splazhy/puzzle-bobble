@@ -50,7 +50,8 @@ public class AnimatedTexture2D
         if (isPlaying) return;
 
         isPlaying = true;
-        sourceRectangle.X = 0;
+        sourceRectangle.X = spriteSheetClip.X;
+        sourceRectangle.Y = spriteSheetClip.Y;
         timeSinceStart = -delay;
     }
 
