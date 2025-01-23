@@ -48,7 +48,7 @@ public class GameScene : AbstractScene
         if (_gameBoard is null) return;
     }
 
-    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
@@ -69,8 +69,6 @@ public class GameScene : AbstractScene
             }
         }
         UpdatePendingAndDestroyedChildren();
-
-        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

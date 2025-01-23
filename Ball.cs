@@ -116,7 +116,7 @@ public class Ball : GameObject
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002").CreateInstance();
     }
 
-    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
@@ -149,7 +149,6 @@ public class Ball : GameObject
                     Destroy();
                 break;
         }
-        return [];
     }
 
     public void BounceOverX(float x)

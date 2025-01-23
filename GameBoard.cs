@@ -237,7 +237,7 @@ public class GameBoard : GameObject
         return fallingBalls;
     }
 
-    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         UpdatePosition(gameTime);
 
@@ -319,9 +319,7 @@ public class GameBoard : GameObject
         }
         ;
 
-
         UpdatePendingAndDestroyedChildren();
-        return [];
     }
 
     public void AddBallFromSlingshot(Ball ball)

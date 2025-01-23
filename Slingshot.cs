@@ -107,7 +107,7 @@ public class Slingshot : GameObject
         _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
     }
 
-    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         // TODO: Implement `IsJustPressed` method for new InputManager class
         // This code executes multiple times per a short key press,
@@ -146,8 +146,6 @@ public class Slingshot : GameObject
             // Cycle through ball colors, just a fun experimentation
             Data = null;
         }
-
-        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

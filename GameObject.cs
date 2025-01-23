@@ -51,9 +51,8 @@ public class GameObject
         }
     }
 
-    public virtual List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public virtual void Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        return [];
     }
 
     protected void UpdatePosition(GameTime gameTime)
@@ -66,8 +65,7 @@ public class GameObject
 
         foreach (var child in children)
         {
-            var newObjs = child.Update(gameTime, parentTranslate + Position);
-            pendingChildren.AddRange(newObjs);
+            child.Update(gameTime, parentTranslate + Position);
         }
     }
 

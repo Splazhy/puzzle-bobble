@@ -64,14 +64,12 @@ public class CreditsScene : AbstractScene
         };
     }
 
-    public override List<GameObject> Update(GameTime gameTime, Vector2 parentTranslate)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
             ChangeScene(new MenuScene());
         }
-
-        return [];
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
