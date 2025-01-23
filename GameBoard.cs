@@ -85,13 +85,14 @@ public class GameBoard : GameObject
         Debug.Assert(leftBorder is not null, "Left border is not loaded.");
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
-        var startScreenPosition = startPosition + Game1.WindowCenter;
+        // we're not making this a field because the board moves
+        var AlignedPosition = startPosition + Game1.WindowCenter;
         // `14 * 6`
         // 14 is the height of each row (16 - 2 dithered pixels)
         // 6 is the number of rows
-        spriteBatch.Draw(background, startScreenPosition, null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(startScreenPosition.X - leftBorder.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(startScreenPosition.X + background.Width * 3, startScreenPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(background, AlignedPosition, null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(AlignedPosition.X - leftBorder.Width * 3, AlignedPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(AlignedPosition.X + background.Width * 3, AlignedPosition.Y), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
 
         base.Draw(spriteBatch, gameTime);
 

@@ -66,6 +66,10 @@ public class Ball : GameObject
     public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new Vector2(0, 9.8f * 100);
+    public Vector2 AlignedPosition
+    {
+        get { return GlobalPosition + Game1.WindowCenter; }
+    }
 
     public Ball(Color ballType, State state) : base("ball")
     {
@@ -169,7 +173,7 @@ public class Ball : GameObject
                 Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Draw(
                     spriteBatch,
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
+                    new Rectangle((int)AlignedPosition.X, (int)AlignedPosition.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(32 / 2, 32 / 2)
@@ -179,7 +183,7 @@ public class Ball : GameObject
                 drawBall(spriteBatch, gameTime);
                 shineAnimation?.Draw(
                     spriteBatch,
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+                    new Rectangle((int)AlignedPosition.X, (int)AlignedPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(16 / 2, 16 / 2)
@@ -195,10 +199,9 @@ public class Ball : GameObject
 
     private void drawBall(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        var ScreenPosition = GlobalPosition + Game1.WindowCenter;
         spriteBatch.Draw(
             _spriteSheet,
-            new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
+            new Rectangle((int)AlignedPosition.X, (int)AlignedPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
             new Rectangle((int)_color * 16, 0, 16, 16),
             Microsoft.Xna.Framework.Color.White,
             0.0f,

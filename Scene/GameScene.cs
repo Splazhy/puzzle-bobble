@@ -53,7 +53,7 @@ public class GameScene : AbstractScene
 
         Root.Update(gameTime);
 
-        var movingBalls = Root.Children.FindAll(gameObject =>
+        var movingBalls = Root.FindAllChidren(gameObject =>
             gameObject is Ball ball &&
             ball.GetState() == Ball.State.Moving
         ).Cast<Ball>().ToList();

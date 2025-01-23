@@ -7,19 +7,15 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
-    public GameObject? Parent = null;
-    public List<GameObject> Children = [];
+    private GameObject? Parent = null;
+    private List<GameObject> Children = [];
     private List<GameObject> _childrenToAdd = [];
 
     public Vector2 Position; // Local position
 
     public Vector2 GlobalPosition
     {
-        get { if (Parent is null) return Position; else return Position + Parent.GlobalPosition; }
-    }
-    public Vector2 ScreenPosition
-    {
-        get { return GlobalPosition + Game1.WindowCenter; }
+        get { return Position + (Parent?.GlobalPosition ?? Vector2.Zero);}
     }
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
@@ -81,14 +77,10 @@ public class GameObject
     }
 
     /// <summary>
-    /// This also destroys all children of the object.
+    /// This would also remove all children automatically
     /// </summary>
     public void Destroy()
     {
-        foreach (var child in Children)
-        {
-            child.Destroy();
-        }
         Destroyed = true;
     }
 
@@ -139,6 +131,11 @@ public class GameObject
             child.Destroy();
         }
         Children.Clear();
+    }
+
+    public List<GameObject> FindAllChidren(System.Predicate<GameObject> predicate)
+    {
+        return Children.FindAll(predicate);
     }
 
 }

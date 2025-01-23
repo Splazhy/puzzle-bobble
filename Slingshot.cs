@@ -111,6 +111,11 @@ public class Slingshot : GameObject
     private const float RECOIL_RECOVERY = 100.0f;
     private float visualRecoilOffset = 0.0f;
 
+    public Vector2 AlignedPosition
+    {
+        get { return GlobalPosition + Game1.WindowCenter; }
+    }
+
     public event BallFiredHandler? BallFired;
     public delegate void BallFiredHandler(Ball ball);
 
@@ -195,11 +200,11 @@ public class Slingshot : GameObject
         Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
         Debug.Assert(_guideline is not null, "Guideline is not loaded.");
 
-        _guideline.Draw(spriteBatch, ScreenPosition, Rotation - MathF.PI / 2, Scale);
+        _guideline.Draw(spriteBatch, AlignedPosition, Rotation - MathF.PI / 2, Scale);
 
         spriteBatch.Draw(
             _slingshotTexture,
-            new Vector2(ScreenPosition.X, ScreenPosition.Y + visualRecoilOffset),
+            new Vector2(AlignedPosition.X, AlignedPosition.Y + visualRecoilOffset),
             null,
             Color.White,
             0.0f,
@@ -213,7 +218,7 @@ public class Slingshot : GameObject
 
         spriteBatch.Draw(
             _ballSpriteSheet,
-            new Rectangle((int)ScreenPosition.X, (int)(ScreenPosition.Y + visualRecoilOffset), 48, 48),
+            new Rectangle((int)AlignedPosition.X, (int)(AlignedPosition.Y + visualRecoilOffset), 48, 48),
             new Rectangle((int)_ballColor * 16, 0, 16, 16),
             Color.White,
             0.0f,

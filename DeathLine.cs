@@ -8,6 +8,11 @@ public class DeathLine : GameObject
 {
     private AnimatedTexture2D? _spriteSheet;
 
+    public Vector2 AlignedPosition
+    {
+        get { return GlobalPosition + Game1.WindowCenter; }
+    }
+
     public DeathLine(Game game) : base("deathline")
     {
         Position = new Vector2(0, 208); // value hand-picked with my eye (pixel-perfect btw)
@@ -33,7 +38,7 @@ public class DeathLine : GameObject
     {
         _spriteSheet?.Draw(
             spriteBatch,
-            ScreenPosition,
+            AlignedPosition,
             Color.White,
             0.0f,
             new Vector2(_spriteSheet.frameWidth / 2, 0),
