@@ -21,6 +21,10 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
+    public static readonly float DEFAULT_SPEED = 20.0f;
+    public static readonly float LERP_AMOUNT = 5.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
+
     public int TopRow;
 
     private HexLayout hexLayout = new HexLayout(
@@ -48,7 +52,7 @@ public class GameBoard : GameObject
         Position = new Vector2((float)(HEX_WIDTH * -4), -300);
         startPosition = Position;
 
-        // Velocity = new Vector2(0, 30.0f);
+        Velocity.Y = DEFAULT_SPEED;
     }
 
     public List<Ball> GetBalls()
@@ -63,7 +67,11 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("test");
+        var level = Level.Load("3-4-connectHaft");
+        for (int i = 0; i < 20; i++)
+        {
+            level.Stack(Level.Load("3-4-connectHaft"));
+        }
         hexMap = level.ToHexRectMap();
         TopRow = level.TopRow;
         foreach (var kv in hexMap)
@@ -209,6 +217,8 @@ public class GameBoard : GameObject
             }
         }
 
+        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
+
         return explodingBalls;
     }
 
@@ -277,6 +287,8 @@ public class GameBoard : GameObject
         }
         spaceWasDown = Keyboard.GetState().IsKeyDown(Keys.Space);
 
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         base.Update(gameTime);

@@ -189,7 +189,8 @@ public class Slingshot : GameObject
 
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
-            _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
+            // _ballColor = (Ball.Color)(((int)_ballColor + 1) % Enum.GetNames(typeof(Ball.Color)).Length);
+            _ballColor = (Ball.Color)(((int)_ballColor + 1) % 3);
             visualRecoilOffset = MAX_RECOIL;
         }
     }
