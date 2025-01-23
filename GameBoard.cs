@@ -72,7 +72,15 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("test");
+        var level = Level.Load("3-4-connectHaft");
+        for (int i = 0; i < 1; i++)
+        {
+            level.StackDown(Level.Load("3-4-connectHaft"));
+        }
+        for (int i = 0; i < 1; i++)
+        {
+            level.StackUp(Level.Load("3-4-connectHaft"));
+        }
         hexMap = level.ToHexRectMap();
 
         var animation = new AnimatedTexture2D(
@@ -241,10 +249,32 @@ public class GameBoard : GameObject
         return fallingBalls;
     }
 
+    private double GetPreferredPos()
+    {
+        return 100 - GetBottomEdgePos();
+    }
+
+    private double GetBottomEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+    }
+
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
+
+        // PROOF OF CONCEPT
+        Velocity = new Vector2(0, Math.Min((float)(GetPreferredPos() - Position.Y) * 4, 250));
+        // END
         UpdatePosition(gameTime);
+
+        // PROOF OF CONCEPT
+        if (hexMap.MaxR - hexMap.MinR < 7)
+        {
+            var l = new Level(hexMap);
+            l.StackUp(Level.Load("3-4-connectHaft"));
+        }
+        // END
 
         UpdateChildren(gameTime);
 
