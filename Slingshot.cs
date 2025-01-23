@@ -185,6 +185,8 @@ public class Slingshot : GameObject
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
             Data = null;
+
+            visualRecoilOffset = MAX_RECOIL;
         }
     }
 
@@ -198,7 +200,7 @@ public class Slingshot : GameObject
         _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
         spriteBatch.Draw(
             _slingshotTexture,
-            scrPos,
+            scrPos + new Vector2(0, visualRecoilOffset),
             null,
             Color.White,
             0.0f,
@@ -210,7 +212,7 @@ public class Slingshot : GameObject
             0
         );
 
-        Data?.Draw(spriteBatch, _ballSpriteSheet, scrPos);
+        Data?.Draw(spriteBatch, _ballSpriteSheet, scrPos + new Vector2(0, visualRecoilOffset));
     }
 
 }
