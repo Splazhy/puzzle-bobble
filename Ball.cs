@@ -130,32 +130,7 @@ public class Ball : GameObject
                 shineAnimation.Update(gameTime);
                 break;
             case State.Moving:
-                // TODO: fix this to take gameboard bounds into account
                 UpdatePosition(gameTime);
-                float right = 600 - Circle.radius;
-                if (0 < Velocity.X && right < Position.X)
-                {
-                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    Position = new Vector2(right - (Position.X - right), Position.Y); // reflect position across X=right
-                }
-                float left = -600 + Circle.radius;
-                if (Velocity.X < 0 && Position.X < left)
-                {
-                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                    Position = new Vector2(left - (Position.X - left), Position.Y); // reflect position across X=left
-                }
-                float top = 600 - Circle.radius;
-                if (0 < Velocity.Y && top < Position.Y)
-                {
-                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
-                    Position = new Vector2(Position.X, top - (Position.Y - top)); // reflect position across Y=top
-                }
-                float bottom = -600 + Circle.radius;
-                if (Velocity.Y < 0 && Position.Y < bottom)
-                {
-                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
-                    Position = new Vector2(Position.X, bottom - (Position.Y - bottom)); // reflect position across Y=bottom
-                }
                 break;
             case State.Exploding:
                 UpdatePosition(gameTime);
@@ -175,6 +150,18 @@ public class Ball : GameObject
                 break;
         }
         return [];
+    }
+
+    public void BounceOverX(float x)
+    {
+        Velocity = new Vector2(-Velocity.X, Velocity.Y);
+        Position = new Vector2(x - (Position.X - x), Position.Y);
+    }
+
+    public void BounceOverY(float y)
+    {
+        Velocity = new Vector2(Velocity.X, -Velocity.Y);
+        Position = new Vector2(Position.X, y - (Position.Y - y));
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)

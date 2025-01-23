@@ -251,10 +251,31 @@ public class GameBoard : GameObject
 
         foreach (var movingBall in movingBalls)
         {
-            // FIXME: when ball goes too fast, it could overwrite another ball
-
-            // balls have already applied velocity into their position
             var circle = movingBall.Circle;
+
+            float right = (HEX_INRADIUS * 8) - circle.radius;
+            if (0 < movingBall.Velocity.X && right < movingBall.Position.X)
+            {
+                movingBall.BounceOverX(right);
+            }
+            float left = -(HEX_INRADIUS * 8) + circle.radius;
+            if (movingBall.Velocity.X < 0 && movingBall.Position.X < left)
+            {
+                movingBall.BounceOverX(left);
+            }
+            float top = 0 - circle.radius;
+            if (0 < movingBall.Velocity.Y && top < movingBall.Position.Y)
+            {
+                movingBall.BounceOverY(top);
+            }
+            float bottom = -5000 + circle.radius;
+            if (movingBall.Velocity.Y < 0 && movingBall.Position.Y < bottom)
+            {
+                movingBall.BounceOverY(bottom);
+            }
+
+            // FIXME: when ball goes too fast, it could overwrite another ball
+            // balls have already applied velocity into their position
             Hex ballClosestHex = ComputeClosestHex(movingBall.Position);
 
             foreach (var dir in Hex.directions)
