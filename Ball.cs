@@ -34,7 +34,6 @@ public class Ball : GameObject
         Moving,
         Falling,
         Exploding,
-        Settle,
     }
 
     public const float FALLING_SPREAD = 50;
@@ -44,10 +43,9 @@ public class Ball : GameObject
     private static Random _rand = new Random();
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
-    private AnimatedTexture2D? shineAnimation;
+
 
     private SoundEffectInstance? explodeSfx;
-    private SoundEffectInstance? settleSfx;
 
     public Circle Circle
     {
@@ -71,31 +69,6 @@ public class Ball : GameObject
         Scale = new Vector2(3, 3);
     }
 
-    public void SetState(State state)
-    {
-        if (_state == state) return;
-
-        switch (state)
-        {
-            case State.Exploding:
-                // var randomPercent = _rand.NextSingle();
-                if (explodeSfx is not null)
-                    explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
-                explosionAnimation?.Play(MAX_EXPLODE_DELAY * _rand.NextSingle());
-                break;
-            case State.Settle:
-                shineAnimation?.Play();
-                settleSfx?.Play();
-                break;
-            case State.Falling:
-                Velocity = new Vector2(
-                    (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD,
-                    -_rand.NextSingle() * FALLING_SPREAD
-                );
-                break;
-        }
-    }
-
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
@@ -106,13 +79,7 @@ public class Ball : GameObject
         explosionAnimation.Play();
 
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
-
-        shineAnimation = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 1, 0.01f, false
-        );
-
-        settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002").CreateInstance();
+        explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -121,12 +88,6 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Idle:
-                break;
-            case State.Settle:
-                if (shineAnimation is null) break;
-                if (shineAnimation.IsFinished)
-                    SetState(State.Idle);
-                shineAnimation.Update(gameTime);
                 break;
             case State.Moving:
                 UpdatePosition(gameTime);
@@ -178,16 +139,6 @@ public class Ball : GameObject
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(32 / 2, 32 / 2)
-                );
-                break;
-            case State.Settle:
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
-                shineAnimation?.Draw(
-                    spriteBatch,
-                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-                    Microsoft.Xna.Framework.Color.White,
-                    0.0f,
-                    new Vector2(16 / 2, 16 / 2)
                 );
                 break;
             default:

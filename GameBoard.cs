@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -39,6 +40,7 @@ public class GameBoard : GameObject
     private Texture2D? rightBorder = null;
 
     private AnimatedTexturePlayer? shineAnimPlayer = null;
+    private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
 
     /// <summary>
@@ -71,6 +73,8 @@ public class GameBoard : GameObject
             9, 1, 0.01f, false
         );
         shineAnimPlayer = new AnimatedTexturePlayer(animation);
+
+        settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
@@ -304,6 +308,7 @@ public class GameBoard : GameObject
                     // yield the expected outcome.
                     var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
                     shineAnimPlayer?.PlayAt(new Rectangle((int)shinePosition.X, (int)shinePosition.Y, 16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    settleSfx?.Play();
                 }
 
                 ball.Destroy();
