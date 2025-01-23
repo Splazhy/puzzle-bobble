@@ -245,40 +245,29 @@ public class GameBoard : GameObject
 
         UpdateChildren(gameTime, parentTranslate);
 
-        var movingBalls = children.OfType<Ball>().Where(ball =>
-            ball.GetState() == Ball.State.Moving
-        );
+        var allBalls = children.OfType<Ball>();
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        foreach (var movingBall in movingBalls)
+        foreach (var ball in allBalls)
         {
-            var circle = movingBall.Circle;
+            var circle = ball.Circle;
 
             float right = BOARD_HALF_WIDTH_PX - circle.radius;
-            if (0 < movingBall.Velocity.X && right < movingBall.Position.X)
+            if (0 < ball.Velocity.X && right < ball.Position.X)
             {
-                movingBall.BounceOverX(right);
+                ball.BounceOverX(right);
             }
             float left = -BOARD_HALF_WIDTH_PX + circle.radius;
-            if (movingBall.Velocity.X < 0 && movingBall.Position.X < left)
+            if (ball.Velocity.X < 0 && ball.Position.X < left)
             {
-                movingBall.BounceOverX(left);
+                ball.BounceOverX(left);
             }
-            float top = 0 - circle.radius;
-            if (0 < movingBall.Velocity.Y && top < movingBall.Position.Y)
-            {
-                movingBall.BounceOverY(top);
-            }
-            float bottom = -5000 + circle.radius;
-            if (movingBall.Velocity.Y < 0 && movingBall.Position.Y < bottom)
-            {
-                movingBall.BounceOverY(bottom);
-            }
+            if (ball.GetState() != Ball.State.Moving) continue;
 
             // FIXME: when ball goes too fast, it could overwrite another ball
             // balls have already applied velocity into their position
-            Hex ballClosestHex = ComputeClosestHex(movingBall.Position);
+            Hex ballClosestHex = ComputeClosestHex(ball.Position);
 
             foreach (var dir in Hex.directions)
             {
@@ -290,7 +279,7 @@ public class GameBoard : GameObject
                 bool colliding = circle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
-                SetBallAt(ballClosestHex, movingBall.Data);
+                SetBallAt(ballClosestHex, ball.Data);
                 var explodingBalls = ExplodeBalls(ballClosestHex);
                 var fallBalls = RemoveFloatingBalls();
 
@@ -313,7 +302,7 @@ public class GameBoard : GameObject
                     return b;
                 }));
 
-                movingBall.Destroy();
+                ball.Destroy();
                 break;
             }
         }
