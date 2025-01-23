@@ -12,7 +12,7 @@ public class GameObject
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
 
-    public Vector2 Velocity { get; set; }
+    public Vector2 Velocity;
 
     public readonly string Name;
 
@@ -74,11 +74,14 @@ public class GameObject
         Debug.Assert(content is not null);
 
         children.RemoveAll(obj => obj.Destroyed);
+
         // NOTE: we need to load content for every new game objects,
         // not sure if this is a design flaw or not.
         pendingChildren.ForEach(obj => obj.LoadContent(content));
         children.AddRange(pendingChildren);
         pendingChildren.Clear();
+
+        // if (pendingChildren.Count > 0) System.Console.WriteLine($"{pendingChildren.Count} children added to {Name}");
     }
 
     protected void DrawChildren(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
@@ -93,8 +96,61 @@ public class GameObject
     {
     }
 
+    /// <summary>
+    /// This also destroys all children of the object.
+    /// </summary>
     public void Destroy()
     {
+        foreach (var child in children)
+        {
+            child.Destroy();
+        }
         Destroyed = true;
     }
+
+    public void AddChild(GameObject child)
+    {
+        child.Position = child.Position - Position;
+        children.Add(child);
+    }
+
+    public void AddChildren(IEnumerable<GameObject> childrenEnum)
+    {
+        foreach (var child in childrenEnum)
+        {
+            child.Position = child.Position - Position;
+            children.Add(child);
+        }
+    }
+
+    /// <summary>
+    /// Call this if the object is created in update loop
+    /// </summary>
+    public void AddChildDeferred(GameObject child)
+    {
+        child.Position = child.Position - Position;
+        pendingChildren.Add(child);
+    }
+
+    /// <summary>
+    /// Call this if the objects are created in update loop
+    /// </summary>
+    public void AddChildrenDeferred(IEnumerable<GameObject> children)
+    {
+        foreach (var child in children)
+        {
+            child.Position = child.Position - Position;
+            pendingChildren.Add(child);
+        }
+    }
+
+    public void ClearChildren()
+    {
+        foreach (var child in children)
+        {
+            child.Destroy();
+        }
+        children.Clear();
+    }
+
 }

@@ -48,6 +48,7 @@ public class Ball : GameObject
     private float _soundDelay = 0.0f;
 
     private SoundEffectInstance? explodeSfx;
+    private SoundEffectInstance? bounceSfx;
 
     public Circle Circle
     {
@@ -84,6 +85,10 @@ public class Ball : GameObject
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
         explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
         _soundDelay = delay;
+
+        bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
+
+        base.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -98,7 +103,7 @@ public class Ball : GameObject
                 break;
             case State.Exploding:
                 UpdatePosition(gameTime);
-                Debug.Assert(explosionAnimation is not null);
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 if (!_soundPlayed)
                 {
                     if (_soundDelay <= 0)
@@ -130,12 +135,20 @@ public class Ball : GameObject
     {
         Velocity = new Vector2(-Velocity.X, Velocity.Y);
         Position = new Vector2(x - (Position.X - x), Position.Y);
+
+        Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+        bounceSfx.Play();
     }
 
     public void BounceOverY(float y)
     {
         Velocity = new Vector2(Velocity.X, -Velocity.Y);
         Position = new Vector2(Position.X, y - (Position.Y - y));
+
+        Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitY));
+        bounceSfx.Play();
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
@@ -145,7 +158,7 @@ public class Ball : GameObject
         switch (_state)
         {
             case State.Exploding:
-                Debug.Assert(explosionAnimation is not null);
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Draw(
                     spriteBatch,
                     // FIXME: this position is not accurate (the y position is off by a bit)

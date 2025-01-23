@@ -8,6 +8,7 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
+    public static Vector2 WindowCenter { get; private set; }
     public SpriteFont? Font { get; private set; }
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
@@ -65,11 +66,11 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        Debug.Assert(_spriteBatch is not null);
+        Debug.Assert(_spriteBatch is not null, "SpriteBatch is not loaded.");
 
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(Color.RosyBrown);
 
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
         // TODO: hide/show these using debug options
         _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
@@ -86,6 +87,7 @@ public class Game1 : Game
 
         // TODO: code that needs to be run on window size change
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }

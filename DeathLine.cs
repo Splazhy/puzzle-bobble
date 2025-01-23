@@ -21,6 +21,7 @@ public class DeathLine : GameObject
             content.Load<Texture2D>("Graphics/deathline"),
             1, 12, 0.025f, true);
         _spriteSheet.Play();
+        base.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)

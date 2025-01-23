@@ -42,29 +42,53 @@ public class Slingshot : GameObject
             }
         }
 
+        // 192 -> gameboard border
+        // 24 -> ball radius
+        private static float LeftBorder { get { return Game1.WindowCenter.X - 192 + 24; } }
+        private static float RightBorder { get { return Game1.WindowCenter.X + 192 - 24; } }
         public void Draw(SpriteBatch spriteBatch, Vector2 startPoint, float rotation, Vector2 scale)
         {
-            var endPoint = new Vector2(
-                startPoint.X + _length * MathF.Cos(rotation),
-                startPoint.Y + _length * MathF.Sin(rotation)
-            );
-
+            var direction = Vector2.Normalize( new Vector2(MathF.Cos(rotation), MathF.Sin(rotation)));
             for (int i = 0; i < _count; i++)
             {
                 var subProgress = (_progress + (float)i / _count) % 1.0f;
-                var subPosition = new Vector2(
-                    startPoint.X + subProgress * (endPoint.X - startPoint.X),
-                    startPoint.Y + subProgress * (endPoint.Y - startPoint.Y)
-                );
                 var actualScale = scale * (1.0f - subProgress);
+                var lengthLeft = _length * subProgress;
+                var tmpDirection = direction;
+                var s = startPoint;
+                Vector2 subPosition;
+                while (true)
+                {
+                    var e = s + (tmpDirection * lengthLeft);
+                    var slope = (e.Y - s.Y) / (e.X - s.X);
+                    Vector2? bouncePoint = null;
+
+                    if (e.X > s.X && e.X > RightBorder)
+                    {
+                        bouncePoint = new Vector2(RightBorder, slope * (RightBorder - s.X) + s.Y);
+                    }
+                    else if (e.X < s.X && e.X < LeftBorder)
+                    {
+                        bouncePoint = new Vector2(LeftBorder, slope * (LeftBorder - s.X) + s.Y);
+                    }
+
+                    lengthLeft -= Vector2.Distance(s, bouncePoint ?? e);
+                    s = bouncePoint ?? e;
+                    tmpDirection = new Vector2(-tmpDirection.X, tmpDirection.Y);
+                    if (bouncePoint is null || lengthLeft <= 0)
+                    {
+                        subPosition = e;
+                        break;
+                    }
+                }
                 spriteBatch.Draw(
                     _texture,
                     subPosition,
                     null,
-                    Color.White,
+                    Color.White * (0.25f * (1.0f - subProgress)),
                     0,
                     _origin,
-                    actualScale,
+                    scale,
                     SpriteEffects.None,
                     0
                 );
@@ -99,12 +123,18 @@ public class Slingshot : GameObject
         _timeSinceLastFired = 1 / firerate;
     }
 
+    private ContentManager? _content;
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
-        _guideline = new Guideline(content.Load<Texture2D>("Graphics/guideline"), 6, 120.0f, 3.0f);
+        _guideline = new Guideline(
+            content.Load<Texture2D>("Graphics/guideline_full"),
+            24, 1200.0f, 15.0f
+        );
+
+        _content = content;
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -141,7 +171,16 @@ public class Slingshot : GameObject
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
                 Scale = Scale,
             };
+            // I'm thinking `BallFactory` class
+            // then maybe `AbstractBallFactory` class
+            // then maybe `AbstractBallFactorySingleton` class
+            // then maybe `AbstractBallFactorySingletonBuilder` class
+            // then burn the whole project to the ground
+            Debug.Assert(_content is not null, "ContentManager is not initialized.");
+            newBall.LoadContent(_content);
+
             BallFired?.Invoke(newBall);
+
             _timeSinceLastFired = 0.0f;
             // Cycle through ball colors, just a fun experimentation
             Data = null;
@@ -150,11 +189,12 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        Debug.Assert(_slingshotTexture is not null && _ballSpriteSheet is not null && _guideline is not null);
+        Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
+        Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
+        Debug.Assert(_guideline is not null, "Guideline is not loaded.");
 
         var scrPos = parentTranslate + Position;
         _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
-
         spriteBatch.Draw(
             _slingshotTexture,
             scrPos,

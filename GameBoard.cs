@@ -13,8 +13,6 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
-    private readonly Game1 _game;
-
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
@@ -23,6 +21,8 @@ public class GameBoard : GameObject
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
+
+    public int TopRow;
 
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
@@ -52,8 +52,6 @@ public class GameBoard : GameObject
 
     public GameBoard(Game game) : base("gameboard")
     {
-        _game = (Game1)game;
-
         Position = new Vector2(0, -300);
     }
 
@@ -67,6 +65,7 @@ public class GameBoard : GameObject
 
         var level = Level.Load("test");
         hexMap = level.ToHexRectMap();
+        TopRow = level.TopRow;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -75,14 +74,17 @@ public class GameBoard : GameObject
         shineAnimPlayer = new AnimatedTexturePlayer(animation);
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
+
+        base.LoadContent(content);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 parentTranslate)
     {
-        Debug.Assert(ballSpriteSheet is not null);
-        Debug.Assert(background is not null);
-        Debug.Assert(leftBorder is not null);
-        Debug.Assert(rightBorder is not null);
+        // better than nothing I guess ( ͡° ͜ʖ ͡°)
+        Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
+        Debug.Assert(background is not null, "Background is not loaded.");
+        Debug.Assert(leftBorder is not null, "Left border is not loaded.");
+        Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var scrPos = parentTranslate + Position;
 
@@ -194,9 +196,12 @@ public class GameBoard : GameObject
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys());
 
-        Queue<Hex> bfsQueue = new();
+        // No balls on the board
+        if (floating.Count == 0) return [];
+
+        Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
-        foreach (var item in hexMap.Where(kv => kv.Key.R == 0))
+        foreach (var item in hexMap.Where(kv => kv.Key.R == TopRow))
         {
             Hex hex = item.Key;
             if (!IsBallAt(hex)) continue;
@@ -318,12 +323,6 @@ public class GameBoard : GameObject
         ;
 
         UpdatePendingAndDestroyedChildren();
-    }
-
-    public void AddBallFromSlingshot(Ball ball)
-    {
-        ball.Position -= Position;
-        pendingChildren.Add(ball);
     }
 
     public BallData.BallStats GetBallStats()

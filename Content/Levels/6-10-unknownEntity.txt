@@ -1,0 +1,10 @@
+. . . b e . . g
+ . c . a h d b
+a d . d f b h .
+ b g e . c d h 
+. e b . f a . .
+ . g b e . d e 
+d f a h c g c f
+ b g c . . a b 
+. . . d f . e g
+ f a e g . h c
