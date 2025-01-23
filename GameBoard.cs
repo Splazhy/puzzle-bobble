@@ -266,6 +266,16 @@ public class GameBoard : GameObject
             {
                 ball.BounceOverX(left);
             }
+
+            if (ball.GetState() == Ball.State.Falling)
+            {
+                if (GetBottomEdgePos() + 1000 < ball.Position.Y)
+                {
+                    ball.Destroy();
+                }
+                continue;
+            }
+
             if (ball.GetState() != Ball.State.Moving) continue;
 
             // FIXME: when ball goes too fast, it could overwrite another ball

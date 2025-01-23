@@ -126,8 +126,6 @@ public class Ball : GameObject
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
                 UpdatePosition(gameTime);
-                if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
-                    Destroy();
                 break;
         }
     }
