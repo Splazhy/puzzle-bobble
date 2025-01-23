@@ -18,7 +18,7 @@ public class GameBoard : GameObject
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
-    public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
+    public static readonly int HEX_WIDTH = HEX_INRADIUS * 2;
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
@@ -28,6 +28,9 @@ public class GameBoard : GameObject
         new Vector2Double(HEX_SIZE, HEX_SIZE),
         new Vector2Double(HEX_INRADIUS * -7, HEX_SIZE) // -(HEX_WIDTH / 2 + HEX_WIDTH * 3) and HEX_HEIGHT / 2
     );
+
+    public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * 8;
+    public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
 
     private Texture2D? ballSpriteSheet = null;
 
@@ -80,10 +83,9 @@ public class GameBoard : GameObject
         var scrPos = parentTranslate + Position;
 
         var pX = parentTranslate.X;
-        var fourHexWidth = (int)(HEX_WIDTH * 4);
-        spriteBatch.Draw(background, new Vector2(pX - fourHexWidth, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(pX - fourHexWidth - leftBorder.Width * 3, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(pX + fourHexWidth, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, new Vector2(0, 14 * 6), 3, SpriteEffects.None, 0);
 
         foreach (var item in hexMap)
         {
@@ -253,12 +255,12 @@ public class GameBoard : GameObject
         {
             var circle = movingBall.Circle;
 
-            float right = (HEX_INRADIUS * 8) - circle.radius;
+            float right = BOARD_HALF_WIDTH_PX - circle.radius;
             if (0 < movingBall.Velocity.X && right < movingBall.Position.X)
             {
                 movingBall.BounceOverX(right);
             }
-            float left = -(HEX_INRADIUS * 8) + circle.radius;
+            float left = -BOARD_HALF_WIDTH_PX + circle.radius;
             if (movingBall.Velocity.X < 0 && movingBall.Position.X < left)
             {
                 movingBall.BounceOverX(left);
