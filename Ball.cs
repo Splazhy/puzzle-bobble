@@ -44,6 +44,8 @@ public class Ball : GameObject
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
 
+    private bool _soundPlayed = false;
+    private float _soundDelay = 0.0f;
 
     private SoundEffectInstance? explodeSfx;
 
@@ -76,10 +78,12 @@ public class Ball : GameObject
         _spriteSheet = BallData.LoadBallSpritesheet(content);
 
         explosionAnimation = Data.CreateExplosionAnimation(content);
-        explosionAnimation.Play();
+        float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
+        explosionAnimation.Play(delay);
 
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
         explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+        _soundDelay = delay;
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -95,10 +99,21 @@ public class Ball : GameObject
             case State.Exploding:
                 UpdatePosition(gameTime);
                 Debug.Assert(explosionAnimation is not null);
+                if (!_soundPlayed)
+                {
+                    if (_soundDelay <= 0)
+                    {
+                        explodeSfx?.Play();
+                        _soundPlayed = true;
+                    }
+                    else
+                    {
+                        _soundDelay -= deltaTime;
+                    }
+                }
                 explosionAnimation.Update(gameTime);
                 if (explosionAnimation.IsFinished)
                 {
-                    explodeSfx?.Play();
                     Destroy();
                 }
                 break;
