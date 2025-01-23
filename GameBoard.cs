@@ -22,6 +22,9 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
+    public static readonly float DEFAULT_SPEED = 20.0f;
+    public static readonly float LERP_AMOUNT = 5.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
 
     private int _topRow;
     public int TopRow
@@ -62,6 +65,8 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300);
+
+        Velocity.Y = DEFAULT_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
@@ -199,6 +204,8 @@ public class GameBoard : GameObject
             }
         }
 
+        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
+
         return explodingBalls;
     }
 
@@ -263,9 +270,9 @@ public class GameBoard : GameObject
     {
         base.Update(gameTime, parentTranslate);
 
-        // PROOF OF CONCEPT
-        Velocity = new Vector2(0, Math.Min((float)(GetPreferredPos() - Position.Y) * 4, 250));
-        // END
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
@@ -279,8 +286,6 @@ public class GameBoard : GameObject
         UpdateChildren(gameTime);
 
         var allBalls = children.OfType<Ball>();
-
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         foreach (var ball in allBalls)
         {
