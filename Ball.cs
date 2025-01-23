@@ -112,7 +112,7 @@ public class Ball : GameObject
         _spriteSheet = content.Load<Texture2D>("Graphics/balls");
 
         explosionAnimation = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/balls_explode"),
+            content.Load<Texture2D>("Graphics/balls_explode2"),
             7, 12, 0.02f, false
         );
         explosionAnimation.SetVFrame((int)_color);
