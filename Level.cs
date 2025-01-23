@@ -65,9 +65,9 @@ public class Level
         Debug.Assert(map.MinOffsetCoord != null);
         Debug.Assert(map.MaxOffsetCoord != null);
         map.Constraint = HexMap<BallData>.Constraints.Rectangular(
-            map.MinOffsetCoord.Value.Col,
+            0,
             null,
-            map.MaxOffsetCoord.Value.Col,
+            7,
             null,
             true
         );

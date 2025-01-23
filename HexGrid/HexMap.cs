@@ -91,15 +91,16 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
         }
         set
         {
+            bool existed = _map.ContainsKey(hex);
             if (value is null)
             {
                 _map.Remove(hex);
-                DecreaseRowCount(hex.R);
+                if (existed) DecreaseRowCount(hex.R);
                 return;
             }
             _map[hex] = (T)value;
             ExpandBounds(hex.ToOffsetCoord());
-            IncreaseRowCount(hex.R);
+            if (!existed) IncreaseRowCount(hex.R);
         }
     }
 
