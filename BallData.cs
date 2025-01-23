@@ -43,7 +43,7 @@ public struct BallData
     }
     public static Texture2D LoadExplosionSpritesheet(ContentManager content)
     {
-        return content.Load<Texture2D>("Graphics/balls_explode");
+        return content.Load<Texture2D>("Graphics/balls_explode2");
     }
     public readonly AnimatedTexture2D CreateExplosionAnimation(ContentManager content)
     {
