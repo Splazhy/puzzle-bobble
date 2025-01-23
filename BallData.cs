@@ -41,8 +41,15 @@ public struct BallData
     {
         return content.Load<Texture2D>("Graphics/balls");
     }
-
-    // TODO: other spritesheets
+    public static Texture2D LoadExplosionSpritesheet(ContentManager content)
+    {
+        return content.Load<Texture2D>("Graphics/balls_explode");
+    }
+    public readonly AnimatedTexture2D CreateExplosionAnimation(ContentManager content)
+    {
+        var explosionSheet = LoadExplosionSpritesheet(content);
+        return new AnimatedTexture2D(explosionSheet, new Rectangle(0, color * (explosionSheet.Height / 12), explosionSheet.Width, explosionSheet.Height / 12), 7, 1, 0.02f, false);
+    }
 
     public class BallStats
     {
