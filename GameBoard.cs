@@ -258,7 +258,7 @@ public class GameBoard : GameObject
 
     private double GetPreferredPos()
     {
-        return 100 - GetBottomEdgePos();
+        return 50 - GetBottomEdgePos();
     }
 
     private double GetBottomEdgePos()
@@ -272,7 +272,8 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
+        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
