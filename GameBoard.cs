@@ -314,7 +314,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (GetBottomEdgePos() + 1000 < ball.Position.Y)
+                if (400 < ball.Position.Y + Position.Y)
                 {
                     ball.Destroy();
                 }
