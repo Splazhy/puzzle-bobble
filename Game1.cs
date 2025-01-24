@@ -15,6 +15,11 @@ public class Game1 : Game
     private readonly SceneManager _sceneManager;
     private readonly FrameCounter _frameCounter = new();
     private Vector2 _screenCenter;
+
+    private TimeSpan _updateTimeMeasured;
+    private TimeSpan _drawOrdersTimeMeasured;
+    private TimeSpan _drawCallTimeMeasured;
+    private readonly Stopwatch _stopwatch = new();
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this)
@@ -58,7 +63,11 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
+        _stopwatch.Restart();
         _sceneManager.Update(gameTime, _screenCenter);
+        _stopwatch.Stop();
+        _updateTimeMeasured = _stopwatch.Elapsed;
+
         _frameCounter.Update(gameTime.ElapsedGameTime.TotalSeconds);
 
         base.Update(gameTime);
@@ -72,11 +81,21 @@ public class Game1 : Game
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
         // TODO: hide/show these using debug options
-        _spriteBatch.DrawString(Font, $"Update Time: {_frameCounter.LastTimeSample}", new Vector2(10, 10), Color.White);
-        _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 40), Color.White);
+        _spriteBatch.DrawString(Font, $"Update Time: {_updateTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 10), Color.White);
+        _spriteBatch.DrawString(Font, $"Draw Orders Time: {_drawOrdersTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 40), Color.White);
+        _spriteBatch.DrawString(Font, $"Draw Call Time: {_drawCallTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 70), Color.White);
+        _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 100), Color.White);
 
+        _stopwatch.Restart();
         _sceneManager.Draw(_spriteBatch, gameTime);
+        _stopwatch.Stop();
+        _drawOrdersTimeMeasured = _stopwatch.Elapsed;
+
+        _stopwatch.Restart();
         _spriteBatch.End();
+        _stopwatch.Stop();
+        _drawCallTimeMeasured = _stopwatch.Elapsed;
+
 
         base.Draw(gameTime);
     }
