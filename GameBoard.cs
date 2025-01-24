@@ -36,6 +36,8 @@ public class GameBoard : GameObject
         }
     }
 
+    bool IsInfinite;
+
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
@@ -87,6 +89,8 @@ public class GameBoard : GameObject
             level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
+
+        IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -266,6 +270,11 @@ public class GameBoard : GameObject
         return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
     }
 
+    private double GetTopEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
+    }
+
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
@@ -312,7 +321,22 @@ public class GameBoard : GameObject
                 continue;
             }
 
+            if (ball.GetState() == Ball.State.Stasis)
+            {
+                if (GetTopEdgePos() < ball.Position.Y + HEX_HEIGHT / 2)
+                {
+                    ball.Unstasis();
+                }
+                continue;
+            }
+
             if (ball.GetState() != Ball.State.Moving) continue;
+
+            if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
+            {
+                ball.SetStasis();
+                continue;
+            }
 
             // FIXME: when ball goes too fast, it could overwrite another ball
             // balls have already applied velocity into their position
@@ -321,7 +345,10 @@ public class GameBoard : GameObject
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex) && TopRow <= neighborHex.R) continue;
+                if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
+                {
+                    continue;
+                }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
