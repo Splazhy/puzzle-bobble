@@ -9,7 +9,6 @@ public class FrameCounter
     public double TotalSeconds { get; private set; }
     public double AverageFramesPerSecond { get; private set; }
     public double CurrentFramesPerSecond { get; private set; }
-    public double LastTimeSample { get; private set; }
 
     public const int MaximumSamples = 100;
 
@@ -17,7 +16,6 @@ public class FrameCounter
 
     public void Update(double deltaTime)
     {
-        LastTimeSample = deltaTime;
         CurrentFramesPerSecond = 1.0f / deltaTime;
 
         _sampleBuffer.Enqueue(CurrentFramesPerSecond);

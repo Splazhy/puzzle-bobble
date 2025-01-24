@@ -30,7 +30,7 @@ public class Ball : GameObject
 
     public enum State
     {
-        Idle,
+        Stasis,
         Moving,
         Falling,
         Exploding,
@@ -40,7 +40,7 @@ public class Ball : GameObject
     public const float MAX_EXPLODE_DELAY = 0.2f;
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
-    private static Random _rand = new Random();
+    private static readonly Random _rand = new();
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
 
@@ -61,15 +61,27 @@ public class Ball : GameObject
         }
     }
     public BallData Data { get; private set; }
-    private readonly State _state; public State GetState() { return _state; }
+    private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
 
     public Ball(BallData data, State state) : base("ball")
     {
         Data = data;
-        _state = state;
         Scale = new Vector2(3, 3);
+        _state = state;
+    }
+
+    public void SetStasis()
+    {
+        Debug.Assert(_state == State.Moving, "Cannot set state to stasis when not moving.");
+        _state = State.Stasis;
+    }
+
+    public void Unstasis()
+    {
+        Debug.Assert(_state == State.Stasis, "Cannot set state to moving when not in stasis.");
+        _state = State.Moving;
     }
 
     public override void LoadContent(ContentManager content)
@@ -87,8 +99,6 @@ public class Ball : GameObject
         _soundDelay = delay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
-
-        base.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -97,7 +107,7 @@ public class Ball : GameObject
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
         {
-            case State.Idle:
+            case State.Stasis:
                 break;
             case State.Moving:
                 UpdatePosition(gameTime);

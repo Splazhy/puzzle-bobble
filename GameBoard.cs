@@ -36,6 +36,8 @@ public class GameBoard : GameObject
         }
     }
 
+    bool IsInfinite;
+
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
@@ -87,6 +89,8 @@ public class GameBoard : GameObject
             level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
+
+        IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -217,7 +221,7 @@ public class GameBoard : GameObject
         // No balls on the board
         if (floating.Count == 0) return [];
 
-        Queue<Hex> bfsQueue = new Queue<Hex>();
+        Queue<Hex> bfsQueue = new();
         // Balls from the top row can't be floating
         foreach (var item in hexMap.Where(kv => kv.Key.R == TopRow))
         {
@@ -258,12 +262,17 @@ public class GameBoard : GameObject
 
     private double GetPreferredPos()
     {
-        return 100 - GetBottomEdgePos();
+        return 50 - GetBottomEdgePos();
     }
 
     private double GetBottomEdgePos()
     {
         return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+    }
+
+    private double GetTopEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -272,7 +281,8 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
+        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
@@ -304,14 +314,29 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (GetBottomEdgePos() + 1000 < ball.Position.Y)
+                if (400 < ball.Position.Y + Position.Y)
                 {
                     ball.Destroy();
                 }
                 continue;
             }
 
+            if (ball.GetState() == Ball.State.Stasis)
+            {
+                if (GetTopEdgePos() < ball.Position.Y + HEX_HEIGHT / 2)
+                {
+                    ball.Unstasis();
+                }
+                continue;
+            }
+
             if (ball.GetState() != Ball.State.Moving) continue;
+
+            if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
+            {
+                ball.SetStasis();
+                continue;
+            }
 
             // FIXME: when ball goes too fast, it could overwrite another ball
             // balls have already applied velocity into their position
@@ -320,7 +345,10 @@ public class GameBoard : GameObject
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex) && TopRow <= neighborHex.R) continue;
+                if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
+                {
+                    continue;
+                }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
                 Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
