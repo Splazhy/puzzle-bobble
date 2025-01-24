@@ -5,27 +5,30 @@ namespace PuzzleBobble.HexGrid;
 public struct OffsetCoord
 {
     public const int ODD = -1;
-    public readonly int col, row;
+    public readonly int Col, Row;
     public OffsetCoord(int col, int row)
     {
-        this.col = col;
-        this.row = row;
+        this.Col = col;
+        this.Row = row;
     }
 
-    public Hex ToHex()
+    public readonly Hex ToHex()
     {
-        int q = col - (row + ODD * (row & 1)) / 2;
-        int r = row;
+        int q = Col - (Row + ODD * (Row & 1)) / 2;
+        int r = Row;
         return new Hex(q, r);
     }
 
-    public OffsetCoord Max(OffsetCoord other)
+    public readonly OffsetCoord Max(OffsetCoord other)
     {
-        return new OffsetCoord(Math.Max(col, other.col), Math.Max(row, other.row));
+        return new OffsetCoord(Math.Max(Col, other.Col), Math.Max(Row, other.Row));
     }
 
-    public OffsetCoord Min(OffsetCoord other)
+    public readonly OffsetCoord Min(OffsetCoord other)
     {
-        return new OffsetCoord(Math.Min(col, other.col), Math.Min(row, other.row));
+        return new OffsetCoord(Math.Min(Col, other.Col), Math.Min(Row, other.Row));
     }
+
+    public static OffsetCoord operator +(OffsetCoord a, OffsetCoord b) => new(a.Col + b.Col, a.Row + b.Row);
+    public static OffsetCoord operator -(OffsetCoord a, OffsetCoord b) => new(a.Col - b.Col, a.Row - b.Row);
 }

@@ -11,25 +11,27 @@ public class MenuScene : AbstractScene
     private Game? _game;
     private Desktop? _desktop;
 
+    public MenuScene() : base("scene_menu")
+    {
+    }
+
     public override void Initialize(Game game)
     {
         _game = game;
     }
 
-    public override void Deinitialize()
-    {
-    }
-
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
 
-        Button startBtn = new Button
+        Button startBtn = new()
+
         {
             Content = new Label { Text = "Start" },
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        startBtn.Click += (sender, args) => ChangeScene(Scenes.GAME);
+        startBtn.Click += (sender, args) => ChangeScene(new GameScene());
 
         var optionsBtn = new Button
         {
@@ -44,7 +46,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        creditsBtn.Click += (sender, args) => ChangeScene(Scenes.CREDITS);
+        creditsBtn.Click += (sender, args) => ChangeScene(new CreditsScene());
 
         var quitBtn = new Button
         {
@@ -60,9 +62,10 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        testBtn.Click += (sender, args) => ChangeScene(Scenes.Craft);
+        testBtn.Click += (sender, args) => ChangeScene(new CraftScene());
 
-        VerticalStackPanel menu = new VerticalStackPanel
+        VerticalStackPanel menu = new()
+
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -76,12 +79,10 @@ public class MenuScene : AbstractScene
             }
         };
 
-        _desktop = new Desktop();
-        _desktop.Root = menu;
-    }
-
-    public override void Update(GameTime gameTime)
-    {
+        _desktop = new Desktop
+        {
+            Root = menu
+        };
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

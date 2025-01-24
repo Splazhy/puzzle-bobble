@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,16 +13,17 @@ public class CreditsScene : AbstractScene
 {
     private Desktop? _desktop;
 
-    public override void Initialize(Game game)
+    public CreditsScene() : base("scene_credits")
     {
     }
 
-    public override void Deinitialize()
+    public override void Initialize(Game game)
     {
     }
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         string[] names = [
             "65050067 Kandanai Chaiyo",
             "65050251 Nutchapol Salawej",
@@ -45,7 +47,7 @@ public class CreditsScene : AbstractScene
             Margin = new Thickness(0, 20),
             Padding = new Thickness(20, 10),
         };
-        backBtn.Click += (sender, args) => ChangeScene(Scenes.MENU);
+        backBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
         var panel = new VerticalStackPanel
         {
@@ -56,15 +58,18 @@ public class CreditsScene : AbstractScene
                 backBtn
             }
         };
-        _desktop = new Desktop();
-        _desktop.Root = panel;
+        _desktop = new Desktop
+        {
+            Root = panel
+        };
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
-            ChangeScene(Scenes.MENU);
+            ChangeScene(new MenuScene());
         }
     }
 

@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -33,8 +36,20 @@ public class Ball : GameObject
         Exploding,
     }
 
+    public const float FALLING_SPREAD = 50;
+    public const float MAX_EXPLODE_DELAY = 0.2f;
+    public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
+
+    private static Random _rand = new Random();
     private Texture2D? _spriteSheet;
-    private AnimatedTexture2D? _explosionSpriteSheet;
+    private AnimatedTexture2D? explosionAnimation;
+
+    private bool _soundPlayed = false;
+    private float _soundDelay = 0.0f;
+
+    private SoundEffectInstance? explodeSfx;
+    private SoundEffectInstance? bounceSfx;
+
     public Circle Circle
     {
         get
@@ -45,89 +60,116 @@ public class Ball : GameObject
             return new Circle(Position, 16 / 2 * Scale.X);
         }
     }
-    private Color _color; public Color GetColor() { return _color; }
-    private State _state; public State GetState() { return _state; }
+    public BallData Data { get; private set; }
+    private readonly State _state; public State GetState() { return _state; }
 
-    private static readonly Vector2 GRAVITY = new Vector2(0, 9.8f * 100);
+    private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
 
-    public Ball(Color ballType, State state) : base("ball")
+    public Ball(BallData data, State state) : base("ball")
     {
-        _color = ballType;
+        Data = data;
         _state = state;
+        Scale = new Vector2(3, 3);
     }
 
     public override void LoadContent(ContentManager content)
     {
+        base.LoadContent(content);
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
-        _spriteSheet = content.Load<Texture2D>("Graphics/balls");
-        _explosionSpriteSheet = new AnimatedTexture2D(content.Load<Texture2D>("Graphics/balls_explode"), 7, 12, 0.02f, false);
-        _explosionSpriteSheet.SetVFrame((int)_color);
-        _explosionSpriteSheet.Play();
+        _spriteSheet = BallData.LoadBallSpritesheet(content);
+
+        explosionAnimation = Data.CreateExplosionAnimation(content);
+        float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
+        explosionAnimation.Play(delay);
+
+        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
+        explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+        _soundDelay = delay;
+
+        bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
+
+        base.LoadContent(content);
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         switch (_state)
         {
             case State.Idle:
                 break;
             case State.Moving:
-                // TODO: fix this to take gameboard bounds into account
-                if (Position.X - Circle.radius < -600 || 600 < Position.X + Circle.radius)
-                {
-                    Velocity = new Vector2(-Velocity.X, Velocity.Y);
-                }
-                if (Position.Y - Circle.radius < -600 || 600 < Position.Y + Circle.radius)
-                {
-                    Velocity = new Vector2(Velocity.X, -Velocity.Y);
-                }
-                Position += Velocity * deltaTime;
+                UpdatePosition(gameTime);
                 break;
             case State.Exploding:
-                if (_explosionSpriteSheet is null) break;
-                _explosionSpriteSheet.Update(gameTime);
-                if (_explosionSpriteSheet.IsFinished)
+                UpdatePosition(gameTime);
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
+                if (!_soundPlayed)
+                {
+                    if (_soundDelay <= 0)
+                    {
+                        explodeSfx?.Play();
+                        _soundPlayed = true;
+                    }
+                    else
+                    {
+                        _soundDelay -= deltaTime;
+                    }
+                }
+                explosionAnimation.Update(gameTime);
+                if (explosionAnimation.IsFinished)
+                {
                     Destroy();
+                }
                 break;
             case State.Falling:
                 Velocity += GRAVITY * deltaTime;
-                Position += Velocity * deltaTime;
-                if (Position.Y > 1000) // TODO: remove this later when we handle this in GameScene
-                    Destroy();
+                UpdatePosition(gameTime);
                 break;
         }
     }
 
+    public void BounceOverX(float x)
+    {
+        Velocity = new Vector2(-Velocity.X, Velocity.Y);
+        Position = new Vector2(x - (Position.X - x), Position.Y);
+
+        Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitX));
+        bounceSfx.Play();
+    }
+
+    public void BounceOverY(float y)
+    {
+        Velocity = new Vector2(Velocity.X, -Velocity.Y);
+        Position = new Vector2(Position.X, y - (Position.Y - y));
+
+        Debug.Assert(bounceSfx is not null, "Bounce sound effect is not loaded.");
+        bounceSfx.Volume = MathF.Abs(Vector2.Dot(Vector2.Normalize(Velocity), Vector2.UnitY));
+        bounceSfx.Play();
+    }
+
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        Debug.Assert(_spriteSheet is not null);
+        var scrPos = ParentTranslate + Position;
         switch (_state)
         {
             case State.Exploding:
-                if (_explosionSpriteSheet is null) break;
-                _explosionSpriteSheet.Draw(
+                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
+                explosionAnimation.Draw(
                     spriteBatch,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
-                    new Vector2(ScreenPosition.X - 48, ScreenPosition.Y - 48),
+                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
+                    Microsoft.Xna.Framework.Color.White,
                     0.0f,
-                    Vector2.Zero,
-                    Scale.X, // we assume that scale is uniform
-                    Microsoft.Xna.Framework.Color.White
+                    new Vector2(32 / 2, 32 / 2)
                 );
                 break;
             default:
-                spriteBatch.Draw(
-                    _spriteSheet,
-                    // FIXME: this one has the same issue as above
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(16 * Scale.X), (int)(16 * Scale.Y)),
-                    new Rectangle((int)_color * 16, 0, 16, 16),
-                    Microsoft.Xna.Framework.Color.White,
-                    0.0f,
-                    new Vector2(16 / 2, 16 / 2),
-                    SpriteEffects.None,
-                    0
-                );
+                Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }
     }
@@ -135,5 +177,10 @@ public class Ball : GameObject
     public bool IsCollideWith(Ball other)
     {
         return Circle.Intersects(other.Circle) > 0;
+    }
+
+    public bool IsCollideWith(Circle other)
+    {
+        return Circle.Intersects(other) > 0;
     }
 }

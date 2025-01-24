@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -10,102 +12,69 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private List<GameObject> _gameObjects = [];
-    private List<GameObject> _pendingGameObjects = [];
     private SpriteFont? _font;
-    private ContentManager? _content;
-
+    private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
+
+    /// <summary>
+    /// For random falling velocity of falling balls
+    /// </summary>
+    private readonly Random _rand = new();
+    private const float FALLING_SPREAD = 50;
+    private const float EXPLOSION_SPREAD = 50;
+
+    public GameScene() : base("scene_game")
+    {
+    }
 
     public override void Initialize(Game game)
     {
-        Slingshot slingshot = new Slingshot(game);
+        _slingshot = new(game);
+        DeathLine deathline = new(game);
         _gameBoard = new GameBoard(game);
-        slingshot.BallFired += ball => _pendingGameObjects.Add(ball);
-        _gameObjects = [
-            slingshot,
+        _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
+        children = [
             _gameBoard,
+            deathline,
+            _slingshot,
         ];
-        _pendingGameObjects = [];
-    }
-
-    public override void Deinitialize()
-    {
-        _gameObjects.Clear();
-        _pendingGameObjects.Clear();
     }
 
     public override void LoadContent(ContentManager content)
     {
-        _content = content;
-        _gameObjects.ForEach(gameObject => gameObject.LoadContent(content));
+        base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
+
+        if (_gameBoard is null) return;
     }
 
-    public override void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         if (Keyboard.GetState().IsKeyDown(Keys.Q))
         {
-            ChangeScene(Scenes.MENU);
+            ChangeScene(new MenuScene());
         }
 
-        if (_gameBoard is null || _content is null) return;
-
-        var movingBalls = _gameObjects.FindAll(gameObject =>
-            gameObject is Ball ball &&
-            ball.GetState() == Ball.State.Moving
-        ).Cast<Ball>().ToList();
-
-        var idleBalls = _gameObjects.FindAll(gameObject =>
-            gameObject is Ball ball &&
-            ball.GetState() == Ball.State.Idle
-        ).Cast<Ball>().ToList();
-
-        _gameObjects.ForEach(gameObject => gameObject.Update(gameTime));
-
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        movingBalls.ForEach(movingBall =>
+        UpdateChildren(gameTime);
+        Debug.Assert(_gameBoard != null && _slingshot != null);
+        if (_slingshot.Data == null)
         {
-            // FIXME: when ball goes too fast, it could overwrite another ball
-
-            // use ahead position to check for collision so player won't see the ball
-            // overlapping with balls on the grid as much (visual polish).
-            var aheadPosition = movingBall.Position + movingBall.Velocity * deltaTime;
-            var aheadCircle = new Circle(aheadPosition, movingBall.Circle.radius);
-            Hex ballClosestHex = _gameBoard.ComputeClosestHex(aheadPosition);
-
-            foreach (var dir in Hex.directions)
+            // TODO: move this into BallData or smth
+            var bs = _gameBoard.GetBallStats();
+            var colors = bs.ColorCounts.Keys.ToList();
+            if (0 < colors.Count)
             {
-                Hex neighborHex = ballClosestHex + dir;
-                if (!_gameBoard.IsBallAt(neighborHex)) continue;
-
-                Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new Circle(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = aheadCircle.Intersects(neighborCircle) > 0;
-                if (!colliding) continue;
-
-                _gameBoard.SetBallAt(ballClosestHex, (int)movingBall.GetColor());
-                var explodingBalls = _gameBoard.ExplodeBalls(ballClosestHex);
-                _pendingGameObjects.AddRange(explodingBalls);
-                var fallBalls = _gameBoard.RemoveFloatingBalls();
-                _pendingGameObjects.AddRange(fallBalls);
-
-                movingBall.Destroy();
-                break;
+                var color = colors[_rand.Next(colors.Count)];
+                _slingshot.Data = new BallData(color);
             }
-        });
-
-        _gameObjects.RemoveAll(gameObject => gameObject.Destroyed);
-        // NOTE: we need to load content for every new game objects,
-        // not sure if this is a design flaw or not.
-        _pendingGameObjects.ForEach(gameObject => gameObject.LoadContent(_content));
-        _gameObjects.AddRange(_pendingGameObjects);
-        _pendingGameObjects.Clear();
+        }
+        UpdatePendingAndDestroyedChildren();
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _gameObjects.ForEach(gameObject => gameObject.Draw(spriteBatch, gameTime));
+        DrawChildren(spriteBatch, gameTime);
         spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
     }
 }

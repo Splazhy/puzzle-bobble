@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -11,143 +13,125 @@ namespace PuzzleBobble;
 
 public class GameBoard : GameObject
 {
-    private Game1 _game;
-    /// <summary>
-    /// For random falling velocity of falling balls
-    /// </summary>
-    private Random _rand;
-    private const float FALLING_SPREAD = 50;
-
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
     public static readonly int BALL_SIZE = 48;
     public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
-    public static readonly double HEX_WIDTH = HEX_INRADIUS * 2;
+    public static readonly int HEX_WIDTH = HEX_INRADIUS * 2;
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
 
-    private HexLayout hexLayout = new HexLayout(
+    public static readonly float DEFAULT_SPEED = 20.0f;
+    public static readonly float LERP_AMOUNT = 5.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
+
+    private int _topRow;
+    public int TopRow
+    {
+        get
+        {
+            _topRow = Math.Min(_topRow, hexMap.MinR);
+            return _topRow;
+        }
+    }
+
+    private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
-        new Vector2Double(HEX_INRADIUS, HEX_SIZE) // HEX_WIDTH / 2 and HEX_HEIGHT / 2
+        new Vector2Double(HEX_INRADIUS * -7, HEX_SIZE) // -(HEX_WIDTH / 2 + HEX_WIDTH * 3) and HEX_HEIGHT / 2
     );
 
+    public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * 8;
+    public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
+
     private Texture2D? ballSpriteSheet = null;
-    private AnimatedTextureInstancer? shineAnimation = null;
 
-    private HexMap<int> hexMap = new HexMap<int>();
+    private Texture2D? background = null;
+    private Texture2D? leftBorder = null;
+    private Texture2D? rightBorder = null;
 
-    private Hex debug_gridpos;
-    private Vector2? debug_mousepos;
+    private AnimatedTexturePlayer? shineAnimPlayer = null;
+    private SoundEffect? settleSfx;
+    private HexMap<BallData> hexMap = [];
 
-    private List<Hex> debug_hexes = new List<Hex>();
-    private List<Vector2> debug_points = new List<Vector2>();
+    /// <summary>
+    /// For random falling velocity of falling balls
+    /// </summary>
+    private readonly Random _rand = new();
+    private const float FALLING_SPREAD = 50;
+    private const float EXPLOSION_SPREAD = 50;
+
     public GameBoard(Game game) : base("gameboard")
     {
-        _game = (Game1)game;
-        _rand = new Random();
+        Position = new Vector2(0, -300);
 
-        Position = new Vector2((float)(HEX_WIDTH * -4), -300);
+        Velocity.Y = DEFAULT_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
     {
-        var level = Level.Load("test");
-        hexMap = level.ToHexRectMap();
+        base.LoadContent(content);
+        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
+        background = content.Load<Texture2D>("Graphics/board_bg");
+        leftBorder = content.Load<Texture2D>("Graphics/border_left");
+        rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        ballSpriteSheet = content.Load<Texture2D>("Graphics/balls");
+        var level = Level.Load("3-4-connectHaft");
+        for (int i = 0; i < 1; i++)
+        {
+            level.StackDown(Level.Load("3-4-connectHaft"));
+        }
+        for (int i = 0; i < 1; i++)
+        {
+            level.StackUp(Level.Load("3-4-connectHaft"));
+        }
+        hexMap = level.ToHexRectMap();
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
             9, 1, 0.01f, false
         );
-        shineAnimation = new AnimatedTextureInstancer(animation);
+        shineAnimPlayer = new AnimatedTexturePlayer(animation);
+
+        settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
+
+        base.LoadContent(content);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        // better than nothing I guess ( ͡° ͜ʖ ͡°)
+        Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
+        Debug.Assert(background is not null, "Background is not loaded.");
+        Debug.Assert(leftBorder is not null, "Left border is not loaded.");
+        Debug.Assert(rightBorder is not null, "Right border is not loaded.");
+
+        var pX = ParentTranslate.X;
+        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+
         foreach (var item in hexMap)
         {
             Hex hex = item.Key;
-            int? ballMaybe = item.Value;
-            if (!ballMaybe.HasValue) continue;
-            int ball = ballMaybe.Value;
+            BallData ball = item.Value;
 
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(ball * 16, 0, 16, 16),
-                Color.White
-            );
+            Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
+            ball.Draw(spriteBatch, ballSpriteSheet, ScreenPosition + p);
         }
 
-        shineAnimation?.Draw(spriteBatch, gameTime);
-
-        if (debug_mousepos.HasValue)
-        {
-            spriteBatch.DrawString(
-                _game.Font,
-                $"{debug_gridpos.q}, {debug_gridpos.r}",
-                Mouse.GetState().Position.ToVector2(),
-                Color.White
-            );
-            // Vector2 p = hexLayout.HexToDrawLocation(debug_gridpos).Downcast();
-            // spriteBatch.Draw(
-            //     ballSpriteSheet,
-            //     new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-            //     new Rectangle(0, 0, 16, 16),
-            //     Color.White
-            // );
-        }
-
-        foreach (Hex hex in debug_hexes)
-        {
-            Vector2 p = hexLayout.HexToDrawLocation(hex).Downcast();
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X), (int)(p.Y + ScreenPosition.Y), BALL_SIZE, BALL_SIZE),
-                new Rectangle(0, 0, 16, 16),
-                Color.White
-            );
-
-        }
-        debug_hexes.Clear();
-
-        foreach (Vector2 point in debug_points)
-        {
-            Vector2 p = point;
-            spriteBatch.Draw(
-                ballSpriteSheet,
-                new Rectangle((int)(p.X + ScreenPosition.X - 4), (int)(p.Y + ScreenPosition.Y - 4), 9, 9),
-                new Rectangle(16 * 11, 16 * 11, 16, 16),
-                Color.White
-            );
-
-        }
-        debug_points.Clear();
+        DrawChildren(spriteBatch, gameTime);
     }
-
-    public void DebugDrawHex(Hex hex)
-    {
-        debug_hexes.Add(hex);
-    }
-
-    public void DebugDrawPoint(Vector2 point)
-    {
-        debug_points.Add(point - Position);
-    }
-
 
     public Hex ComputeClosestHex(Vector2 pos)
     {
-        return hexLayout.PixelToHex(pos - Position).Round();
+        return hexLayout.PixelToHex(pos).Round();
     }
 
     public Vector2 ConvertHexToCenter(Hex hex)
     {
-        return hexLayout.HexToPixel(hex).Downcast() + Position;
+        return hexLayout.HexToCenterPixel(hex).Downcast();
     }
 
     public bool IsValidHex(Hex hex)
@@ -171,18 +155,20 @@ public class GameBoard : GameObject
         return false;
     }
 
-    public void SetBallAt(Hex hex, int ball)
+    public void SetBallAt(Hex hex, BallData ball)
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
     }
 
-    public List<Ball> ExplodeBalls(Hex sourceHex)
+    // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
+    // although haven't benchmarked it yet
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
     {
-        if (!IsValidHex(sourceHex)) return[];
-        int? mapBall = hexMap[sourceHex];
-        if (!mapBall.HasValue) return [];
-        int specifiedBall = mapBall.Value;
+        if (!IsValidHex(sourceHex)) return [];
+        BallData? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return [];
+        BallData specifiedBall = mapBall.Value;
 
         Queue<Hex> pending = [];
         pending.Enqueue(sourceHex);
@@ -205,42 +191,35 @@ public class GameBoard : GameObject
 
         if (connected.Count < 3)
         {
-            // We want to play the shine animation when a ball is settled
-            // and that ball doesn't cause any explosion.
-            //
-            // We currently only call this method on settled moving ball,
-            // so we can assume that calling play shine animation here will
-            // yield the expected outcome.
-            var shinePosition = hexLayout.HexToDrawLocation(sourceHex).Downcast() + ScreenPosition;
-            shineAnimation?.PlayAt(shinePosition, 0, Vector2.Zero, 3, Color.White);
             return [];
         }
 
-        List<Ball> explodingBalls = [];
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
         foreach (Hex hex in connected)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is BallData ball)
             {
-                explodingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Exploding)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Scale = new Vector2(3, 3),
-                });
+                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
             }
         }
 
+        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
+
         return explodingBalls;
     }
 
-    public List<Ball> RemoveFloatingBalls()
+    public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
-        floating.UnionWith(hexMap.GetKeys().Where(kv => hexMap[kv].HasValue));
+        floating.UnionWith(hexMap.GetKeys());
+
+        // No balls on the board
+        if (floating.Count == 0) return [];
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
-        foreach (var item in hexMap.Where(kv => kv.Key.r == 0))
+        foreach (var item in hexMap.Where(kv => kv.Key.R == TopRow))
         {
             Hex hex = item.Key;
             if (!IsBallAt(hex)) continue;
@@ -264,38 +243,145 @@ public class GameBoard : GameObject
 
         if (floating.Count == 0) return [];
 
-        List<Ball> fallingBalls = [];
+        List<KeyValuePair<Vector2, BallData>> fallingBalls = [];
         foreach (Hex hex in floating)
         {
-            if (hexMap[hex] is int ball)
+            if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new Ball((Ball.Color)ball, Ball.State.Falling)
-                {
-                    Position = ConvertHexToCenter(hex),
-                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, 0),
-                    Scale = new Vector2(3, 3),
-                });
+                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
             }
         }
 
-
         return fallingBalls;
     }
 
-    public override void Update(GameTime gameTime)
+    private double GetPreferredPos()
     {
-        shineAnimation?.Update(gameTime);
+        return 100 - GetBottomEdgePos();
+    }
 
-        MouseState mouseState = Mouse.GetState();
-        int mouseX = mouseState.X - (int)VirtualOrigin.X;
-        int mouseY = mouseState.Y - (int)VirtualOrigin.Y;
+    private double GetBottomEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+    }
 
-        debug_mousepos = new Vector2(mouseX, mouseY);
-        debug_gridpos = ComputeClosestHex(debug_mousepos.Value);
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    {
+        base.Update(gameTime, parentTranslate);
 
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        base.Update(gameTime);
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
+        UpdatePosition(gameTime);
+
+        // PROOF OF CONCEPT
+        if (hexMap.MaxR - hexMap.MinR < 7)
+        {
+            var l = new Level(hexMap);
+            l.StackUp(Level.Load("3-4-connectHaft"));
+        }
+        // END
+
+        UpdateChildren(gameTime);
+
+        var allBalls = children.OfType<Ball>();
+
+        foreach (var ball in allBalls)
+        {
+            var circle = ball.Circle;
+
+            float right = BOARD_HALF_WIDTH_PX - circle.radius;
+            if (0 < ball.Velocity.X && right < ball.Position.X)
+            {
+                ball.BounceOverX(right);
+            }
+            float left = -BOARD_HALF_WIDTH_PX + circle.radius;
+            if (ball.Velocity.X < 0 && ball.Position.X < left)
+            {
+                ball.BounceOverX(left);
+            }
+
+            if (ball.GetState() == Ball.State.Falling)
+            {
+                if (GetBottomEdgePos() + 1000 < ball.Position.Y)
+                {
+                    ball.Destroy();
+                }
+                continue;
+            }
+
+            if (ball.GetState() != Ball.State.Moving) continue;
+
+            // FIXME: when ball goes too fast, it could overwrite another ball
+            // balls have already applied velocity into their position
+            Hex ballClosestHex = ComputeClosestHex(ball.Position);
+
+            foreach (var dir in Hex.directions)
+            {
+                Hex neighborHex = ballClosestHex + dir;
+                if (!IsBallAt(neighborHex) && TopRow <= neighborHex.R) continue;
+
+                Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
+                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
+                bool colliding = circle.Intersects(neighborCircle) > 0;
+                if (!colliding) continue;
+
+                SetBallAt(ballClosestHex, ball.Data);
+                var explodingBalls = ExplodeBalls(ballClosestHex);
+                var fallBalls = RemoveFloatingBalls();
+
+                pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
+                {
+                    var b = new Ball(explodingBall.Value, Ball.State.Exploding)
+                    {
+                        Position = explodingBall.Key,
+                        // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
+                    };
+                    return b;
+                }));
+                pendingChildren.AddRange(fallBalls.ConvertAll(fallingBall =>
+                {
+                    var b = new Ball(fallingBall.Value, Ball.State.Falling)
+                    {
+                        Position = fallingBall.Key,
+                        Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
+                    };
+                    return b;
+                }));
+
+                if (explodingBalls.Count == 0)
+                {
+                    Debug.Assert(shineAnimPlayer is not null && settleSfx is not null);
+                    // We want to play the shine animation when a ball is settled
+                    // and that ball doesn't cause any explosion.
+                    //
+                    // We currently only call this method on settled moving ball,
+                    // so we can assume that calling play shine animation here will
+                    // yield the expected outcome.
+                    var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
+                    var shineObj = shineAnimPlayer.PlayAt(shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    pendingChildren.Add(shineObj);
+                    settleSfx.Play();
+                }
+
+                ball.Destroy();
+                break;
+            }
+        }
+        ;
+
+        UpdatePendingAndDestroyedChildren();
+    }
+
+    public BallData.BallStats GetBallStats()
+    {
+        BallData.BallStats stats = new();
+        stats.Add(hexMap.GetValues().GetEnumerator());
+        stats.Add(children.Concat(pendingChildren).OfType<Ball>().Where(ball =>
+            ball.GetState() == Ball.State.Moving
+        ).Select(ball => ball.Data).GetEnumerator());
+        return stats;
     }
 
 }
