@@ -40,7 +40,7 @@ public class Ball : GameObject
     public const float MAX_EXPLODE_DELAY = 0.2f;
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
-    private static Random _rand = new Random();
+    private static readonly Random _rand = new();
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
 

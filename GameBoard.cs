@@ -217,7 +217,7 @@ public class GameBoard : GameObject
         // No balls on the board
         if (floating.Count == 0) return [];
 
-        Queue<Hex> bfsQueue = new Queue<Hex>();
+        Queue<Hex> bfsQueue = new();
         // Balls from the top row can't be floating
         foreach (var item in hexMap.Where(kv => kv.Key.R == TopRow))
         {
