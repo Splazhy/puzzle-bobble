@@ -98,10 +98,10 @@ public class Slingshot : GameObject
 
     private Texture2D? _slingshotTexture;
     private Guideline? _guideline;
-    private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
-    public BallData? Data = null;
+    public BallData? Data { get; private set; }
+    private BallData.Assets? _ballAssets = null;
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
@@ -128,13 +128,22 @@ public class Slingshot : GameObject
     {
         base.LoadContent(content);
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
-        _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
         _guideline = new Guideline(
             content.Load<Texture2D>("Graphics/guideline_full"),
             24, 1200.0f, 15.0f
         );
 
         _content = content;
+
+        _ballAssets = new BallData.Assets(content);
+        Data?.LoadAnimation(_ballAssets);
+    }
+
+    public void SetData(BallData data)
+    {
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
+        Data = data;
+        Data?.LoadAnimation(_ballAssets);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -161,6 +170,11 @@ public class Slingshot : GameObject
 
         Rotation = MathF.Atan2(direction.Y, direction.X);
         Rotation = MathHelper.Clamp(Rotation, MIN_ROTATION, MAX_ROTATION);
+
+        if (mouseState.RightButton == ButtonState.Pressed)
+        {
+            _timeSinceLastFired = 1 + 1 / firerate;
+        }
 
         if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
         {
@@ -193,8 +207,8 @@ public class Slingshot : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
-        Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
         Debug.Assert(_guideline is not null, "Guideline is not loaded.");
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
         var scrPos = ParentTranslate + Position;
         _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
@@ -212,7 +226,7 @@ public class Slingshot : GameObject
             0
         );
 
-        Data?.Draw(spriteBatch, _ballSpriteSheet, scrPos + new Vector2(0, visualRecoilOffset));
+        Data?.Draw(spriteBatch, gameTime, _ballAssets, scrPos + new Vector2(0, visualRecoilOffset));
     }
 
 }

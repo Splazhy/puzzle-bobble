@@ -50,6 +50,11 @@ public class AnimatedTexture2D
         startTime = gameTime.TotalGameTime + TimeSpan.FromSeconds(delay);
     }
 
+    public void Delay(float delay)
+    {
+        startTime += TimeSpan.FromSeconds(delay);
+    }
+
     public void TriggerPlayOnNextDraw(float delay = 0.0f)
     {
         triggerOnNextDraw = true;

@@ -66,7 +66,7 @@ public class GameScene : AbstractScene
             if (0 < colors.Count)
             {
                 var color = colors[_rand.Next(colors.Count)];
-                _slingshot.Data = new BallData(color);
+                _slingshot.SetData(new BallData(color));
             }
         }
         UpdatePendingAndDestroyedChildren();

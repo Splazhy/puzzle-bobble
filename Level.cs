@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using PuzzleBobble.HexGrid;
 namespace PuzzleBobble;
@@ -5,6 +6,8 @@ namespace PuzzleBobble;
 public class Level
 {
     public readonly HexMap<BallData> Map;
+
+    private static readonly Random _rand = new();
 
     public Level(HexMap<BallData> map)
     {
@@ -45,7 +48,14 @@ public class Level
 
     public static Level Load(string levelName)
     {
-        string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
+        // string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
+        string[] lines = new[]
+        {
+            "a a a . . . . .",
+            "b b b . . . . .",
+            "c c c . . . . .",
+            "d d d . . . . .",
+        };
         HexMap<BallData> map = [];
         for (int y = 0; y < lines.Length; y++)
         {
@@ -57,7 +67,7 @@ public class Level
                 BallData? value = cells[x] switch
                 {
                     "." => null,
-                    _ => new BallData((int)cells[x][0] - 97)
+                    _ => new BallData(_rand.NextSingle() < 0.2 ? -1 : (int)cells[x][0] - 97)
                 };
                 map[hex] = value;
             }

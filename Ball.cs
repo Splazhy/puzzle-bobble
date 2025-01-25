@@ -41,7 +41,6 @@ public class Ball : GameObject
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
     private static readonly Random _rand = new();
-    private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
 
     private bool _soundPlayed = false;
@@ -50,6 +49,7 @@ public class Ball : GameObject
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
     public BallData Data { get; private set; }
+    private BallData.Assets? _ballAssets;
     private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
@@ -77,9 +77,10 @@ public class Ball : GameObject
     {
         base.LoadContent(content);
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
-        _spriteSheet = BallData.LoadBallSpritesheet(content);
+        _ballAssets = new BallData.Assets(content);
+        Data.LoadAnimation(_ballAssets);
 
-        explosionAnimation = Data.CreateExplosionAnimation(content);
+        explosionAnimation = Data.CreateExplosionAnimation(_ballAssets);
         float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
         explosionAnimation.TriggerPlayOnNextDraw(delay);
 
@@ -150,7 +151,7 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_spriteSheet is not null);
+        Debug.Assert(_ballAssets is not null);
         var scrPos = ParentTranslate + Position;
         switch (_state)
         {
@@ -168,7 +169,7 @@ public class Ball : GameObject
                 );
                 break;
             default:
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
+                Data.Draw(spriteBatch, gameTime, _ballAssets, scrPos);
                 break;
         }
     }
