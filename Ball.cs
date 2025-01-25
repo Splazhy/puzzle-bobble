@@ -49,17 +49,6 @@ public class Ball : GameObject
 
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
-
-    public Circle Circle
-    {
-        get
-        {
-            Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
-            // We use sprite sheet now, so this assertion is no longer valid
-            // Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
-            return new Circle(Position, 16 / 2 * Scale.X);
-        }
-    }
     public BallData Data { get; private set; }
     private State _state; public State GetState() { return _state; }
 
@@ -182,15 +171,5 @@ public class Ball : GameObject
                 Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }
-    }
-
-    public bool IsCollideWith(Ball other)
-    {
-        return Circle.Intersects(other.Circle) > 0;
-    }
-
-    public bool IsCollideWith(Circle other)
-    {
-        return Circle.Intersects(other) > 0;
     }
 }

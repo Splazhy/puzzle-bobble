@@ -299,14 +299,12 @@ public class GameBoard : GameObject
 
         foreach (var ball in allBalls)
         {
-            var circle = ball.Circle;
-
-            float right = BOARD_HALF_WIDTH_PX - circle.radius;
+            float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
             if (0 < ball.Velocity.X && right < ball.Position.X)
             {
                 ball.BounceOverX(right);
             }
-            float left = -BOARD_HALF_WIDTH_PX + circle.radius;
+            float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
             if (ball.Velocity.X < 0 && ball.Position.X < left)
             {
                 ball.BounceOverX(left);
@@ -342,6 +340,9 @@ public class GameBoard : GameObject
             // balls have already applied velocity into their position
             Hex ballClosestHex = ComputeClosestHex(ball.Position);
 
+            // reduce the collision circle to be more forgiving to players
+            Circle collisionCircle = new(ball.Position, HEX_INRADIUS * 0.8f);
+
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
@@ -351,8 +352,8 @@ public class GameBoard : GameObject
                 }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = circle.Intersects(neighborCircle) > 0;
+                Circle neighborCircle = new(neighborCenterPos, HEX_INRADIUS);
+                bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
                 SetBallAt(ballClosestHex, ball.Data);
