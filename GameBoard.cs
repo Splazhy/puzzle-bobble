@@ -90,6 +90,8 @@ public class GameBoard : GameObject
         }
         hexMap = level.ToHexRectMap();
 
+        Position = new Vector2(0, (float)GetPreferredPos());
+
         IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
