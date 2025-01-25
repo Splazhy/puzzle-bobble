@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,11 +14,11 @@ public class AnimatedTexture2D
     public readonly float frameDuration;
     public readonly int frameWidth;
     public readonly int frameHeight;
-    protected Rectangle sourceRectangle;
     private bool isLooping;
-    private bool isPlaying;
-    public bool IsFinished { get; private set; }
-    private float timeSinceStart;
+    private bool triggerOnNextDraw;
+    private float triggerOnNextDrawDelay;
+
+    private TimeSpan startTime;
 
     public AnimatedTexture2D(Texture2D spriteSheet, Rectangle spriteSheetClip, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
     {
@@ -32,7 +33,6 @@ public class AnimatedTexture2D
         frameHeight = spriteSheetClip.Height / vFrames;
         Debug.Assert(spriteSheetClip.Width % hFrames == 0, "clippped spritesheet width should be divisible by the number of horizontal frames.");
         Debug.Assert(spriteSheetClip.Height % vFrames == 0, "clippped spritesheet height should be divisible by the number of vertical frames.");
-        sourceRectangle = new Rectangle(spriteSheetClip.X, spriteSheetClip.Y, frameWidth, frameHeight);
     }
 
     public AnimatedTexture2D(AnimatedTexture2D template)
@@ -45,20 +45,26 @@ public class AnimatedTexture2D
     {
     }
 
-    public void Play(float delay = 0.0f)
+    public void Play(GameTime gameTime, float delay = 0.0f)
     {
-        if (isPlaying) return;
-
-        isPlaying = true;
-        sourceRectangle.X = spriteSheetClip.X;
-        sourceRectangle.Y = spriteSheetClip.Y;
-        timeSinceStart = -delay;
+        startTime = gameTime.TotalGameTime + TimeSpan.FromSeconds(delay);
     }
 
-    public void Stop()
+    public void TriggerPlayOnNextDraw(float delay = 0.0f)
     {
-        isPlaying = false;
-        timeSinceStart = 0;
+        triggerOnNextDraw = true;
+        triggerOnNextDrawDelay = delay;
+    }
+
+    public bool IsFinished(GameTime gameTime)
+    {
+        if (triggerOnNextDraw)
+        {
+            return false;
+        }
+        var elapsed = gameTime.TotalGameTime - startTime;
+        var frameIndex = (int)(elapsed.TotalSeconds / frameDuration);
+        return !isLooping && vFrames <= frameIndex / hFrames;
     }
 
     public void SetLooping(bool isLooping)
@@ -66,37 +72,36 @@ public class AnimatedTexture2D
         this.isLooping = isLooping;
     }
 
-    public void Update(GameTime gameTime)
+    private Rectangle ComputeSourceRectangle(GameTime gameTime)
     {
-        if (!isPlaying) return;
-
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        timeSinceStart += deltaTime;
-        if (timeSinceStart > frameDuration)
+        if (triggerOnNextDraw)
         {
-            timeSinceStart = 0;
-            sourceRectangle.X += frameWidth;
-            if (sourceRectangle.X >= spriteSheetClip.X + spriteSheetClip.Width)
-            {
-                sourceRectangle.X = spriteSheetClip.X;
-                sourceRectangle.Y += frameHeight;
-                if (sourceRectangle.Y >= spriteSheetClip.Y + spriteSheetClip.Height)
-                {
-                    sourceRectangle.Y = spriteSheetClip.Y;
-                    if (!isLooping)
-                    {
-                        Stop();
-                        IsFinished = true;
-                    }
-                }
-            }
-
+            Play(gameTime, triggerOnNextDrawDelay);
+            triggerOnNextDraw = false;
         }
+
+        var elapsed = Math.Max(0, (gameTime.TotalGameTime - startTime).TotalSeconds);
+        var frameIndex = (int)(elapsed / frameDuration);
+        var hFrameIndex = frameIndex % hFrames;
+        var vFrameIndex = frameIndex / hFrames;
+        if (vFrames <= vFrameIndex)
+        {
+            if (isLooping)
+            {
+                vFrameIndex %= vFrames;
+            }
+            else
+            {
+                vFrameIndex = vFrames - 1;
+                hFrameIndex = hFrames - 1;
+            }
+        }
+        return new Rectangle(spriteSheetClip.X + hFrameIndex * frameWidth, spriteSheetClip.Y + vFrameIndex * frameHeight, frameWidth, frameHeight);
     }
 
-    public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
     {
-        if (!isPlaying) return;
+        var sourceRectangle = ComputeSourceRectangle(gameTime);
 
         spriteBatch.Draw(
             spriteSheet,
@@ -111,9 +116,9 @@ public class AnimatedTexture2D
         );
     }
 
-    public void Draw(SpriteBatch spriteBatch, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
     {
-        if (!isPlaying) return;
+        var sourceRectangle = ComputeSourceRectangle(gameTime);
 
         spriteBatch.Draw(
             spriteSheet,

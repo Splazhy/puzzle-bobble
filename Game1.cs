@@ -24,8 +24,8 @@ public class Game1 : Game
     {
         _graphics = new GraphicsDeviceManager(this)
         {
-            // _graphics.PreferredBackBufferWidth = 1280;
-            // _graphics.PreferredBackBufferHeight = 720;
+            PreferredBackBufferWidth = 1600,
+            PreferredBackBufferHeight = 900,
 
             // change framerate to vsync
             SynchronizeWithVerticalRetrace = true
@@ -37,8 +37,6 @@ public class Game1 : Game
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
 
-        _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
-
         Window.ClientSizeChanged += Window_ClientSizeChanged;
 
     }
@@ -49,6 +47,8 @@ public class Game1 : Game
         _sceneManager.Initialize(this);
 
         base.Initialize();
+        _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
     }
 
     protected override void LoadContent()

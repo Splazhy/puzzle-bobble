@@ -49,17 +49,6 @@ public class Ball : GameObject
 
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
-
-    public Circle Circle
-    {
-        get
-        {
-            Debug.Assert(Scale.X == Scale.Y, "Non-uniform scaling is not supported for collision detection.");
-            // We use sprite sheet now, so this assertion is no longer valid
-            // Debug.Assert(_texture.Width == _texture.Height, "Non-square textures are not supported for collision detection.");
-            return new Circle(Position, 16 / 2 * Scale.X);
-        }
-    }
     public BallData Data { get; private set; }
     private State _state; public State GetState() { return _state; }
 
@@ -92,7 +81,7 @@ public class Ball : GameObject
 
         explosionAnimation = Data.CreateExplosionAnimation(content);
         float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
-        explosionAnimation.Play(delay);
+        explosionAnimation.TriggerPlayOnNextDraw(delay);
 
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
         explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
@@ -127,8 +116,7 @@ public class Ball : GameObject
                         _soundDelay -= deltaTime;
                     }
                 }
-                explosionAnimation.Update(gameTime);
-                if (explosionAnimation.IsFinished)
+                if (explosionAnimation.IsFinished(gameTime))
                 {
                     Destroy();
                 }
@@ -170,6 +158,7 @@ public class Ball : GameObject
                 Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Draw(
                     spriteBatch,
+                    gameTime,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
                     new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
@@ -182,15 +171,5 @@ public class Ball : GameObject
                 Data.Draw(spriteBatch, _spriteSheet, scrPos);
                 break;
         }
-    }
-
-    public bool IsCollideWith(Ball other)
-    {
-        return Circle.Intersects(other.Circle) > 0;
-    }
-
-    public bool IsCollideWith(Circle other)
-    {
-        return Circle.Intersects(other) > 0;
     }
 }

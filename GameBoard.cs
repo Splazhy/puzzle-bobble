@@ -90,6 +90,8 @@ public class GameBoard : GameObject
         }
         hexMap = level.ToHexRectMap();
 
+        Position = new Vector2(0, (float)GetPreferredPos());
+
         IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
@@ -112,9 +114,9 @@ public class GameBoard : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var pX = ParentTranslate.X;
-        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, ParentTranslate.Y - leftBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
 
         foreach (var item in hexMap)
         {
@@ -299,14 +301,12 @@ public class GameBoard : GameObject
 
         foreach (var ball in allBalls)
         {
-            var circle = ball.Circle;
-
-            float right = BOARD_HALF_WIDTH_PX - circle.radius;
+            float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
             if (0 < ball.Velocity.X && right < ball.Position.X)
             {
                 ball.BounceOverX(right);
             }
-            float left = -BOARD_HALF_WIDTH_PX + circle.radius;
+            float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
             if (ball.Velocity.X < 0 && ball.Position.X < left)
             {
                 ball.BounceOverX(left);
@@ -318,7 +318,6 @@ public class GameBoard : GameObject
                 {
                     ball.Destroy();
                 }
-                continue;
             }
 
             if (ball.GetState() == Ball.State.Stasis)
@@ -330,7 +329,7 @@ public class GameBoard : GameObject
                 continue;
             }
 
-            if (ball.GetState() != Ball.State.Moving) continue;
+            if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
 
             if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
             {
@@ -342,6 +341,9 @@ public class GameBoard : GameObject
             // balls have already applied velocity into their position
             Hex ballClosestHex = ComputeClosestHex(ball.Position);
 
+            // reduce the collision circle to be more forgiving to players
+            Circle collisionCircle = new(ball.Position, HEX_INRADIUS * 0.8f);
+
             foreach (var dir in Hex.directions)
             {
                 Hex neighborHex = ballClosestHex + dir;
@@ -351,8 +353,8 @@ public class GameBoard : GameObject
                 }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = circle.Intersects(neighborCircle) > 0;
+                Circle neighborCircle = new(neighborCenterPos, HEX_INRADIUS);
+                bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
                 SetBallAt(ballClosestHex, ball.Data);
@@ -388,7 +390,7 @@ public class GameBoard : GameObject
                     // so we can assume that calling play shine animation here will
                     // yield the expected outcome.
                     var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    var shineObj = shineAnimPlayer.PlayAt(shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
                     pendingChildren.Add(shineObj);
                     settleSfx.Play();
                 }

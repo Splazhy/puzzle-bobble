@@ -75,6 +75,6 @@ public class GameScene : AbstractScene
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         DrawChildren(spriteBatch, gameTime);
-        spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 100), Color.White);
+        spriteBatch.DrawString(_font, "Press q to go back to menu", new Vector2(100, 200), Color.White);
     }
 }

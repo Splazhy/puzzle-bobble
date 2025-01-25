@@ -98,3 +98,6 @@ _*
 
 # Nopipeline
 *.mgcb
+
+# Visual Studio performance profiler
+*.diagsession

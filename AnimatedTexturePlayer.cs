@@ -22,17 +22,17 @@ public class AnimatedTexturePlayer
         public override void Update(GameTime gameTime, Vector2 parentTranslate)
         {
             base.Update(gameTime, parentTranslate);
-            if (_animatedTexture.IsFinished)
+            if (_animatedTexture.IsFinished(gameTime))
             {
                 Destroy();
             }
-            _animatedTexture.Update(gameTime);
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             _animatedTexture.Draw(
                 spriteBatch,
+                gameTime,
                 new Rectangle(
                     (int)(Position.X + ParentTranslate.X),
                     (int)(Position.Y + ParentTranslate.Y),
@@ -53,10 +53,10 @@ public class AnimatedTexturePlayer
         this.animatedTexture = animatedTexture;
     }
 
-    public AnimationInstance PlayAt(Vector2 position, Vector2 size, Color color, float rotation, Vector2 origin)
+    public AnimationInstance PlayAt(GameTime gameTime, Vector2 position, Vector2 size, Color color, float rotation, Vector2 origin)
     {
         var newAnimatedTexture = new AnimatedTexture2D(animatedTexture);
-        newAnimatedTexture.Play();
+        newAnimatedTexture.Play(gameTime);
         return new AnimationInstance(newAnimatedTexture)
         {
             Position = position,
