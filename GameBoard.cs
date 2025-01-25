@@ -318,7 +318,6 @@ public class GameBoard : GameObject
                 {
                     ball.Destroy();
                 }
-                continue;
             }
 
             if (ball.GetState() == Ball.State.Stasis)
@@ -330,7 +329,7 @@ public class GameBoard : GameObject
                 continue;
             }
 
-            if (ball.GetState() != Ball.State.Moving) continue;
+            if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
 
             if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
             {
