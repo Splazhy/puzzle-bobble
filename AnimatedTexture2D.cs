@@ -13,7 +13,9 @@ public class AnimatedTexture2D
     public readonly float frameDuration;
     public readonly int frameWidth;
     public readonly int frameHeight;
-    protected Rectangle sourceRectangle;
+    private int hFrameIndex;
+    private int vFrameIndex;
+    protected Rectangle SourceRectangle => new(spriteSheetClip.X + hFrameIndex * frameWidth, spriteSheetClip.Y + vFrameIndex * frameHeight, frameWidth, frameHeight);
     private bool isLooping;
     private bool isPlaying;
     public bool IsFinished { get; private set; }
@@ -32,7 +34,6 @@ public class AnimatedTexture2D
         frameHeight = spriteSheetClip.Height / vFrames;
         Debug.Assert(spriteSheetClip.Width % hFrames == 0, "clippped spritesheet width should be divisible by the number of horizontal frames.");
         Debug.Assert(spriteSheetClip.Height % vFrames == 0, "clippped spritesheet height should be divisible by the number of vertical frames.");
-        sourceRectangle = new Rectangle(spriteSheetClip.X, spriteSheetClip.Y, frameWidth, frameHeight);
     }
 
     public AnimatedTexture2D(AnimatedTexture2D template)
@@ -50,8 +51,8 @@ public class AnimatedTexture2D
         if (isPlaying) return;
 
         isPlaying = true;
-        sourceRectangle.X = spriteSheetClip.X;
-        sourceRectangle.Y = spriteSheetClip.Y;
+        hFrameIndex = 0;
+        vFrameIndex = 0;
         timeSinceStart = -delay;
     }
 
@@ -72,17 +73,17 @@ public class AnimatedTexture2D
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         timeSinceStart += deltaTime;
-        if (timeSinceStart > frameDuration)
+        if (frameDuration <= timeSinceStart)
         {
-            timeSinceStart = 0;
-            sourceRectangle.X += frameWidth;
-            if (sourceRectangle.X >= spriteSheetClip.X + spriteSheetClip.Width)
+            timeSinceStart -= frameDuration;
+            hFrameIndex++;
+            if (hFrames <= hFrameIndex)
             {
-                sourceRectangle.X = spriteSheetClip.X;
-                sourceRectangle.Y += frameHeight;
-                if (sourceRectangle.Y >= spriteSheetClip.Y + spriteSheetClip.Height)
+                hFrameIndex = 0;
+                vFrameIndex++;
+                if (vFrames <= vFrameIndex)
                 {
-                    sourceRectangle.Y = spriteSheetClip.Y;
+                    vFrameIndex = 0;
                     if (!isLooping)
                     {
                         Stop();
@@ -101,7 +102,7 @@ public class AnimatedTexture2D
         spriteBatch.Draw(
             spriteSheet,
             position,
-            sourceRectangle,
+            SourceRectangle,
             color,
             rotation,
             origin,
@@ -118,7 +119,7 @@ public class AnimatedTexture2D
         spriteBatch.Draw(
             spriteSheet,
             destinationRectangle,
-            sourceRectangle,
+            SourceRectangle,
             color,
             rotation,
             origin,
