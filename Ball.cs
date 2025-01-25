@@ -50,6 +50,8 @@ public class Ball : GameObject
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
     public BallData Data { get; private set; }
+    private BallData.Assets? _ballAssets;
+    private BallData.AnimState? _dataAnimState;
     private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
@@ -88,6 +90,8 @@ public class Ball : GameObject
         _soundDelay = delay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
+        _ballAssets = new BallData.Assets(content);
+        _dataAnimState = Data.CreateAnimationState(_ballAssets);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -150,7 +154,7 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_spriteSheet is not null);
+        Debug.Assert(_spriteSheet is not null && _ballAssets is not null);
         var scrPos = ParentTranslate + Position;
         switch (_state)
         {
@@ -168,7 +172,7 @@ public class Ball : GameObject
                 );
                 break;
             default:
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
+                Data.Draw(spriteBatch, gameTime, _ballAssets, _dataAnimState, scrPos);
                 break;
         }
     }

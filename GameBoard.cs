@@ -57,6 +57,9 @@ public class GameBoard : GameObject
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
 
+    private BallData.Assets? _ballAssets;
+    private HexMap<BallData.AnimState> _ballAnimations = [];
+
     /// <summary>
     /// For random falling velocity of falling balls
     /// </summary>
@@ -74,6 +77,7 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
+        _ballAssets = new BallData.Assets(content);
         ballSpriteSheet = BallData.LoadBallSpritesheet(content);
         background = content.Load<Texture2D>("Graphics/board_bg");
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
@@ -84,13 +88,20 @@ public class GameBoard : GameObject
         {
             level.StackDown(Level.Load("3-4-connectHaft"));
         }
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 10; i++)
         {
             level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
 
-        IsInfinite = true;
+        foreach (var item in hexMap)
+        {
+            Hex hex = item.Key;
+            BallData ball = item.Value;
+            _ballAnimations[hex] = ball.CreateAnimationState(_ballAssets);
+        }
+
+        // IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -110,6 +121,7 @@ public class GameBoard : GameObject
         Debug.Assert(background is not null, "Background is not loaded.");
         Debug.Assert(leftBorder is not null, "Left border is not loaded.");
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
         var pX = ParentTranslate.X;
         spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
@@ -122,7 +134,7 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, ballSpriteSheet, ScreenPosition + p);
+            ball.Draw(spriteBatch, gameTime, _ballAssets, _ballAnimations[hex], ScreenPosition + p);
         }
 
         DrawChildren(spriteBatch, gameTime);
@@ -163,6 +175,8 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
+        Debug.Assert(_ballAssets is not null);
+        _ballAnimations[hex] = ball.CreateAnimationState(_ballAssets);
     }
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
@@ -205,6 +219,7 @@ public class GameBoard : GameObject
             {
                 explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
+                _ballAnimations[hex] = null;
             }
         }
 
@@ -254,6 +269,7 @@ public class GameBoard : GameObject
             {
                 fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
                 hexMap[hex] = null;
+                _ballAnimations[hex] = null;
             }
         }
 
@@ -286,11 +302,11 @@ public class GameBoard : GameObject
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
-        if (hexMap.MaxR - hexMap.MinR < 7)
-        {
-            var l = new Level(hexMap);
-            l.StackUp(Level.Load("3-4-connectHaft"));
-        }
+        // if (hexMap.MaxR - hexMap.MinR < 7)
+        // {
+        //     var l = new Level(hexMap);
+        //     l.StackUp(Level.Load("3-4-connectHaft"));
+        // }
         // END
 
         UpdateChildren(gameTime);
