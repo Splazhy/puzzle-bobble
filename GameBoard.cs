@@ -114,9 +114,9 @@ public class GameBoard : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var pX = ParentTranslate.X;
-        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, 0), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, ParentTranslate.Y - leftBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
 
         foreach (var item in hexMap)
         {
