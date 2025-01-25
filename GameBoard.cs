@@ -389,7 +389,7 @@ public class GameBoard : GameObject
                     // so we can assume that calling play shine animation here will
                     // yield the expected outcome.
                     var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    var shineObj = shineAnimPlayer.PlayAt(shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
                     pendingChildren.Add(shineObj);
                     settleSfx.Play();
                 }

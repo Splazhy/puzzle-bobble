@@ -81,7 +81,7 @@ public class Ball : GameObject
 
         explosionAnimation = Data.CreateExplosionAnimation(content);
         float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
-        explosionAnimation.Play(delay);
+        explosionAnimation.TriggerPlayOnNextDraw(delay);
 
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
         explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
@@ -116,8 +116,7 @@ public class Ball : GameObject
                         _soundDelay -= deltaTime;
                     }
                 }
-                explosionAnimation.Update(gameTime);
-                if (explosionAnimation.IsFinished)
+                if (explosionAnimation.IsFinished(gameTime))
                 {
                     Destroy();
                 }
@@ -159,6 +158,7 @@ public class Ball : GameObject
                 Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 explosionAnimation.Draw(
                     spriteBatch,
+                    gameTime,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
                     new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),

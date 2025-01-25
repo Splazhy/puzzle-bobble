@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,13 +14,11 @@ public class AnimatedTexture2D
     public readonly float frameDuration;
     public readonly int frameWidth;
     public readonly int frameHeight;
-    private int hFrameIndex;
-    private int vFrameIndex;
-    protected Rectangle SourceRectangle => new(spriteSheetClip.X + hFrameIndex * frameWidth, spriteSheetClip.Y + vFrameIndex * frameHeight, frameWidth, frameHeight);
     private bool isLooping;
-    private bool isPlaying;
-    public bool IsFinished { get; private set; }
-    private float timeSinceStart;
+    private bool triggerOnNextDraw;
+    private float triggerOnNextDrawDelay;
+
+    private TimeSpan startTime;
 
     public AnimatedTexture2D(Texture2D spriteSheet, Rectangle spriteSheetClip, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
     {
@@ -46,20 +45,26 @@ public class AnimatedTexture2D
     {
     }
 
-    public void Play(float delay = 0.0f)
+    public void Play(GameTime gameTime, float delay = 0.0f)
     {
-        if (isPlaying) return;
-
-        isPlaying = true;
-        hFrameIndex = 0;
-        vFrameIndex = 0;
-        timeSinceStart = -delay;
+        startTime = gameTime.TotalGameTime + TimeSpan.FromSeconds(delay);
     }
 
-    public void Stop()
+    public void TriggerPlayOnNextDraw(float delay = 0.0f)
     {
-        isPlaying = false;
-        timeSinceStart = 0;
+        triggerOnNextDraw = true;
+        triggerOnNextDrawDelay = delay;
+    }
+
+    public bool IsFinished(GameTime gameTime)
+    {
+        if (triggerOnNextDraw)
+        {
+            return false;
+        }
+        var elapsed = gameTime.TotalGameTime - startTime;
+        var frameIndex = (int)(elapsed.TotalSeconds / frameDuration);
+        return !isLooping && vFrames <= frameIndex / hFrames;
     }
 
     public void SetLooping(bool isLooping)
@@ -67,42 +72,41 @@ public class AnimatedTexture2D
         this.isLooping = isLooping;
     }
 
-    public void Update(GameTime gameTime)
+    private Rectangle ComputeSourceRectangle(GameTime gameTime)
     {
-        if (!isPlaying) return;
-
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        timeSinceStart += deltaTime;
-        if (frameDuration <= timeSinceStart)
+        if (triggerOnNextDraw)
         {
-            timeSinceStart -= frameDuration;
-            hFrameIndex++;
-            if (hFrames <= hFrameIndex)
-            {
-                hFrameIndex = 0;
-                vFrameIndex++;
-                if (vFrames <= vFrameIndex)
-                {
-                    vFrameIndex = 0;
-                    if (!isLooping)
-                    {
-                        Stop();
-                        IsFinished = true;
-                    }
-                }
-            }
-
+            Play(gameTime, triggerOnNextDrawDelay);
+            triggerOnNextDraw = false;
         }
+
+        var elapsed = Math.Max(0, (gameTime.TotalGameTime - startTime).TotalSeconds);
+        var frameIndex = (int)(elapsed / frameDuration);
+        var hFrameIndex = frameIndex % hFrames;
+        var vFrameIndex = frameIndex / hFrames;
+        if (vFrames <= vFrameIndex)
+        {
+            if (isLooping)
+            {
+                vFrameIndex %= vFrames;
+            }
+            else
+            {
+                vFrameIndex = vFrames - 1;
+                hFrameIndex = hFrames - 1;
+            }
+        }
+        return new Rectangle(spriteSheetClip.X + hFrameIndex * frameWidth, spriteSheetClip.Y + vFrameIndex * frameHeight, frameWidth, frameHeight);
     }
 
-    public void Draw(SpriteBatch spriteBatch, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
     {
-        if (!isPlaying) return;
+        var sourceRectangle = ComputeSourceRectangle(gameTime);
 
         spriteBatch.Draw(
             spriteSheet,
             position,
-            SourceRectangle,
+            sourceRectangle,
             color,
             rotation,
             origin,
@@ -112,14 +116,14 @@ public class AnimatedTexture2D
         );
     }
 
-    public void Draw(SpriteBatch spriteBatch, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
+    public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
     {
-        if (!isPlaying) return;
+        var sourceRectangle = ComputeSourceRectangle(gameTime);
 
         spriteBatch.Draw(
             spriteSheet,
             destinationRectangle,
-            SourceRectangle,
+            sourceRectangle,
             color,
             rotation,
             origin,
