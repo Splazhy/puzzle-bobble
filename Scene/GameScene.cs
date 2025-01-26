@@ -45,8 +45,9 @@ public class GameScene : AbstractScene
         _gameBoard = new GameBoard(game);
 
         _guideline = new Guideline(
+            _gameBoard,
             _slingshot,
-            24, 1200.0f, 15.0f
+            96, 45.0f
         );
 
         _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
