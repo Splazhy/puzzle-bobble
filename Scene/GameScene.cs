@@ -15,6 +15,7 @@ public class GameScene : AbstractScene
     private SpriteFont? _font;
     private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
+    private Guideline? _guideline;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -35,10 +36,17 @@ public class GameScene : AbstractScene
         _slingshot = new(game);
         DeathLine deathline = new(game);
         _gameBoard = new GameBoard(game);
+
+        _guideline = new Guideline(
+            _slingshot,
+            24, 1200.0f, 15.0f
+        );
+
         _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
         children = [
             _gameBoard,
             deathline,
+            _guideline,
             _slingshot,
         ];
     }

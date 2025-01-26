@@ -10,94 +10,8 @@ namespace PuzzleBobble;
 
 public class Slingshot : GameObject
 {
-    public class Guideline
-    {
-        private readonly Texture2D _texture;
-        private readonly float _length;
-        private readonly float _duration; // in seconds
-        private float _progress; // 0.0f to 1.0f
-        private readonly int _count;
-        private float _timePassed;
-        private Vector2 _origin;
-
-        public Guideline(Texture2D texture, int drawCount, float lineLength, float loopDuration)
-        {
-            _texture = texture;
-            _length = lineLength;
-            _duration = loopDuration;
-            _count = drawCount;
-            _progress = 0.0f;
-            _timePassed = 0.0f;
-            _origin = new Vector2(_texture.Width / 2, _texture.Height / 2);
-        }
-
-        public void Update(GameTime gameTime)
-        {
-            _timePassed += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            _progress = _timePassed / _duration;
-            if (_progress > 1.0f)
-            {
-                _progress = 0.0f;
-                _timePassed = 0.0f;
-            }
-        }
-
-        // 192 -> gameboard border
-        // 24 -> ball radius
-        private static float LeftBorder { get { return Game1.WindowCenter.X - 192 + 24; } }
-        private static float RightBorder { get { return Game1.WindowCenter.X + 192 - 24; } }
-        public void Draw(SpriteBatch spriteBatch, Vector2 startPoint, float rotation, Vector2 scale)
-        {
-            var direction = Vector2.Normalize(new Vector2(MathF.Cos(rotation), MathF.Sin(rotation)));
-            for (int i = 0; i < _count; i++)
-            {
-                var subProgress = (_progress + (float)i / _count) % 1.0f;
-                var actualScale = scale * (1.0f - subProgress);
-                var lengthLeft = _length * subProgress;
-                var tmpDirection = direction;
-                var s = startPoint;
-                Vector2 subPosition;
-                while (true)
-                {
-                    var e = s + (tmpDirection * lengthLeft);
-                    var slope = (e.Y - s.Y) / (e.X - s.X);
-                    Vector2? bouncePoint = null;
-
-                    if (e.X > s.X && e.X > RightBorder)
-                    {
-                        bouncePoint = new Vector2(RightBorder, slope * (RightBorder - s.X) + s.Y);
-                    }
-                    else if (e.X < s.X && e.X < LeftBorder)
-                    {
-                        bouncePoint = new Vector2(LeftBorder, slope * (LeftBorder - s.X) + s.Y);
-                    }
-
-                    lengthLeft -= Vector2.Distance(s, bouncePoint ?? e);
-                    s = bouncePoint ?? e;
-                    tmpDirection = new Vector2(-tmpDirection.X, tmpDirection.Y);
-                    if (bouncePoint is null || lengthLeft <= 0)
-                    {
-                        subPosition = e;
-                        break;
-                    }
-                }
-                spriteBatch.Draw(
-                    _texture,
-                    subPosition,
-                    null,
-                    Color.White * (0.25f * (1.0f - subProgress)),
-                    0,
-                    _origin,
-                    scale,
-                    SpriteEffects.None,
-                    0
-                );
-            }
-        }
-    }
 
     private Texture2D? _slingshotTexture;
-    private Guideline? _guideline;
     private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
@@ -129,11 +43,6 @@ public class Slingshot : GameObject
         base.LoadContent(content);
         _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
-        _guideline = new Guideline(
-            content.Load<Texture2D>("Graphics/guideline_full"),
-            24, 1200.0f, 15.0f
-        );
-
         _content = content;
     }
 
@@ -150,8 +59,6 @@ public class Slingshot : GameObject
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _timeSinceLastFired += deltaTime;
         visualRecoilOffset = Math.Max(0.0f, visualRecoilOffset - RECOIL_RECOVERY * deltaTime);
-
-        _guideline?.Update(gameTime);
 
         if (!IsActive) return;
 
@@ -196,10 +103,8 @@ public class Slingshot : GameObject
     {
         Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
         Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
-        Debug.Assert(_guideline is not null, "Guideline is not loaded.");
 
         var scrPos = ParentTranslate + Position;
-        _guideline.Draw(spriteBatch, scrPos, Rotation - MathF.PI / 2, Scale);
         spriteBatch.Draw(
             _slingshotTexture,
             scrPos + new Vector2(0, visualRecoilOffset),
