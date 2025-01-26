@@ -75,10 +75,10 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("1-12-empty");
+        var level = Level.Load("3-4-connectHaft");
         for (int i = 0; i < 20; i++)
         {
-            level.StackUp(Level.Load("4-16-chained"));
+            level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
         foreach (var kv in hexMap)
