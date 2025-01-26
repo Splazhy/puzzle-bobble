@@ -277,9 +277,15 @@ public class GameBoard : GameObject
         return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
     }
 
+    public int GetMapBallCount()
+    {
+        return hexMap.Count;
+    }
+
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
+        if (!IsActive) return;
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 

@@ -26,6 +26,7 @@ public class DeathLine : GameObject
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
+        if (!IsActive) return;
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

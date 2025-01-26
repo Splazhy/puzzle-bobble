@@ -22,6 +22,8 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
 
     public Func<Hex, bool> Constraint = (hex) => true;
 
+    public int Count => _map.Count;
+
     public static class Constraints
     {
         /// <summary>
