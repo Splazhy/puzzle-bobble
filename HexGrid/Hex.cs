@@ -5,42 +5,36 @@ namespace PuzzleBobble.HexGrid;
 
 public readonly struct Hex
 {
-    public readonly int q;
-    public readonly int r;
+    public readonly int Q;
+    public readonly int R;
 
     public Hex(int q_, int r_)
     {
-        q = q_;
-        r = r_;
+        Q = q_;
+        R = r_;
     }
 
     public Hex(int q_, int r_, int s_)
     {
         Debug.Assert(q_ + r_ + s_ == 0);
-        q = q_;
-        r = r_;
+        Q = q_;
+        R = r_;
     }
 
-    public int s
-    {
-        get
-        {
-            return -q - r;
-        }
-    }
+    public int S => -Q - R;
 
     public override bool Equals(object? obj) => obj is Hex other && Equals(other);
 
-    public bool Equals(Hex other) => q == other.q && r == other.r;
-    public override int GetHashCode() => (q, r).GetHashCode();
+    public bool Equals(Hex other) => Q == other.Q && R == other.R;
+    public override int GetHashCode() => (Q, R).GetHashCode();
     public static bool operator ==(Hex lhs, Hex rhs) => lhs.Equals(rhs);
     public static bool operator !=(Hex lhs, Hex rhs) => !(lhs == rhs);
 
-    public static Hex operator +(Hex a, Hex b) => new(a.q + b.q, a.r + b.r, a.s + b.s);
-    public static Hex operator -(Hex a, Hex b) => new(a.q - b.q, a.r - b.r, a.s - b.s);
-    public static Hex operator *(Hex a, int k) => new(a.q * k, a.r * k, a.s * k);
+    public static Hex operator +(Hex a, Hex b) => new(a.Q + b.Q, a.R + b.R, a.S + b.S);
+    public static Hex operator -(Hex a, Hex b) => new(a.Q - b.Q, a.R - b.R, a.S - b.S);
+    public static Hex operator *(Hex a, int k) => new(a.Q * k, a.R * k, a.S * k);
 
-    public int Length() => (Math.Abs(q) + Math.Abs(r) + Math.Abs(s)) / 2;
+    public int Length() => (Math.Abs(Q) + Math.Abs(R) + Math.Abs(S)) / 2;
     public int Distance(Hex other)
     {
         return (this - other).Length();
@@ -61,10 +55,10 @@ public readonly struct Hex
 
     public OffsetCoord ToOffsetCoord()
     {
-        int col = q + (r + OffsetCoord.ODD * (r & 1)) / 2;
-        int row = r;
+        int col = Q + (R + OffsetCoord.ODD * (R & 1)) / 2;
+        int row = R;
         return new OffsetCoord(col, row);
     }
 
-    public override string ToString() => $"Hex({q}, {r}, {s})";
+    public override string ToString() => $"Hex({Q}, {R}, {S})";
 }

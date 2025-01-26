@@ -55,7 +55,8 @@ public class GameScene : AbstractScene
 
         var movingBalls = Root.FindAllChidren(gameObject =>
             gameObject is Ball ball &&
-            ball.GetState() == Ball.State.Moving
+            (ball.GetState() == Ball.State.Moving ||
+            ball.GetState() == Ball.State.Falling)
         ).Cast<Ball>().ToList();
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -89,7 +90,7 @@ public class GameScene : AbstractScene
 
                     // uncomment these 2 lines if you want explosion position to stay in place.
                     // Root.AddChildrenDeferred(explodingBalls);
-                    // Root.AddChildrenDeferred(fallingBalls);
+                    Root.AddChildrenDeferred(fallingBalls);
 
                     break;
                 }

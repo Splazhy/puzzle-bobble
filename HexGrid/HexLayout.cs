@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 namespace PuzzleBobble.HexGrid;
 
 // https://www.redblobgames.com/grids/hexagons/implementation.html
-public struct HexLayout
+public readonly struct HexLayout
 {
     public readonly HexOrientation orientation;
     public readonly Vector2Double size;
@@ -15,21 +15,21 @@ public struct HexLayout
         origin = origin_;
     }
 
-    public Vector2Double HexToPixel(Hex h)
+    public readonly Vector2Double HexToCenterPixel(Hex h)
     {
-        double x = (orientation.f0 * h.q + orientation.f1 * h.r) * size.X;
-        double y = (orientation.f2 * h.q + orientation.f3 * h.r) * size.Y;
+        double x = (orientation.f0 * h.Q + orientation.f1 * h.R) * size.X;
+        double y = (orientation.f2 * h.Q + orientation.f3 * h.R) * size.Y;
         return new Vector2Double(x + origin.X, y + origin.Y);
     }
 
-    public Vector2Double HexToDrawLocation(Hex h)
+    public readonly Vector2Double HexToOriginPixel(Hex h)
     {
-        double x = (orientation.f0 * h.q + orientation.f1 * h.r) * size.X;
-        double y = (orientation.f2 * h.q + orientation.f3 * h.r) * size.Y;
+        double x = (orientation.f0 * h.Q + orientation.f1 * h.R) * size.X;
+        double y = (orientation.f2 * h.Q + orientation.f3 * h.R) * size.Y;
         return new Vector2Double(x, y);
     }
 
-    public HexFrac PixelToHex(Vector2Double p)
+    public readonly HexFrac PixelToHex(Vector2Double p)
     {
         Vector2Double pt = new((p.X - origin.X) / size.X,
                                 (p.Y - origin.Y) / size.Y);

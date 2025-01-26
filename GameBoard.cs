@@ -25,7 +25,15 @@ public class GameBoard : GameObject
     public static readonly float LERP_AMOUNT = 5.0f;
     public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
 
-    public int TopRow;
+    private int _topRow;
+    public int TopRow
+    {
+        get
+        {
+            _topRow = Math.Min(_topRow, hexMap.MinR);
+            return _topRow;
+        }
+    }
 
     private HexLayout hexLayout = new HexLayout(
         HexOrientation.POINTY,
@@ -67,13 +75,12 @@ public class GameBoard : GameObject
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
-        var level = Level.Load("3-4-connectHaft");
+        var level = Level.Load("1-12-empty");
         for (int i = 0; i < 20; i++)
         {
-            level.Stack(Level.Load("3-4-connectHaft"));
+            level.StackUp(Level.Load("4-16-chained"));
         }
         hexMap = level.ToHexRectMap();
-        TopRow = level.TopRow;
         foreach (var kv in hexMap)
         {
             Hex hex = kv.Key;
@@ -108,7 +115,7 @@ public class GameBoard : GameObject
         {
             spriteBatch.DrawString(
                 Game1.Font,
-                $"{debug_gridpos.q}, {debug_gridpos.r}",
+                $"{debug_gridpos.Q}, {debug_gridpos.Q}",
                 Mouse.GetState().Position.ToVector2(),
                 Color.White
             );
@@ -129,7 +136,7 @@ public class GameBoard : GameObject
 
     public Vector2 ConvertHexToCenter(Hex hex)
     {
-        return hexLayout.HexToPixel(hex).Downcast() + Position;
+        return hexLayout.HexToCenterPixel(hex).Downcast() + Position;
     }
 
     public bool IsValidHex(Hex hex)
@@ -232,7 +239,7 @@ public class GameBoard : GameObject
 
         Queue<Hex> bfsQueue = new Queue<Hex>();
         // Balls from the top row can't be floating
-        foreach (var item in hexMap.Where(kv => kv.Key.r == TopRow))
+        foreach (var item in hexMap.Where(kv => kv.Key.R == TopRow))
         {
             Hex hex = item.Key;
             if (!IsBallAt(hex)) continue;
@@ -288,10 +295,25 @@ public class GameBoard : GameObject
         spaceWasDown = Keyboard.GetState().IsKeyDown(Keys.Space);
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED, LERP_AMOUNT * deltaTime);
+        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
+        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
         Position += Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         base.Update(gameTime);
     }
 
+    private double GetPreferredPos()
+    {
+        return 50 - GetBottomEdgePos();
+    }
+
+    private double GetBottomEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+    }
+
+    private double GetTopEdgePos()
+    {
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
+    }
 }

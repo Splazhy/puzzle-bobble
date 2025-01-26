@@ -4,29 +4,42 @@ namespace PuzzleBobble;
 
 public class Level
 {
-    public int TopRow {get; private set;} = 0;
-    public int FarLeftCol {get; private set;} = 0;
-    public int RowCount {get; private set;}
     public readonly HexMap<Ball> Map;
 
     public Level(int rowCount, HexMap<Ball> map)
     {
-        RowCount = rowCount;
         Map = map;
     }
 
-    public void Stack(Level level)
+public void StackDown(Level other)
     {
-        Debug.Assert(level != this, "Cannot stack level with itself");
-        TopRow -= level.RowCount;
-        FarLeftCol += level.RowCount / 2;
-        RowCount += level.RowCount;
-        foreach (var kv in level.Map)
+        Debug.Assert(other != this, "Cannot stack level with itself");
+
+        int translateR = Map.MaxR + 1 - other.Map.MinR;
+
+        foreach (var kv in other.Map)
         {
             var hex = kv.Key;
             var ball = kv.Value;
-            var newR = hex.r + TopRow;
-            Map[new Hex(hex.q + FarLeftCol, hex.r + TopRow)] = ball;
+
+            var offset = hex.ToOffsetCoord();
+            Map[offset + new OffsetCoord(0, translateR)] = ball;
+        }
+    }
+
+    public void StackUp(Level other)
+    {
+        Debug.Assert(other != this, "Cannot stack level with itself");
+
+        int translateR = Map.MinR - other.Map.MaxR - 1;
+
+        foreach (var kv in other.Map)
+        {
+            var hex = kv.Key;
+            var ball = kv.Value;
+
+            var offset = hex.ToOffsetCoord();
+            Map[offset + new OffsetCoord(0, translateR)] = ball;
         }
     }
 
@@ -50,12 +63,12 @@ public class Level
                 map[hex] = value;
             }
         }
-        Debug.Assert(map.minOffsetCoord is not null);
-        Debug.Assert(map.maxOffsetCoord is not null);
+        Debug.Assert(map.MinOffsetCoord is not null);
+        Debug.Assert(map.MaxOffsetCoord is not null);
         map.Constraint = HexMap<Ball>.Constraints.Rectangular(
-            map.minOffsetCoord.Value.col,
+            map.MinOffsetCoord.Value.Col,
             null,
-            map.maxOffsetCoord.Value.col,
+            map.MaxOffsetCoord.Value.Col,
             null,
             true
         );
