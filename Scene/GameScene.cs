@@ -24,7 +24,14 @@ public class GameScene : AbstractScene
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
-    public bool Paused = false;
+    private enum State
+    {
+        Playing,
+        Fail,
+        Success,
+        Paused
+    }
+    private State _state = State.Playing;
     private bool _keyPDown = false;
 
     public GameScene() : base("scene_game")
@@ -62,7 +69,8 @@ public class GameScene : AbstractScene
 
     private void Pause()
     {
-        Paused = true;
+        Debug.Assert(_state == State.Playing);
+        _state = State.Paused;
         foreach (var child in children)
         {
             child.IsActive = false;
@@ -71,10 +79,31 @@ public class GameScene : AbstractScene
 
     private void Unpause()
     {
-        Paused = false;
+        Debug.Assert(_state == State.Paused);
+        _state = State.Playing;
         foreach (var child in children)
         {
             child.IsActive = true;
+        }
+    }
+
+    private void Fail()
+    {
+        Debug.Assert(_state == State.Playing);
+        _state = State.Fail;
+        foreach (var child in children)
+        {
+            child.IsActive = false;
+        }
+    }
+
+    private void Success()
+    {
+        Debug.Assert(_state == State.Playing);
+        _state = State.Success;
+        foreach (var child in children)
+        {
+            child.IsActive = false;
         }
     }
 
@@ -85,11 +114,11 @@ public class GameScene : AbstractScene
         {
             if (!_keyPDown)
             {
-                if (Paused)
+                if (_state == State.Paused)
                 {
                     Unpause();
                 }
-                else
+                else if (_state == State.Playing)
                 {
                     Pause();
                 }
@@ -107,17 +136,33 @@ public class GameScene : AbstractScene
 
         UpdateChildren(gameTime);
         Debug.Assert(_gameBoard != null && _slingshot != null);
-        if (_slingshot.Data == null)
+        if (_state == State.Playing)
         {
-            // TODO: move this into BallData or smth
-            var bs = _gameBoard.GetBallStats();
-            var colors = bs.ColorCounts.Keys.ToList();
-            if (0 < colors.Count)
+            if (_gameBoard.GetMapBallCount() == 0)
             {
-                var color = colors[_rand.Next(colors.Count)];
-                _slingshot.Data = new BallData(color);
+                Success();
+            }
+            else
+            {
+                if (_slingshot.Data == null)
+                {
+                    // TODO: move this into BallData or smth
+                    var bs = _gameBoard.GetBallStats();
+                    var colors = bs.ColorCounts.Keys.ToList();
+                    if (0 < colors.Count)
+                    {
+                        var color = colors[_rand.Next(colors.Count)];
+                        _slingshot.Data = new BallData(color);
+                    }
+                }
+
+                if (220 < _gameBoard.GetMapBottomEdge())
+                {
+                    Fail();
+                }
             }
         }
+
         UpdatePendingAndDestroyedChildren();
     }
 
@@ -125,5 +170,18 @@ public class GameScene : AbstractScene
     {
         DrawChildren(spriteBatch, gameTime);
         spriteBatch.DrawString(_font, "Press q to go back to menu\nPress p to pause", new Vector2(100, 200), Color.White);
+
+        switch (_state)
+        {
+            case State.Paused:
+                spriteBatch.DrawString(_font, "Paused", new Vector2(100, ScreenPosition.Y), Color.White);
+                break;
+            case State.Fail:
+                spriteBatch.DrawString(_font, "Fail", new Vector2(100, ScreenPosition.Y), Color.White);
+                break;
+            case State.Success:
+                spriteBatch.DrawString(_font, "Success", new Vector2(100, ScreenPosition.Y), Color.White);
+                break;
+        }
     }
 }

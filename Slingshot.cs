@@ -11,7 +11,6 @@ namespace PuzzleBobble;
 public class Slingshot : GameObject
 {
 
-    private Texture2D? _slingshotTexture;
     private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
@@ -29,21 +28,23 @@ public class Slingshot : GameObject
     public event BallFiredHandler? BallFired;
     public delegate void BallFiredHandler(Ball ball);
 
+    private readonly SlingshotStaff _staff;
+
     public Slingshot(Game game) : base("slingshot")
     {
         Position = new Vector2(0, 300);
         Scale = new Vector2(3, 3);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
+
+        _staff = new SlingshotStaff();
     }
 
-    private ContentManager? _content;
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
-        _slingshotTexture = content.Load<Texture2D>("Graphics/slingshot");
         _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
-        _content = content;
+        _staff.LoadContent(content);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -71,8 +72,21 @@ public class Slingshot : GameObject
         Rotation = MathF.Atan2(direction.Y, direction.X);
         Rotation = MathHelper.Clamp(Rotation, MIN_ROTATION, MAX_ROTATION);
 
+        _staff.TargetPosition = new Vector2(MathF.Cos(Rotation + (MathF.PI / 2)), MathF.Sin(Rotation + (MathF.PI / 2)));
+        _staff.TargetPosition.Normalize();
+        _staff.TargetPosition *= 30;
+        _staff.TargetRotation = -Rotation * 0.2f;
+
+
         if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
         {
+            var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
+            staffTargetPos2.Normalize();
+            staffTargetPos2 *= 20;
+            _staff.TargetPosition2 = staffTargetPos2;
+            _staff.TargetRotation2 = 0;
+            _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
+
             // Rotate back to 0 degrees
             float targetRotation = Rotation - MathF.PI / 2.0f;
             Ball newBall = new(bd, Ball.State.Moving)
@@ -86,8 +100,8 @@ public class Slingshot : GameObject
             // then maybe `AbstractBallFactorySingleton` class
             // then maybe `AbstractBallFactorySingletonBuilder` class
             // then burn the whole project to the ground
-            Debug.Assert(_content is not null, "ContentManager is not initialized.");
-            newBall.LoadContent(_content);
+            Debug.Assert(content is not null, "ContentManager is not initialized.");
+            newBall.LoadContent(content);
 
             BallFired?.Invoke(newBall);
 
@@ -97,29 +111,17 @@ public class Slingshot : GameObject
 
             visualRecoilOffset = MAX_RECOIL;
         }
+
+        _staff.Update(gameTime, ScreenPosition);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_slingshotTexture is not null, "Slingshot texture is not loaded.");
         Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
 
-        var scrPos = ParentTranslate + Position;
-        spriteBatch.Draw(
-            _slingshotTexture,
-            scrPos + new Vector2(0, visualRecoilOffset),
-            null,
-            Color.White,
-            0.0f,
-            // anchors the texture from the top by 10 pixels no matter the height
-            // so that the ball positioned in the center nicely.
-            new Vector2(_slingshotTexture.Width / 2, 10),
-            Scale,
-            SpriteEffects.None,
-            0
-        );
 
-        Data?.Draw(spriteBatch, _ballSpriteSheet, scrPos + new Vector2(0, visualRecoilOffset));
+        Data?.Draw(spriteBatch, _ballSpriteSheet, ScreenPosition + new Vector2(0, visualRecoilOffset));
+        _staff.Draw(spriteBatch, gameTime);
     }
 
 }

@@ -282,6 +282,11 @@ public class GameBoard : GameObject
         return hexMap.Count;
     }
 
+    public double GetMapBottomEdge()
+    {
+        return GetBottomEdgePos() + Position.Y;
+    }
+
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
