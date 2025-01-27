@@ -11,10 +11,10 @@ namespace PuzzleBobble;
 public class Slingshot : GameObject
 {
 
-    private Texture2D? _ballSpriteSheet;
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
-    public BallData? Data = null;
+    public BallData? Data { get; private set; }
+    private BallData.Assets? _ballAssets = null;
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
@@ -42,8 +42,17 @@ public class Slingshot : GameObject
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
-        _ballSpriteSheet = BallData.LoadBallSpritesheet(content);
         _staff.LoadContent(content);
+
+        _ballAssets = new BallData.Assets(content);
+        Data?.LoadAnimation(_ballAssets);
+    }
+
+    public void SetData(BallData data)
+    {
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
+        Data = data;
+        Data?.LoadAnimation(_ballAssets);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -115,10 +124,10 @@ public class Slingshot : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_ballSpriteSheet is not null, "Ball sprite sheet is not loaded.");
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
 
-        Data?.Draw(spriteBatch, _ballSpriteSheet, ScreenPosition + new Vector2(0, visualRecoilOffset));
+        Data?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + new Vector2(0, visualRecoilOffset));
         _staff.Draw(spriteBatch, gameTime);
     }
 

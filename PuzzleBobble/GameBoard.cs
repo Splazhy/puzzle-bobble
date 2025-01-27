@@ -47,11 +47,12 @@ public class GameBoard : GameObject
     public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * 8;
     public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
 
-    private Texture2D? ballSpriteSheet = null;
 
     private AnimatedTexturePlayer? shineAnimPlayer = null;
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
+
+    private BallData.Assets? _ballAssets;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -70,22 +71,29 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
-        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
+        _ballAssets = new BallData.Assets(content);
 
         var level = Level.Load("3-4-connectHaft");
         for (int i = 0; i < 1; i++)
         {
             level.StackDown(Level.Load("3-4-connectHaft"));
         }
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 10; i++)
         {
             level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
 
+        foreach (var item in hexMap)
+        {
+            Hex hex = item.Key;
+            BallData ball = item.Value;
+            ball.LoadAnimation(_ballAssets);
+        }
+
         Position = new Vector2(0, (float)GetPreferredPos());
 
-        IsInfinite = true;
+        // IsInfinite = true;
 
         var animation = new AnimatedTexture2D(
             content.Load<Texture2D>("Graphics/ball_shine"),
@@ -101,7 +109,7 @@ public class GameBoard : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
-        Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
         foreach (var item in hexMap)
         {
@@ -109,7 +117,7 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, ballSpriteSheet, ScreenPosition + p);
+            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + p);
         }
 
         DrawChildren(spriteBatch, gameTime);
@@ -160,6 +168,8 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
+        Debug.Assert(_ballAssets is not null);
+        ball.LoadAnimation(_ballAssets);
     }
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
@@ -294,11 +304,11 @@ public class GameBoard : GameObject
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
-        if (hexMap.MaxR - hexMap.MinR < 7)
-        {
-            var l = new Level(hexMap);
-            l.StackUp(Level.Load("3-4-connectHaft"));
-        }
+        // if (hexMap.MaxR - hexMap.MinR < 7)
+        // {
+        //     var l = new Level(hexMap);
+        //     l.StackUp(Level.Load("3-4-connectHaft"));
+        // }
         // END
 
         UpdateChildren(gameTime);
@@ -370,16 +380,10 @@ public class GameBoard : GameObject
 
                 if (explodingBalls.Count == 0)
                 {
-                    Debug.Assert(shineAnimPlayer is not null && settleSfx is not null);
-                    // We want to play the shine animation when a ball is settled
-                    // and that ball doesn't cause any explosion.
-                    //
-                    // We currently only call this method on settled moving ball,
-                    // so we can assume that calling play shine animation here will
-                    // yield the expected outcome.
-                    var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(BallData.BALL_SIZE, BallData.BALL_SIZE), Color.White, 0, new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2));
-                    pendingChildren.Add(shineObj);
+                    var data = hexMap[ballClosestHex];
+                    Debug.Assert(data is not null && settleSfx is not null);
+                    // Let this ball shine ( ◡̀_◡́)ᕤ
+                    data.Value.PlayShineAnimation(gameTime);
                     settleSfx.Play();
                 }
 

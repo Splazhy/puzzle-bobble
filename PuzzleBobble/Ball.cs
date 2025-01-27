@@ -10,24 +10,6 @@ namespace PuzzleBobble;
 
 public class Ball : GameObject
 {
-    public enum Color
-    {
-        // The order of the colors is significant,
-        // as it is connected to the sprite sheet.
-        Red = 0,
-        Orange,
-        Yellow,
-        Green,
-        Teal,
-        Sky,
-        Blue,
-        Lavender,
-        Purple,
-        Pink,
-        White,
-        Black,
-    }
-
     public enum State
     {
         Stasis,
@@ -41,7 +23,6 @@ public class Ball : GameObject
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
     private static readonly Random _rand = new();
-    private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
     private AnimatedTexture2D? _previewBallSpriteSheet;
     public Vector2? EstimatedCollisionPosition;
@@ -52,6 +33,7 @@ public class Ball : GameObject
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
     public BallData Data { get; private set; }
+    private BallData.Assets? _ballAssets;
     private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
@@ -78,9 +60,10 @@ public class Ball : GameObject
     {
         base.LoadContent(content);
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
-        _spriteSheet = BallData.LoadBallSpritesheet(content);
+        _ballAssets = new BallData.Assets(content);
+        Data.LoadAnimation(_ballAssets);
 
-        explosionAnimation = Data.CreateExplosionAnimation(content);
+        explosionAnimation = Data.CreateExplosionAnimation(_ballAssets);
         float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
         explosionAnimation.TriggerPlayOnNextDraw(delay);
 
@@ -156,12 +139,12 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_spriteSheet is not null);
+        Debug.Assert(_ballAssets is not null);
 
         if (EstimatedCollisionPosition is Vector2 ep)
         {
             Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball sprite sheet is not loaded.");
-            Data.Draw(spriteBatch, _spriteSheet, ParentTranslate + ep, 0.5f);
+            Data.Draw(spriteBatch, gameTime, _ballAssets, ParentTranslate + ep, 0.5f);
             _previewBallSpriteSheet.Draw(
                 spriteBatch,
                 gameTime,
@@ -189,10 +172,10 @@ public class Ball : GameObject
                 );
                 break;
             case State.Stasis:
-                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition, 0.75f);
+                Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition, 0.75f);
                 break;
             default:
-                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition);
+                Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition);
                 break;
         }
     }
