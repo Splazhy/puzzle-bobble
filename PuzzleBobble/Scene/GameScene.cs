@@ -162,11 +162,11 @@ public class GameScene : AbstractScene
                 {
                     Fail();
                 }
-                else if (DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 3 < _gameBoard.GetMapBottomEdge())
+                else if (DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 4 < _gameBoard.GetMapBottomEdge())
                 {
                     _deathline.Show(gameTime);
                 }
-                else if (_gameBoard.GetMapBottomEdge() < DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 4.5)
+                else if (_gameBoard.GetMapBottomEdge() < DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5.5)
                 {
                     _deathline.Hide(gameTime);
                 }

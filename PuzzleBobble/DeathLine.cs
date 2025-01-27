@@ -80,7 +80,7 @@ public class DeathLine : GameObject
         _spriteSheet?.Draw(
             spriteBatch,
             gameTime,
-            ScreenPosition,
+            ScreenPosition - new Vector2(0, BallData.BALL_SIZE),
             Color.White * _alphaEaser.GetValue(gameTime.TotalGameTime),
             0.0f,
             new Vector2(_spriteSheet.frameWidth / 2, originY),
