@@ -150,7 +150,6 @@ public class Ball : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_spriteSheet is not null);
-        var scrPos = ParentTranslate + Position;
         switch (_state)
         {
             case State.Exploding:
@@ -160,14 +159,14 @@ public class Ball : GameObject
                     gameTime,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
-                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
+                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(BallData.EXPLOSION_TEXTURE_SIZE / 2, BallData.EXPLOSION_TEXTURE_SIZE / 2)
                 );
                 break;
             default:
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
+                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition);
                 break;
         }
     }
