@@ -20,6 +20,7 @@ public class GameBoard : GameObject
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
+    public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
     public static readonly float DEFAULT_SPEED = 20.0f;
     public static readonly float LERP_AMOUNT = 5.0f;
@@ -46,15 +47,11 @@ public class GameBoard : GameObject
     public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * 8;
     public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
 
-    private Texture2D? ballSpriteSheet = null;
 
-    private Texture2D? background = null;
-    private Texture2D? leftBorder = null;
-    private Texture2D? rightBorder = null;
-
-    private AnimatedTexturePlayer? shineAnimPlayer = null;
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
+
+    private BallData.Assets? _ballAssets;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -73,31 +70,28 @@ public class GameBoard : GameObject
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
-        ballSpriteSheet = BallData.LoadBallSpritesheet(content);
-        background = content.Load<Texture2D>("Graphics/board_bg");
-        leftBorder = content.Load<Texture2D>("Graphics/border_left");
-        rightBorder = content.Load<Texture2D>("Graphics/border_right");
+        _ballAssets = new BallData.Assets(content);
 
         var level = Level.Load("3-4-connectHaft");
         for (int i = 0; i < 1; i++)
         {
             level.StackDown(Level.Load("3-4-connectHaft"));
         }
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 10; i++)
         {
             level.StackUp(Level.Load("3-4-connectHaft"));
         }
         hexMap = level.ToHexRectMap();
 
+        foreach (var item in hexMap)
+        {
+            BallData ball = item.Value;
+            ball.LoadAnimation(_ballAssets);
+        }
+
         Position = new Vector2(0, (float)GetPreferredPos());
 
-        IsInfinite = true;
-
-        var animation = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 1, 0.01f, false
-        );
-        shineAnimPlayer = new AnimatedTexturePlayer(animation);
+        // IsInfinite = true;
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
 
@@ -107,27 +101,7 @@ public class GameBoard : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
-        Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
-        Debug.Assert(background is not null, "Background is not loaded.");
-        Debug.Assert(leftBorder is not null, "Left border is not loaded.");
-        Debug.Assert(rightBorder is not null, "Right border is not loaded.");
-
-        var pX = ParentTranslate.X;
-        spriteBatch.Draw(
-            background,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
-        spriteBatch.Draw(
-            leftBorder,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * PIXEL_SIZE, ParentTranslate.Y - leftBorder.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
-        spriteBatch.Draw(
-            rightBorder,
-            new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
+        Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
         foreach (var item in hexMap)
         {
@@ -135,20 +109,30 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, ballSpriteSheet, ScreenPosition + p);
+            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + p);
         }
 
         DrawChildren(spriteBatch, gameTime);
     }
 
-    public Hex ComputeClosestHex(Vector2 pos)
+    private Hex ComputeClosestHexInner(Vector2 pos)
     {
         return hexLayout.PixelToHex(pos).Round();
     }
 
-    public Vector2 ConvertHexToCenter(Hex hex)
+    private Vector2 ConvertHexToCenterInner(Hex hex)
     {
         return hexLayout.HexToCenterPixel(hex).Downcast();
+    }
+
+    public Hex ComputeClosestHex(Vector2 pos)
+    {
+        return ComputeClosestHexInner(ParentToSelfRelPos(pos));
+    }
+
+    public Vector2 ConvertHexToCenter(Hex hex)
+    {
+        return SelfToParentRelPos(ConvertHexToCenterInner(hex));
     }
 
     public bool IsValidHex(Hex hex)
@@ -176,6 +160,8 @@ public class GameBoard : GameObject
     {
         if (!IsValidHex(hex)) return;
         hexMap[hex] = ball;
+        Debug.Assert(_ballAssets is not null);
+        ball.LoadAnimation(_ballAssets);
     }
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
@@ -216,7 +202,7 @@ public class GameBoard : GameObject
         {
             if (hexMap[hex] is BallData ball)
             {
-                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
+                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
@@ -265,7 +251,7 @@ public class GameBoard : GameObject
         {
             if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
+                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
@@ -280,12 +266,12 @@ public class GameBoard : GameObject
 
     private double GetBottomEdgePos()
     {
-        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + BallData.BALL_SIZE / 2;
     }
 
     private double GetTopEdgePos()
     {
-        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y - BallData.BALL_SIZE / 2;
     }
 
     public int GetMapBallCount()
@@ -310,11 +296,11 @@ public class GameBoard : GameObject
         UpdatePosition(gameTime);
 
         // PROOF OF CONCEPT
-        if (hexMap.MaxR - hexMap.MinR < 7)
-        {
-            var l = new Level(hexMap);
-            l.StackUp(Level.Load("3-4-connectHaft"));
-        }
+        // if (hexMap.MaxR - hexMap.MinR < 7)
+        // {
+        //     var l = new Level(hexMap);
+        //     l.StackUp(Level.Load("3-4-connectHaft"));
+        // }
         // END
 
         UpdateChildren(gameTime);
@@ -336,7 +322,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (400 < ball.Position.Y + Position.Y)
+                if (400 < SelfToParentRelPos(ball.Position).Y)
                 {
                     ball.Destroy();
                 }
@@ -344,7 +330,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Stasis)
             {
-                if (GetTopEdgePos() < ball.Position.Y + HEX_HEIGHT / 2)
+                if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
                 {
                     ball.Unstasis();
                 }
@@ -353,32 +339,14 @@ public class GameBoard : GameObject
 
             if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
 
-            if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
+            if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
             {
                 ball.SetStasis();
                 continue;
             }
 
-            // FIXME: when ball goes too fast, it could overwrite another ball
-            // balls have already applied velocity into their position
-            Hex ballClosestHex = ComputeClosestHex(ball.Position);
-
-            // reduce the collision circle to be more forgiving to players
-            Circle collisionCircle = new(ball.Position, HEX_INRADIUS * 0.8f);
-
-            foreach (var dir in Hex.directions)
+            if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
             {
-                Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
-                {
-                    continue;
-                }
-
-                Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, HEX_INRADIUS);
-                bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
-                if (!colliding) continue;
-
                 SetBallAt(ballClosestHex, ball.Data);
                 var explodingBalls = ExplodeBalls(ballClosestHex);
                 var fallBalls = RemoveFloatingBalls();
@@ -404,26 +372,48 @@ public class GameBoard : GameObject
 
                 if (explodingBalls.Count == 0)
                 {
-                    Debug.Assert(shineAnimPlayer is not null && settleSfx is not null);
-                    // We want to play the shine animation when a ball is settled
-                    // and that ball doesn't cause any explosion.
-                    //
-                    // We currently only call this method on settled moving ball,
-                    // so we can assume that calling play shine animation here will
-                    // yield the expected outcome.
-                    var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(BallData.BALL_SIZE, BallData.BALL_SIZE), Color.White, 0, new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2));
-                    pendingChildren.Add(shineObj);
+                    var data = hexMap[ballClosestHex];
+                    Debug.Assert(data is not null && settleSfx is not null);
+                    // Let this ball shine ( ◡̀_◡́)ᕤ
+                    data.Value.PlayShineAnimation(gameTime);
                     settleSfx.Play();
                 }
 
                 ball.Destroy();
-                break;
             }
         }
         ;
 
         UpdatePendingAndDestroyedChildren();
+    }
+
+    public bool CheckBallCollision(Vector2 ballPosition, out Hex ballClosestHex)
+    {
+        return CheckBallCollisionInner(ParentToSelfRelPos(ballPosition), out ballClosestHex);
+    }
+
+    private bool CheckBallCollisionInner(Vector2 ballPosition, out Hex ballClosestHex)
+    {
+        ballClosestHex = ComputeClosestHexInner(ballPosition);
+
+        // reduce the collision circle to be more forgiving to players
+        Circle collisionCircle = new(ballPosition, BallData.BALL_SIZE / 2 * 0.8f);
+
+        foreach (var dir in Hex.directions)
+        {
+            Hex neighborHex = ballClosestHex + dir;
+            if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
+            {
+                continue;
+            }
+
+            Vector2 neighborCenterPos = ConvertHexToCenterInner(neighborHex);
+            Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE / 2);
+            bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
+
+            if (colliding) return true;
+        }
+        return false;
     }
 
     public BallData.BallStats GetBallStats()

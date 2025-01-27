@@ -47,6 +47,26 @@ public class GameObject
         Destroyed = false;
     }
 
+    /// <summary>
+    /// Convert a Self-relative position to Parent-relative position
+    ///
+    /// Use when returning position to public
+    /// </summary>
+    protected Vector2 SelfToParentRelPos(Vector2 position)
+    {
+        return position + Position;
+    }
+
+    /// <summary>
+    /// Convert a Parent-relative position to Self-relative position
+    ///
+    /// Use when taking position from public
+    /// </summary>
+    protected Vector2 ParentToSelfRelPos(Vector2 position)
+    {
+        return position - Position;
+    }
+
     public virtual void LoadContent(ContentManager content)
     {
         this.content = content;

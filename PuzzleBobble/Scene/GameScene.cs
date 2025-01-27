@@ -12,10 +12,12 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
+    private static readonly int DEATH_Y_POS = 260;
     private SpriteFont? _font;
     private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
     private Guideline? _guideline;
+    private DeathLine? _deathline;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -41,8 +43,9 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game)
     {
         _slingshot = new(game);
-        DeathLine deathline = new(game);
+        _deathline = new(DEATH_Y_POS);
         _gameBoard = new GameBoard(game);
+        BoardBackground boardBackground = new(_gameBoard);
 
         _guideline = new Guideline(
             _gameBoard,
@@ -50,10 +53,16 @@ public class GameScene : AbstractScene
             96, 45.0f
         );
 
-        _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
+        _slingshot.BallFired += ball =>
+        {
+            // hacky solution!
+            ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            _gameBoard.AddChildDeferred(ball);
+        };
         children = [
+            boardBackground,
+            _deathline,
             _gameBoard,
-            deathline,
             _guideline,
             _slingshot,
         ];
@@ -135,7 +144,7 @@ public class GameScene : AbstractScene
         }
 
         UpdateChildren(gameTime);
-        Debug.Assert(_gameBoard != null && _slingshot != null);
+        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null, "GameBoard, Slingshot, or DeathLine is not loaded");
         if (_state == State.Playing)
         {
             if (_gameBoard.GetMapBallCount() == 0)
@@ -152,13 +161,21 @@ public class GameScene : AbstractScene
                     if (0 < colors.Count)
                     {
                         var color = colors[_rand.Next(colors.Count)];
-                        _slingshot.Data = new BallData(color);
+                        _slingshot.SetData(new BallData(color));
                     }
                 }
 
-                if (220 < _gameBoard.GetMapBottomEdge())
+                if (DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
                 {
                     Fail();
+                }
+                else if (DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 4 < _gameBoard.GetMapBottomEdge())
+                {
+                    _deathline.Show(gameTime);
+                }
+                else if (_gameBoard.GetMapBottomEdge() < DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5.5)
+                {
+                    _deathline.Hide(gameTime);
                 }
             }
         }

@@ -10,24 +10,6 @@ namespace PuzzleBobble;
 
 public class Ball : GameObject
 {
-    public enum Color
-    {
-        // The order of the colors is significant,
-        // as it is connected to the sprite sheet.
-        Red = 0,
-        Orange,
-        Yellow,
-        Green,
-        Teal,
-        Sky,
-        Blue,
-        Lavender,
-        Purple,
-        Pink,
-        White,
-        Black,
-    }
-
     public enum State
     {
         Stasis,
@@ -41,8 +23,9 @@ public class Ball : GameObject
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
     private static readonly Random _rand = new();
-    private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
+    private AnimatedTexture2D? _previewBallSpriteSheet;
+    public Vector2? EstimatedCollisionPosition;
 
     private bool _soundPlayed = false;
     private float _soundDelay = 0.0f;
@@ -50,6 +33,7 @@ public class Ball : GameObject
     private SoundEffectInstance? explodeSfx;
     private SoundEffectInstance? bounceSfx;
     public BallData Data { get; private set; }
+    private BallData.Assets? _ballAssets;
     private State _state; public State GetState() { return _state; }
 
     private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
@@ -76,9 +60,10 @@ public class Ball : GameObject
     {
         base.LoadContent(content);
         // XNA caches textures, so we don't need to worry about loading the same texture multiple times
-        _spriteSheet = BallData.LoadBallSpritesheet(content);
+        _ballAssets = new BallData.Assets(content);
+        Data.LoadAnimation(_ballAssets);
 
-        explosionAnimation = Data.CreateExplosionAnimation(content);
+        explosionAnimation = Data.CreateExplosionAnimation(_ballAssets);
         float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
         explosionAnimation.TriggerPlayOnNextDraw(delay);
 
@@ -87,6 +72,8 @@ public class Ball : GameObject
         _soundDelay = delay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
+
+        _previewBallSpriteSheet = _ballAssets.CreatePreviewBallAnimation();
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -149,8 +136,16 @@ public class Ball : GameObject
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(_spriteSheet is not null);
-        var scrPos = ParentTranslate + Position;
+        Debug.Assert(_ballAssets is not null);
+
+        if (EstimatedCollisionPosition is Vector2 ep)
+        {
+            Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball sprite sheet is not loaded.");
+            Data.Draw(spriteBatch, gameTime, _ballAssets, ParentTranslate + ep, 0.5f);
+            BallData.DrawPreviewBall(spriteBatch, gameTime, _previewBallSpriteSheet, ParentTranslate + ep, 0.75f);
+        }
+
+
         switch (_state)
         {
             case State.Exploding:
@@ -160,14 +155,17 @@ public class Ball : GameObject
                     gameTime,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
-                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
+                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
                     new Vector2(BallData.EXPLOSION_TEXTURE_SIZE / 2, BallData.EXPLOSION_TEXTURE_SIZE / 2)
                 );
                 break;
+            case State.Stasis:
+                Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition, 0.75f);
+                break;
             default:
-                Data.Draw(spriteBatch, _spriteSheet, scrPos);
+                Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition);
                 break;
         }
     }

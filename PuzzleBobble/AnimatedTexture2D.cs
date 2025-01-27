@@ -19,6 +19,7 @@ public class AnimatedTexture2D
     private float triggerOnNextDrawDelay;
 
     private TimeSpan startTime;
+    public bool KeepDrawingAfterFinish { get; set; }
 
     public AnimatedTexture2D(Texture2D spriteSheet, Rectangle spriteSheetClip, int hFrames, int vFrames, float frameDuration, bool isLooping = false)
     {
@@ -50,6 +51,11 @@ public class AnimatedTexture2D
         startTime = gameTime.TotalGameTime + TimeSpan.FromSeconds(delay);
     }
 
+    public void Delay(float delay)
+    {
+        startTime += TimeSpan.FromSeconds(delay);
+    }
+
     public void TriggerPlayOnNextDraw(float delay = 0.0f)
     {
         triggerOnNextDraw = true;
@@ -72,7 +78,7 @@ public class AnimatedTexture2D
         this.isLooping = isLooping;
     }
 
-    private Rectangle ComputeSourceRectangle(GameTime gameTime)
+    private Rectangle? ComputeSourceRectangle(GameTime gameTime)
     {
         if (triggerOnNextDraw)
         {
@@ -92,6 +98,8 @@ public class AnimatedTexture2D
             }
             else
             {
+                if (!KeepDrawingAfterFinish) return null;
+
                 vFrameIndex = vFrames - 1;
                 hFrameIndex = hFrames - 1;
             }
@@ -102,11 +110,12 @@ public class AnimatedTexture2D
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Vector2 position, Color color, float rotation, Vector2 origin, float scale)
     {
         var sourceRectangle = ComputeSourceRectangle(gameTime);
+        if (sourceRectangle is null) return;
 
         spriteBatch.Draw(
             spriteSheet,
             position,
-            sourceRectangle,
+            sourceRectangle.Value,
             color,
             rotation,
             origin,
@@ -119,11 +128,12 @@ public class AnimatedTexture2D
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Rectangle destinationRectangle, Color color, float rotation, Vector2 origin)
     {
         var sourceRectangle = ComputeSourceRectangle(gameTime);
+        if (sourceRectangle is null) return;
 
         spriteBatch.Draw(
             spriteSheet,
             destinationRectangle,
-            sourceRectangle,
+            sourceRectangle.Value,
             color,
             rotation,
             origin,
