@@ -296,7 +296,7 @@ public class GameBoard : GameObject
 
     private double GetTopEdgePos()
     {
-        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + BallData.BALL_SIZE / 2;
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y - BallData.BALL_SIZE / 2;
     }
 
     public int GetMapBallCount()
@@ -355,7 +355,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Stasis)
             {
-                if (GetTopEdgePos() < ball.Position.Y + BallData.BALL_SIZE / 2)
+                if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
                 {
                     ball.Unstasis();
                 }
@@ -364,7 +364,7 @@ public class GameBoard : GameObject
 
             if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
 
-            if (IsInfinite && ball.Position.Y + BallData.BALL_SIZE / 2 < GetTopEdgePos())
+            if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
             {
                 ball.SetStasis();
                 continue;
