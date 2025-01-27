@@ -8,6 +8,8 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
+    public static readonly int PIXEL_SIZE = 3;
+    protected Vector2 PixelScale => new(Scale.X * PIXEL_SIZE, Scale.Y * PIXEL_SIZE);
     public Vector2 ParentTranslate { get; set; }
     public Vector2 Position { get; set; }
     public Vector2 ScreenPosition => Position + ParentTranslate;

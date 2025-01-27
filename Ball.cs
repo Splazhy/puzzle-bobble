@@ -57,7 +57,6 @@ public class Ball : GameObject
     public Ball(BallData data, State state) : base("ball")
     {
         Data = data;
-        Scale = new Vector2(3, 3);
         _state = state;
     }
 
@@ -161,10 +160,10 @@ public class Ball : GameObject
                     gameTime,
                     // FIXME: this position is not accurate (the y position is off by a bit)
                     // might be due to floating point precision errors of GameBoard.
-                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(32 * Scale.X), (int)(32 * Scale.Y)),
+                    new Rectangle((int)scrPos.X, (int)scrPos.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
                     Microsoft.Xna.Framework.Color.White,
                     0.0f,
-                    new Vector2(32 / 2, 32 / 2)
+                    new Vector2(BallData.EXPLOSION_TEXTURE_SIZE / 2, BallData.EXPLOSION_TEXTURE_SIZE / 2)
                 );
                 break;
             default:

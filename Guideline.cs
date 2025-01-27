@@ -25,7 +25,7 @@ public class Guideline : GameObject
     private readonly float _cutoffLength;
     private readonly float _duration;
 
-    private readonly float HalfBoardWidth = 192 - 24;
+    private readonly float HalfBoardWidth = GameBoard.BOARD_HALF_WIDTH_PX - BallData.BALL_SIZE / 2;
 
     public Guideline(GameBoard gameBoard, Slingshot slingshot, int drawCount, float loopDuration, float lineLength = MAX_LENGTH) : base("guideline")
     {
@@ -100,7 +100,7 @@ public class Guideline : GameObject
                 Color.White * 0.5f * (1.0f - ((pos.Y / endHexPos?.Y) ?? 0.0f)),
                 0.0f,
                 _origin,
-                3.0f,
+                PixelScale,
                 SpriteEffects.None,
                 0
             );
@@ -111,10 +111,10 @@ public class Guideline : GameObject
         _previewBallSpriteSheet.Draw(
             spriteBatch,
             gameTime,
-            new Rectangle((int)(endHexPos.Value.X + ScreenPosition.X), (int)(endHexPos.Value.Y + ScreenPosition.Y), 16 * 3, 16 * 3),
+            new Rectangle((int)(endHexPos.Value.X + ScreenPosition.X), (int)(endHexPos.Value.Y + ScreenPosition.Y), BallData.BALL_SIZE, BallData.BALL_SIZE),
             Color.White,
             0.0f,
-            new Vector2(8, 8)
+            new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2)
         );
     }
 
@@ -167,7 +167,7 @@ public class Guideline : GameObject
     {
         Debug.Assert(progress >= 0.0f && progress <= 1.0f, "Progress must be between 0 and 1");
 
-        var actualScale = new Vector2(3, 3) * (1.0f - progress);
+        var actualScale = PixelScale * (1.0f - progress);
         var lengthFromSlingshot = _cutoffLength * progress;
         var vecToEndPos = direction * lengthFromSlingshot;
 

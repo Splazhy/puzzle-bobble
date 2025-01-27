@@ -7,6 +7,10 @@ using PuzzleBobble.HexGrid;
 namespace PuzzleBobble;
 public struct BallData
 {
+    public static readonly int BALL_TEXTURE_SIZE = 16;
+    public static readonly int EXPLOSION_TEXTURE_SIZE = 32;
+    public static readonly int BALL_SIZE = BALL_TEXTURE_SIZE * GameObject.PIXEL_SIZE;
+
     public int color;
 
     public BallData(int color)
@@ -27,11 +31,11 @@ public struct BallData
     {
         spriteBatch.Draw(
             spritesheet,
-            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, (int)(16 * 3), (int)(16 * 3)),
-            new Rectangle(color * 16, 0, 16, 16),
+            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+            new Rectangle(color * BALL_TEXTURE_SIZE, 0, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE),
             Color.White,
             0.0f,
-            new Vector2(16 / 2, 16 / 2),
+            new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2),
             SpriteEffects.None,
             0
         );
