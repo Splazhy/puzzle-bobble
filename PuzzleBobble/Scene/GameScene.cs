@@ -12,10 +12,12 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
+    private static readonly int DEATH_Y_POS = 260;
     private SpriteFont? _font;
     private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
     private Guideline? _guideline;
+    private DeathLine? _deathline;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -41,7 +43,7 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game)
     {
         _slingshot = new(game);
-        DeathLine deathline = new(game);
+        _deathline = new(DEATH_Y_POS);
         _gameBoard = new GameBoard(game);
 
         _guideline = new Guideline(
@@ -53,7 +55,7 @@ public class GameScene : AbstractScene
         _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
         children = [
             _gameBoard,
-            deathline,
+            _deathline,
             _guideline,
             _slingshot,
         ];
@@ -135,7 +137,7 @@ public class GameScene : AbstractScene
         }
 
         UpdateChildren(gameTime);
-        Debug.Assert(_gameBoard != null && _slingshot != null);
+        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null, "GameBoard, Slingshot, or DeathLine is not loaded");
         if (_state == State.Playing)
         {
             if (_gameBoard.GetMapBallCount() == 0)
@@ -156,9 +158,17 @@ public class GameScene : AbstractScene
                     }
                 }
 
-                if (220 < _gameBoard.GetMapBottomEdge())
+                if (DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
                 {
                     Fail();
+                }
+                else if (DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 3 < _gameBoard.GetMapBottomEdge())
+                {
+                    _deathline.Show(gameTime);
+                }
+                else if (_gameBoard.GetMapBottomEdge() < DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 4.5)
+                {
+                    _deathline.Hide(gameTime);
                 }
             }
         }

@@ -20,6 +20,7 @@ public class GameBoard : GameObject
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
+    public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
     public static readonly float DEFAULT_SPEED = 20.0f;
     public static readonly float LERP_AMOUNT = 5.0f;
