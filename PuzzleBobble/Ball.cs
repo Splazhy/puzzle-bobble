@@ -188,6 +188,9 @@ public class Ball : GameObject
                     new Vector2(BallData.EXPLOSION_TEXTURE_SIZE / 2, BallData.EXPLOSION_TEXTURE_SIZE / 2)
                 );
                 break;
+            case State.Stasis:
+                Data.Draw(spriteBatch, _spriteSheet, ScreenPosition, 0.75f);
+                break;
             default:
                 Data.Draw(spriteBatch, _spriteSheet, ScreenPosition);
                 break;
