@@ -48,7 +48,6 @@ public class GameBoard : GameObject
     public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
 
 
-    private AnimatedTexturePlayer? shineAnimPlayer = null;
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
 
@@ -86,7 +85,6 @@ public class GameBoard : GameObject
 
         foreach (var item in hexMap)
         {
-            Hex hex = item.Key;
             BallData ball = item.Value;
             ball.LoadAnimation(_ballAssets);
         }
@@ -94,12 +92,6 @@ public class GameBoard : GameObject
         Position = new Vector2(0, (float)GetPreferredPos());
 
         // IsInfinite = true;
-
-        var animation = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_shine"),
-            9, 1, 0.01f, false
-        );
-        shineAnimPlayer = new AnimatedTexturePlayer(animation);
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
 

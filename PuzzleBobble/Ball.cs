@@ -73,10 +73,7 @@ public class Ball : GameObject
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
 
-        _previewBallSpriteSheet = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_preview"),
-            4, 1, 0.1f, true);
-        _previewBallSpriteSheet.TriggerPlayOnNextDraw();
+        _previewBallSpriteSheet = _ballAssets.CreatePreviewBallAnimation();
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -145,14 +142,7 @@ public class Ball : GameObject
         {
             Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball sprite sheet is not loaded.");
             Data.Draw(spriteBatch, gameTime, _ballAssets, ParentTranslate + ep, 0.5f);
-            _previewBallSpriteSheet.Draw(
-                spriteBatch,
-                gameTime,
-                new Rectangle((int)(ParentTranslate.X + ep.X), (int)(ParentTranslate.Y + ep.Y), BallData.BALL_SIZE, BallData.BALL_SIZE),
-                Microsoft.Xna.Framework.Color.White * 0.75f,
-                0.0f,
-                new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2)
-            );
+            BallData.DrawPreviewBall(spriteBatch, gameTime, _previewBallSpriteSheet, ParentTranslate + ep, 0.75f);
         }
 
 

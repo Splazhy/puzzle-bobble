@@ -59,10 +59,9 @@ public class Guideline : GameObject
 
         _texture = content.Load<Texture2D>("Graphics/guideline_full");
         _textureHollow = content.Load<Texture2D>("Graphics/guideline_hollow");
-        _previewBallSpriteSheet = new AnimatedTexture2D(
-            content.Load<Texture2D>("Graphics/ball_preview"),
-            4, 1, 0.1f, true);
-        _previewBallSpriteSheet.TriggerPlayOnNextDraw();
+
+
+        _previewBallSpriteSheet = new BallData.Assets(content).CreatePreviewBallAnimation();
         _origin = new Vector2(_texture.Width / 2, _texture.Height / 2);
     }
 
@@ -114,13 +113,11 @@ public class Guideline : GameObject
         _lastCollidePosition = endHexPos;
         if (endHexPos is null) return;
 
-        _previewBallSpriteSheet.Draw(
+        BallData.DrawPreviewBall(
             spriteBatch,
             gameTime,
-            new Rectangle((int)(endHexPos.Value.X + ScreenPosition.X), (int)(endHexPos.Value.Y + ScreenPosition.Y), BallData.BALL_SIZE, BallData.BALL_SIZE),
-            Color.White,
-            0.0f,
-            new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2)
+            _previewBallSpriteSheet,
+            endHexPos.Value + ScreenPosition
         );
     }
 

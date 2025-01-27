@@ -44,6 +44,15 @@ public readonly struct BallData
             ShineSpritesheet = content.Load<Texture2D>("Graphics/ball_shine");
             PreviewBallSpriteSheet = content.Load<Texture2D>("Graphics/ball_preview");
         }
+
+        public AnimatedTexture2D CreatePreviewBallAnimation()
+        {
+            var at2d = new AnimatedTexture2D(
+                PreviewBallSpriteSheet,
+                4, 1, 0.1f, true);
+            at2d.TriggerPlayOnNextDraw();
+            return at2d;
+        }
     }
 
     private class AnimState
@@ -88,6 +97,18 @@ public readonly struct BallData
     {
         Debug.Assert(animState.shineAnim is not null, "Shine animation is not loaded.");
         animState.shineAnim.Play(gameTime);
+    }
+
+    public static void DrawPreviewBall(SpriteBatch spriteBatch, GameTime gameTime, AnimatedTexture2D previewBallAnim, Vector2 screenPosition, float alpha = 1.0f)
+    {
+        previewBallAnim.Draw(
+            spriteBatch,
+            gameTime,
+            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+            Color.White * alpha,
+            0.0f,
+            new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+        );
     }
 
     /// <summary>
