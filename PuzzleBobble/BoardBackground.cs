@@ -33,11 +33,13 @@ public class BoardBackground : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var BOARD_HALF_WIDTH_PX = GameBoard.BOARD_HALF_WIDTH_PX;
-        var pX = _gameBoard.ParentTranslate.X;
+        var pX = ParentTranslate.X;
+        var sourceY = -_gameBoard.Position.Y / PIXEL_SIZE;
+        var subPixelY = sourceY - (int)sourceY;
         spriteBatch.Draw(
             background,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
+            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2 - subPixelY * PIXEL_SIZE),
+            new Rectangle(0, (int)sourceY, background.Width, background.Height + 1), Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
         );
         spriteBatch.Draw(
             leftBorder,
