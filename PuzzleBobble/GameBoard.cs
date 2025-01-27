@@ -142,14 +142,24 @@ public class GameBoard : GameObject
         DrawChildren(spriteBatch, gameTime);
     }
 
-    public Hex ComputeClosestHex(Vector2 pos)
+    private Hex ComputeClosestHexInner(Vector2 pos)
     {
         return hexLayout.PixelToHex(pos).Round();
     }
 
-    public Vector2 ConvertHexToCenter(Hex hex)
+    private Vector2 ConvertHexToCenterInner(Hex hex)
     {
         return hexLayout.HexToCenterPixel(hex).Downcast();
+    }
+
+    public Hex ComputeClosestHex(Vector2 pos)
+    {
+        return ComputeClosestHexInner(ParentToSelfRelPos(pos));
+    }
+
+    public Vector2 ConvertHexToCenter(Hex hex)
+    {
+        return SelfToParentRelPos(ConvertHexToCenterInner(hex));
     }
 
     public bool IsValidHex(Hex hex)
@@ -217,7 +227,7 @@ public class GameBoard : GameObject
         {
             if (hexMap[hex] is BallData ball)
             {
-                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
+                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
@@ -266,7 +276,7 @@ public class GameBoard : GameObject
         {
             if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenter(hex), ball));
+                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
@@ -337,7 +347,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (400 < ball.Position.Y + Position.Y)
+                if (400 < SelfToParentRelPos(ball.Position).Y)
                 {
                     ball.Destroy();
                 }
@@ -360,26 +370,8 @@ public class GameBoard : GameObject
                 continue;
             }
 
-            // FIXME: when ball goes too fast, it could overwrite another ball
-            // balls have already applied velocity into their position
-            Hex ballClosestHex = ComputeClosestHex(ball.Position);
-
-            // reduce the collision circle to be more forgiving to players
-            Circle collisionCircle = new(ball.Position, BallData.BALL_SIZE / 2 * 0.8f);
-
-            foreach (var dir in Hex.directions)
+            if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
             {
-                Hex neighborHex = ballClosestHex + dir;
-                if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
-                {
-                    continue;
-                }
-
-                Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE / 2);
-                bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
-                if (!colliding) continue;
-
                 SetBallAt(ballClosestHex, ball.Data);
                 var explodingBalls = ExplodeBalls(ballClosestHex);
                 var fallBalls = RemoveFloatingBalls();
@@ -419,12 +411,40 @@ public class GameBoard : GameObject
                 }
 
                 ball.Destroy();
-                break;
             }
         }
         ;
 
         UpdatePendingAndDestroyedChildren();
+    }
+
+    public bool CheckBallCollision(Vector2 ballPosition, out Hex ballClosestHex)
+    {
+        return CheckBallCollisionInner(ParentToSelfRelPos(ballPosition), out ballClosestHex);
+    }
+
+    private bool CheckBallCollisionInner(Vector2 ballPosition, out Hex ballClosestHex)
+    {
+        ballClosestHex = ComputeClosestHexInner(ballPosition);
+
+        // reduce the collision circle to be more forgiving to players
+        Circle collisionCircle = new(ballPosition, BallData.BALL_SIZE / 2 * 0.8f);
+
+        foreach (var dir in Hex.directions)
+        {
+            Hex neighborHex = ballClosestHex + dir;
+            if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
+            {
+                continue;
+            }
+
+            Vector2 neighborCenterPos = ConvertHexToCenterInner(neighborHex);
+            Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE / 2);
+            bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
+
+            if (colliding) return true;
+        }
+        return false;
     }
 
     public BallData.BallStats GetBallStats()

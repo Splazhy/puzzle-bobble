@@ -125,7 +125,7 @@ public class Guideline : GameObject
             var calculatedPos = GetCalculatedPosition(direction, i * STEP_SIZE);
 
             // check collision
-            var translatedPos = calculatedPos + Position - _gameBoard.Position;
+            var translatedPos = SelfToParentRelPos(calculatedPos);
             var closestHex = _gameBoard.ComputeClosestHex(translatedPos);
 
             {
@@ -135,29 +135,16 @@ public class Guideline : GameObject
                 {
                     float midProgress = (rightProgress + leftProgress) / 2;
                     calculatedPos = GetCalculatedPosition(direction, midProgress);
-                    translatedPos = calculatedPos + Position - _gameBoard.Position;
+                    translatedPos = SelfToParentRelPos(calculatedPos);
                     closestHex = _gameBoard.ComputeClosestHex(translatedPos);
                     rightProgress = midProgress;
                 }
             }
 
-            Circle collisionCircle = new(translatedPos, GameBoard.HEX_INRADIUS * 0.8f);
-
-            foreach (var dir in Hex.directions)
+            if (_gameBoard.CheckBallCollision(translatedPos, out _))
             {
-                Hex neighborHex = closestHex + dir;
-                if (!_gameBoard.IsBallAt(neighborHex))
-                {
-                    continue;
-                }
-                Vector2 neighborCenterPos = _gameBoard.ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, GameBoard.HEX_INRADIUS);
-                bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
-                if (colliding)
-                {
-                    var translatedHexPos = _gameBoard.ConvertHexToCenter(closestHex) + _gameBoard.Position - Position;
-                    return translatedHexPos;
-                }
+                var translatedHexPos = ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(closestHex));
+                return translatedHexPos;
             }
         }
         return null;
