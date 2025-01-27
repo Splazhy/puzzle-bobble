@@ -27,6 +27,8 @@ public class Guideline : GameObject
 
     private readonly float HalfBoardWidth = GameBoard.BOARD_HALF_WIDTH_PX - BallData.BALL_SIZE / 2;
 
+    private Vector2? _lastCollidePosition;
+
     public Guideline(GameBoard gameBoard, Slingshot slingshot, int drawCount, float loopDuration, float lineLength = MAX_LENGTH) : base("guideline")
     {
         _gameBoard = gameBoard;
@@ -35,6 +37,19 @@ public class Guideline : GameObject
         _cutoffLength = lineLength;
         _duration = loopDuration;
         Position = _slingshot.Position;
+    }
+
+    public Vector2? LastCollidePosition
+    {
+        get
+        {
+            if (_lastCollidePosition is Vector2 pos)
+            {
+                return SelfToParentRelPos(pos);
+            }
+
+            return null;
+        }
     }
 
     public override void LoadContent(ContentManager content)
@@ -106,6 +121,7 @@ public class Guideline : GameObject
             );
         }
 
+        _lastCollidePosition = endHexPos;
         if (endHexPos is null) return;
 
         _previewBallSpriteSheet.Draw(

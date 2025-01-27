@@ -43,6 +43,8 @@ public class Ball : GameObject
     private static readonly Random _rand = new();
     private Texture2D? _spriteSheet;
     private AnimatedTexture2D? explosionAnimation;
+    private AnimatedTexture2D? _previewBallSpriteSheet;
+    public Vector2? EstimatedCollisionPosition;
 
     private bool _soundPlayed = false;
     private float _soundDelay = 0.0f;
@@ -87,6 +89,11 @@ public class Ball : GameObject
         _soundDelay = delay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
+
+        _previewBallSpriteSheet = new AnimatedTexture2D(
+            content.Load<Texture2D>("Graphics/ball_preview"),
+            4, 1, 0.1f, true);
+        _previewBallSpriteSheet.TriggerPlayOnNextDraw();
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -150,6 +157,22 @@ public class Ball : GameObject
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_spriteSheet is not null);
+
+        if (EstimatedCollisionPosition is Vector2 ep)
+        {
+            Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball sprite sheet is not loaded.");
+            Data.Draw(spriteBatch, _spriteSheet, ParentTranslate + ep, 0.5f);
+            _previewBallSpriteSheet.Draw(
+                spriteBatch,
+                gameTime,
+                new Rectangle((int)(ParentTranslate.X + ep.X), (int)(ParentTranslate.Y + ep.Y), BallData.BALL_SIZE, BallData.BALL_SIZE),
+                Microsoft.Xna.Framework.Color.White * 0.75f,
+                0.0f,
+                new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2)
+            );
+        }
+
+
         switch (_state)
         {
             case State.Exploding:

@@ -27,13 +27,13 @@ public struct BallData
     /// <summary>
     /// Draw the ball at the given screen position, with the ball centered at the position.
     /// </summary>
-    public readonly void Draw(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition)
+    public readonly void Draw(SpriteBatch spriteBatch, Texture2D spritesheet, Vector2 screenPosition, float alpha = 1.0f)
     {
         spriteBatch.Draw(
             spritesheet,
             new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
             new Rectangle(color * BALL_TEXTURE_SIZE, 0, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE),
-            Color.White,
+            Color.White * alpha,
             0.0f,
             new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2),
             SpriteEffects.None,

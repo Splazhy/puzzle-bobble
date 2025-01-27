@@ -52,7 +52,12 @@ public class GameScene : AbstractScene
             96, 45.0f
         );
 
-        _slingshot.BallFired += ball => _gameBoard.AddChildDeferred(ball);
+        _slingshot.BallFired += ball =>
+        {
+            // hacky solution!
+            ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            _gameBoard.AddChildDeferred(ball);
+        };
         children = [
             _gameBoard,
             _deathline,
