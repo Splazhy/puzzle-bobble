@@ -365,7 +365,7 @@ public class GameBoard : GameObject
             Hex ballClosestHex = ComputeClosestHex(ball.Position);
 
             // reduce the collision circle to be more forgiving to players
-            Circle collisionCircle = new(ball.Position, BallData.BALL_SIZE * 0.8f);
+            Circle collisionCircle = new(ball.Position, BallData.BALL_SIZE / 2 * 0.8f);
 
             foreach (var dir in Hex.directions)
             {
@@ -376,7 +376,7 @@ public class GameBoard : GameObject
                 }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE);
+                Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE / 2);
                 bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
