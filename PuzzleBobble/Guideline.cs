@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBobble.Easer;
 using PuzzleBobble.HexGrid;
 
 namespace PuzzleBobble;
@@ -35,7 +36,7 @@ public class Guideline : GameObject
         _slingshot = slingshot;
         _drawCount = drawCount;
         _cutoffLength = lineLength;
-        _duration = loopDuration;
+        _duration = loopDuration / _drawCount;
         Position = _slingshot.Position;
     }
 
@@ -82,29 +83,18 @@ public class Guideline : GameObject
         Debug.Assert(_texture is not null, "Guideline texture is not loaded");
         Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball spritesheet is not loaded");
 
-        var direction = Vector2.Normalize(new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation)));
+        var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
         Vector2? endHexPos = GetEndHexPosition(direction);
 
-        var _progress = (float)(gameTime.TotalGameTime.TotalSeconds % _duration / _duration);
-        int minProgressI = 0;
-        float minProgress = 1.0f;
-        for (int i = 0; i < _drawCount; i++)
-        {
-            float progress = (_progress + (float)i / _drawCount) % 1.0f;
-            if (progress < minProgress)
-            {
-                minProgressI = i;
-                minProgress = progress;
-            }
-        }
+        var _progress = (float)(gameTime.TotalGameTime.TotalSeconds / _duration % 1.0);
 
         var selectedTexture = endHexPos is null ? _textureHollow : _texture;
-        for (int i = minProgressI, j = 0; j < _drawCount; i = (i + 1) % _drawCount, j++)
+        for (int i = 0, j = 0; j < _drawCount; i = (i + 1) % _drawCount, j++)
         {
-            float subProgress = (_progress + (float)i / _drawCount) % 1.0f;
+            float subProgress = ((_progress % 1.0f) + i) / _drawCount;
             var pos = GetCalculatedPosition(direction, subProgress);
             // early break (not sure if this optimization is necessary)
-            if (endHexPos is not null && pos.Y + 24.0f < endHexPos?.Y)
+            if (endHexPos is not null && pos.Y + BallData.BALL_SIZE / 2 < endHexPos?.Y)
             {
                 break;
             }
