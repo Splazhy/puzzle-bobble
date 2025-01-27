@@ -45,6 +45,7 @@ public class GameScene : AbstractScene
         _slingshot = new(game);
         _deathline = new(DEATH_Y_POS);
         _gameBoard = new GameBoard(game);
+        BoardBackground boardBackground = new(_gameBoard);
 
         _guideline = new Guideline(
             _gameBoard,
@@ -59,8 +60,9 @@ public class GameScene : AbstractScene
             _gameBoard.AddChildDeferred(ball);
         };
         children = [
-            _gameBoard,
+            boardBackground,
             _deathline,
+            _gameBoard,
             _guideline,
             _slingshot,
         ];
