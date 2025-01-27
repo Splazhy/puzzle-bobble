@@ -48,10 +48,6 @@ public class GameBoard : GameObject
 
     private Texture2D? ballSpriteSheet = null;
 
-    private Texture2D? background = null;
-    private Texture2D? leftBorder = null;
-    private Texture2D? rightBorder = null;
-
     private AnimatedTexturePlayer? shineAnimPlayer = null;
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
@@ -74,9 +70,6 @@ public class GameBoard : GameObject
     {
         base.LoadContent(content);
         ballSpriteSheet = BallData.LoadBallSpritesheet(content);
-        background = content.Load<Texture2D>("Graphics/board_bg");
-        leftBorder = content.Load<Texture2D>("Graphics/border_left");
-        rightBorder = content.Load<Texture2D>("Graphics/border_right");
 
         var level = Level.Load("3-4-connectHaft");
         for (int i = 0; i < 1; i++)
@@ -108,26 +101,6 @@ public class GameBoard : GameObject
     {
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(ballSpriteSheet is not null, "Ball spritesheet is not loaded.");
-        Debug.Assert(background is not null, "Background is not loaded.");
-        Debug.Assert(leftBorder is not null, "Left border is not loaded.");
-        Debug.Assert(rightBorder is not null, "Right border is not loaded.");
-
-        var pX = ParentTranslate.X;
-        spriteBatch.Draw(
-            background,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
-        spriteBatch.Draw(
-            leftBorder,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * PIXEL_SIZE, ParentTranslate.Y - leftBorder.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
-        spriteBatch.Draw(
-            rightBorder,
-            new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * PIXEL_SIZE / 2),
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
 
         foreach (var item in hexMap)
         {
