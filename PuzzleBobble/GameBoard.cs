@@ -280,12 +280,12 @@ public class GameBoard : GameObject
 
     private double GetBottomEdgePos()
     {
-        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + HEX_HEIGHT / 2;
+        return hexLayout.HexToCenterPixel(new Hex(0, hexMap.MaxR)).Y + BallData.BALL_SIZE / 2;
     }
 
     private double GetTopEdgePos()
     {
-        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + HEX_HEIGHT / 2;
+        return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y + BallData.BALL_SIZE / 2;
     }
 
     public int GetMapBallCount()
@@ -344,7 +344,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Stasis)
             {
-                if (GetTopEdgePos() < ball.Position.Y + HEX_HEIGHT / 2)
+                if (GetTopEdgePos() < ball.Position.Y + BallData.BALL_SIZE / 2)
                 {
                     ball.Unstasis();
                 }
@@ -353,7 +353,7 @@ public class GameBoard : GameObject
 
             if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
 
-            if (IsInfinite && ball.Position.Y + HEX_HEIGHT / 2 < GetTopEdgePos())
+            if (IsInfinite && ball.Position.Y + BallData.BALL_SIZE / 2 < GetTopEdgePos())
             {
                 ball.SetStasis();
                 continue;
@@ -364,7 +364,7 @@ public class GameBoard : GameObject
             Hex ballClosestHex = ComputeClosestHex(ball.Position);
 
             // reduce the collision circle to be more forgiving to players
-            Circle collisionCircle = new(ball.Position, HEX_INRADIUS * 0.8f);
+            Circle collisionCircle = new(ball.Position, BallData.BALL_SIZE * 0.8f);
 
             foreach (var dir in Hex.directions)
             {
@@ -375,7 +375,7 @@ public class GameBoard : GameObject
                 }
 
                 Vector2 neighborCenterPos = ConvertHexToCenter(neighborHex);
-                Circle neighborCircle = new(neighborCenterPos, HEX_INRADIUS);
+                Circle neighborCircle = new(neighborCenterPos, BallData.BALL_SIZE);
                 bool colliding = collisionCircle.Intersects(neighborCircle) > 0;
                 if (!colliding) continue;
 
