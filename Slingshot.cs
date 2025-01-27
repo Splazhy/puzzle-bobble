@@ -33,7 +33,6 @@ public class Slingshot : GameObject
     public Slingshot(Game game) : base("slingshot")
     {
         Position = new Vector2(0, 300);
-        Scale = new Vector2(3, 3);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
 
@@ -93,7 +92,6 @@ public class Slingshot : GameObject
             {
                 Position = Position,
                 Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
-                Scale = Scale,
             };
             // I'm thinking `BallFactory` class
             // then maybe `AbstractBallFactory` class

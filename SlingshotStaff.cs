@@ -55,7 +55,7 @@ public class SlingshotStaff : GameObject
             // anchors the texture from the top by 10 pixels no matter the height
             // so that the ball positioned in the center nicely.
             new Vector2(_slingshotTexture.Width / 2, 10),
-            new Vector2(3, 3),
+            PixelScale,
             SpriteEffects.None,
             0
         );

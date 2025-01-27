@@ -15,8 +15,7 @@ public class GameBoard : GameObject
 {
     // a packed grid of balls becomes a hexagon grid
     // https://www.redblobgames.com/grids/hexagons/
-    public static readonly int BALL_SIZE = 48;
-    public static readonly int HEX_INRADIUS = BALL_SIZE / 2;
+    public static readonly int HEX_INRADIUS = BallData.BALL_SIZE / 2;
     public static readonly int HEX_WIDTH = HEX_INRADIUS * 2;
 
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
@@ -114,9 +113,21 @@ public class GameBoard : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var pX = ParentTranslate.X;
-        spriteBatch.Draw(background, new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(leftBorder, new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * 3, ParentTranslate.Y - leftBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
-        spriteBatch.Draw(rightBorder, new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * 3 / 2), null, Color.White, 0, Vector2.Zero, 3, SpriteEffects.None, 0);
+        spriteBatch.Draw(
+            background,
+            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2),
+            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
+        );
+        spriteBatch.Draw(
+            leftBorder,
+            new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * PIXEL_SIZE, ParentTranslate.Y - leftBorder.Height * PIXEL_SIZE / 2),
+            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
+        );
+        spriteBatch.Draw(
+            rightBorder,
+            new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * PIXEL_SIZE / 2),
+            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
+        );
 
         foreach (var item in hexMap)
         {
@@ -401,7 +412,7 @@ public class GameBoard : GameObject
                     // so we can assume that calling play shine animation here will
                     // yield the expected outcome.
                     var shinePosition = hexLayout.HexToCenterPixel(ballClosestHex).Downcast();
-                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(16 * 3, 16 * 3), Color.White, 0, new Vector2(8, 8));
+                    var shineObj = shineAnimPlayer.PlayAt(gameTime, shinePosition, new Vector2(BallData.BALL_SIZE, BallData.BALL_SIZE), Color.White, 0, new Vector2(BallData.BALL_TEXTURE_SIZE / 2, BallData.BALL_TEXTURE_SIZE / 2));
                     pendingChildren.Add(shineObj);
                     settleSfx.Play();
                 }
