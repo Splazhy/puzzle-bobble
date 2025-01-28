@@ -74,12 +74,19 @@ public readonly struct BallData
         switch (value)
         {
             case (int)SpecialType.Rainbow:
-                var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, 0, BALL_TEXTURE_SIZE * 10, BALL_TEXTURE_SIZE), 10, 1, 0.15f, true);
-                anim.Delay(_rand.NextSingle() * 0.15f * 10);
-                animState.anim = anim;
-                return;
+                {
+                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, 0, BALL_TEXTURE_SIZE * 10, BALL_TEXTURE_SIZE), 10, 1, 0.15f, true);
+                    anim.Delay(_rand.NextSingle() * 0.15f * 10);
+                    animState.anim = anim;
+                    return;
+                }
             case (int)SpecialType.Bomb:
-                return;
+                {
+                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE * 4, BALL_TEXTURE_SIZE), 4, 1, 0.1f, true);
+                    anim.Delay(_rand.NextSingle() * 0.1f * 4);
+                    animState.anim = anim;
+                    return;
+                }
             case (int)SpecialType.Stone:
                 return;
             default: // Color balls
@@ -131,24 +138,48 @@ public readonly struct BallData
                 );
                 break;
             case (int)SpecialType.Rainbow:
-                Debug.Assert(animState.anim is not null, "Rainbow ball animation state is not loaded.");
-                if (animState.anim is AnimatedTexture2D atex)
                 {
-                    atex.Draw(
-                    spriteBatch,
-                    gameTime,
+                    Debug.Assert(animState.anim is not null, "Rainbow ball animation state is not loaded.");
+                    if (animState.anim is AnimatedTexture2D atex)
+                    {
+                        atex.Draw(
+                        spriteBatch,
+                        gameTime,
+                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                        Color.White * alpha,
+                        0.0f,
+                        new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                    );
+                    }
+                    break;
+                }
+            case (int)SpecialType.Bomb:
+                {
+                    Debug.Assert(animState.anim is not null, "Bomb ball animation state is not loaded.");
+                    if (animState.anim is AnimatedTexture2D atex)
+                    {
+                        atex.Draw(
+                        spriteBatch,
+                        gameTime,
+                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                        Color.White * alpha,
+                        0.0f,
+                        new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                    );
+                    }
+                    break;
+                }
+            case (int)SpecialType.Stone:
+                spriteBatch.Draw(
+                    assets.BallSpritesheet,
                     new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                    new Rectangle(4 * BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE),
                     Color.White * alpha,
                     0.0f,
-                    new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                    new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2),
+                    SpriteEffects.None,
+                    0
                 );
-                }
-                break;
-            case (int)SpecialType.Bomb:
-                //TODO
-                break;
-            case (int)SpecialType.Stone:
-                //TODO
                 break;
         }
 

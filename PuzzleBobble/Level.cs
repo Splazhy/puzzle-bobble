@@ -68,7 +68,7 @@ public class Level
                 {
                     "." => null,
                     // TODO
-                    _ => new BallData(_rand.NextSingle() < 0.2 ? -1 : (int)cells[x][0] - 97)
+                    _ => new BallData(_rand.NextSingle() < 0.2 ? _rand.Next(-3, 0) : (int)cells[x][0] - 97)
                 };
                 map[hex] = value;
             }
