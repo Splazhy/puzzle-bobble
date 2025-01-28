@@ -14,6 +14,7 @@ public class Slingshot : GameObject
     private readonly float firerate; // shots per second
     private float _timeSinceLastFired;
     public BallData? Data { get; private set; }
+    public BallData? NextData { get; private set; }
     private BallData.Assets? _ballAssets = null;
     public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
 
@@ -29,6 +30,9 @@ public class Slingshot : GameObject
     public delegate void BallFiredHandler(Ball ball);
 
     private readonly SlingshotStaff _staff;
+
+    private bool _lastFrameRightClick = false;
+    public bool RecheckNextData;
 
     public Slingshot(Game game) : base("slingshot")
     {
@@ -46,13 +50,20 @@ public class Slingshot : GameObject
 
         _ballAssets = new BallData.Assets(content);
         Data?.LoadAnimation(_ballAssets);
+        NextData?.LoadAnimation(_ballAssets);
     }
 
-    public void SetData(BallData data)
+    public void SetNextData(BallData data)
     {
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
-        Data = data;
-        Data?.LoadAnimation(_ballAssets);
+        NextData = data;
+        NextData?.LoadAnimation(_ballAssets);
+        RecheckNextData = false;
+    }
+
+    private void SwapDatas()
+    {
+        (NextData, Data) = (Data, NextData);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -73,6 +84,14 @@ public class Slingshot : GameObject
 
         MouseState mouseState = Mouse.GetState();
         Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - (Position + ParentTranslate);
+
+
+        if (mouseState.RightButton == ButtonState.Pressed && !_lastFrameRightClick)
+        {
+            SwapDatas();
+            RecheckNextData = true;
+        }
+        _lastFrameRightClick = mouseState.RightButton == ButtonState.Pressed;
 
         // +90 degrees to adjust for texture orientation
         direction.Rotate(MathF.PI / 2.0f);
@@ -113,10 +132,15 @@ public class Slingshot : GameObject
             BallFired?.Invoke(newBall);
 
             _timeSinceLastFired = 0.0f;
-            // Cycle through ball colors, just a fun experimentation
+
             Data = null;
 
             visualRecoilOffset = MAX_RECOIL;
+        }
+
+        if (Data is null && NextData is not null)
+        {
+            SwapDatas();
         }
 
         _staff.Update(gameTime, ScreenPosition);
@@ -127,6 +151,7 @@ public class Slingshot : GameObject
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
 
+        NextData?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + new Vector2(100, 20));
         Data?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + new Vector2(0, visualRecoilOffset));
         _staff.Draw(spriteBatch, gameTime);
     }

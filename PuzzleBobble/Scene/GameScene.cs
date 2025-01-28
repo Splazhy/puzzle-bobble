@@ -153,15 +153,26 @@ public class GameScene : AbstractScene
             }
             else
             {
-                if (_slingshot.Data == null)
+                var newBallNeeded = _slingshot.NextData == null;
+                BallData.BallStats? bs = null;
+                if (!newBallNeeded && _slingshot.RecheckNextData)
+                {
+                    bs = _gameBoard.GetBallStats();
+                    var colors = bs.ColorCounts.Keys.ToHashSet();
+                    if (_slingshot.NextData is BallData nd)
+                    {
+                        newBallNeeded = newBallNeeded || !colors.Contains(nd.value);
+                    }
+                }
+                if (newBallNeeded)
                 {
                     // TODO: move this into BallData or smth
-                    var bs = _gameBoard.GetBallStats();
+                    bs ??= _gameBoard.GetBallStats();
                     var colors = bs.ColorCounts.Keys.ToList();
                     if (0 < colors.Count)
                     {
                         var color = colors[_rand.Next(colors.Count)];
-                        _slingshot.SetData(new BallData(color));
+                        _slingshot.SetNextData(new BallData(color));
                     }
                 }
 
