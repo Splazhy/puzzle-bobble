@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using PuzzleBobble.Easer;
 using PuzzleBobble.HexGrid;
 
 namespace PuzzleBobble;
@@ -15,7 +15,7 @@ public class Guideline : GameObject
     private readonly Slingshot _slingshot;
 
     private const int STEP_COUNT = 200;
-    private const float STEP_SIZE = 1.0f / STEP_COUNT;
+    private static readonly float STEP_SIZE = BallData.BALL_SIZE;
     private const float MAX_LENGTH = 4800.0f;
 
     private Texture2D? _texture;
@@ -30,13 +30,13 @@ public class Guideline : GameObject
 
     private Vector2? _lastCollidePosition;
 
-    public Guideline(GameBoard gameBoard, Slingshot slingshot, int drawCount, float loopDuration, float lineLength = MAX_LENGTH) : base("guideline")
+    public Guideline(GameBoard gameBoard, Slingshot slingshot) : base("guideline")
     {
         _gameBoard = gameBoard;
         _slingshot = slingshot;
-        _drawCount = drawCount;
-        _cutoffLength = lineLength;
-        _duration = loopDuration / _drawCount;
+        _drawCount = 96;
+        _cutoffLength = MAX_LENGTH;
+        _duration = 45f / _drawCount;
         Position = _slingshot.Position;
     }
 
@@ -72,28 +72,33 @@ public class Guideline : GameObject
         Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball spritesheet is not loaded");
 
         Rotation = _slingshot.Rotation - MathF.PI / 2;
+
+        Recalculate();
+    }
+
+    public void Recalculate()
+    {
+        var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
+        _lastCollidePosition = GetEndHexPosition(direction);
     }
 
 
-    // 192 -> gameboard border
-    // 24 -> ball radius
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_texture is not null, "Guideline texture is not loaded");
         Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball spritesheet is not loaded");
 
         var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
-        Vector2? endHexPos = GetEndHexPosition(direction);
 
         var _progress = (float)(gameTime.TotalGameTime.TotalSeconds / _duration % 1.0);
 
-        var selectedTexture = endHexPos is null ? _textureHollow : _texture;
-        for (int i = 0, j = 0; j < _drawCount; i = (i + 1) % _drawCount, j++)
+        var selectedTexture = _lastCollidePosition is null ? _textureHollow : _texture;
+        for (int i = 0; i < _drawCount; i++)
         {
-            float subProgress = ((_progress % 1.0f) + i) / _drawCount;
-            var pos = GetCalculatedPosition(direction, subProgress);
+            float subProgress = (_progress % 1.0f) + i;
+            var pos = GetCalculatedPosition(direction * subProgress * BallData.BALL_SIZE);
             // early break (not sure if this optimization is necessary)
-            if (endHexPos is not null && pos.Y + BallData.BALL_SIZE / 2 < endHexPos?.Y)
+            if (_lastCollidePosition is not null && pos.Y + BallData.BALL_SIZE / 2 < _lastCollidePosition?.Y)
             {
                 break;
             }
@@ -101,7 +106,7 @@ public class Guideline : GameObject
                 selectedTexture,
                 pos + ScreenPosition,
                 null,
-                Color.White * 0.5f * (1.0f - ((pos.Y / endHexPos?.Y) ?? 0.0f)),
+                Color.White * 0.5f * (1.0f - ((pos.Y / _lastCollidePosition?.Y) ?? 0.0f)),
                 0.0f,
                 _origin,
                 PixelScale,
@@ -110,63 +115,74 @@ public class Guideline : GameObject
             );
         }
 
-        _lastCollidePosition = endHexPos;
-        if (endHexPos is null) return;
+        if (_lastCollidePosition is null) return;
 
         BallData.DrawPreviewBall(
             spriteBatch,
             gameTime,
             _previewBallSpriteSheet,
-            endHexPos.Value + ScreenPosition
+            _lastCollidePosition.Value + ScreenPosition
         );
     }
 
     private Vector2? GetEndHexPosition(Vector2 direction)
     {
+        var lastNonCollidePos = new Vector2(0, 0);
+        var lastCollidePos = new Vector2(0, 0);
         for (int i = 0; i < STEP_COUNT; i++)
         {
-            var calculatedPos = GetCalculatedPosition(direction, i * STEP_SIZE);
+            // var calculatedPos = GetCalculatedPosition(direction, i * STEP_SIZE);
+            var calculatedPos = GetCalculatedPosition(direction * i * STEP_SIZE);
 
             // check collision
-            var translatedPos = SelfToParentRelPos(calculatedPos);
-            var closestHex = _gameBoard.ComputeClosestHex(translatedPos);
-
-            {
-                float rightProgress = i * STEP_SIZE;
-                float leftProgress = (i - 1) * STEP_SIZE;
-                while (_gameBoard.IsBallAt(closestHex))
-                {
-                    float midProgress = (rightProgress + leftProgress) / 2;
-                    calculatedPos = GetCalculatedPosition(direction, midProgress);
-                    translatedPos = SelfToParentRelPos(calculatedPos);
-                    closestHex = _gameBoard.ComputeClosestHex(translatedPos);
-                    rightProgress = midProgress;
-                }
-            }
-
-            if (_gameBoard.CheckBallCollision(translatedPos, out _))
+            if (_gameBoard.CheckBallCollision(SelfToParentRelPos(calculatedPos), out Hex closestHex))
             {
                 var translatedHexPos = ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(closestHex));
-                return translatedHexPos;
+                lastCollidePos = calculatedPos;
+                break;
+            }
+
+            lastNonCollidePos = calculatedPos;
+        }
+
+        if (lastCollidePos == Vector2.Zero) return null;
+
+        for (int subdivs = 0; subdivs < 3; subdivs++)
+        {
+            var averagePos = (lastNonCollidePos + lastCollidePos) / 2;
+
+            if (_gameBoard.CheckBallCollision(SelfToParentRelPos(averagePos), out _))
+            {
+                lastCollidePos = averagePos;
+            }
+            else
+            {
+                lastNonCollidePos = averagePos;
             }
         }
-        return null;
+        var lastAveragePos = (lastNonCollidePos + lastCollidePos) / 2;
+        // return averagePos;
+        // return lastCollidePos;
+        var hex = _gameBoard.ComputeClosestHex(SelfToParentRelPos(lastAveragePos));
+        return ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(hex));
+
     }
 
-    private Vector2 GetCalculatedPosition(Vector2 direction, float progress)
+    private Vector2 GetCalculatedPosition(Vector2 vec)
     {
-        Debug.Assert(progress >= 0.0f && progress <= 1.0f, "Progress must be between 0 and 1");
+        // Debug.Assert(progress >= 0.0f && progress <= 1.0f, "Progress must be between 0 and 1");
 
-        var actualScale = PixelScale * (1.0f - progress);
-        var lengthFromSlingshot = _cutoffLength * progress;
-        var vecToEndPos = direction * lengthFromSlingshot;
+        // var actualScale = PixelScale * (1.0f - progress);
+        // var lengthFromSlingshot = _cutoffLength * progress;
+        // var vecToEndPos = direction * lengthFromSlingshot;
+        // var vecToEndPos = vec;
 
         // exploiting modulo and absolute to do reflections
 
         // shift coordinates so
         // left edge of "negative" board is 0,
         // and right edge of "positive" board is 2 * Width
-        var x1 = vecToEndPos.X + 3 * HalfBoardWidth;
+        var x1 = vec.X + 3 * HalfBoardWidth;
 
         // loop coordinates so everything falls between 0 and 2 * Width
         // compute modulo using remainder operator
@@ -187,7 +203,7 @@ public class Guideline : GameObject
         // and 0 in the center of the board
         var x5 = x4 - HalfBoardWidth;
 
-        Vector2 calculatedPos = new(x5, vecToEndPos.Y);
+        Vector2 calculatedPos = new(x5, vec.Y);
         return calculatedPos;
     }
 }

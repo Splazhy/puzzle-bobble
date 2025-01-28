@@ -505,6 +505,11 @@ public class GameBoard : GameObject
     {
         ballClosestHex = ComputeClosestHexInner(ballPosition);
 
+        if (IsBallAt(ballClosestHex) || (!IsInfinite && ballClosestHex.R < TopRow))
+        {
+            return true;
+        }
+
         // reduce the collision circle to be more forgiving to players
         Circle collisionCircle = new(ballPosition, BallData.BALL_SIZE / 2 * 0.8f);
 

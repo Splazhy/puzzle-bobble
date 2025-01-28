@@ -49,13 +49,13 @@ public class GameScene : AbstractScene
 
         _guideline = new Guideline(
             _gameBoard,
-            _slingshot,
-            96, 45.0f
+            _slingshot
         );
 
         _slingshot.BallFired += ball =>
         {
-            // hacky solution!
+            // semi-hacky solution!
+            _guideline.Recalculate();
             ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
             _gameBoard.AddChildDeferred(ball);
         };
