@@ -60,6 +60,11 @@ public class GameBoard : GameObject
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
+    /// <summary>
+    /// For decorative animations
+    /// </summary>
+    private readonly Random _decoRand = new();
+
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300);
@@ -72,15 +77,16 @@ public class GameBoard : GameObject
         base.LoadContent(content);
         _ballAssets = new BallData.Assets(content);
 
-        var level = Level.Load("3-4-connectHaft");
-        for (int i = 0; i < 1; i++)
-        {
-            level.StackDown(Level.Load("3-4-connectHaft"));
-        }
-        for (int i = 0; i < 10; i++)
-        {
-            level.StackUp(Level.Load("3-4-connectHaft"));
-        }
+        var level = Level.Load("test-bombpass");
+        // var level = Level.Load("3-4-connectHaft");
+        // for (int i = 0; i < 1; i++)
+        // {
+        //     level.StackDown(Level.Load("3-4-connectHaft"));
+        // }
+        // for (int i = 0; i < 10; i++)
+        // {
+        //     level.StackUp(Level.Load("3-4-connectHaft"));
+        // }
         hexMap = level.ToHexRectMap();
 
         foreach (var item in hexMap)
@@ -148,9 +154,8 @@ public class GameBoard : GameObject
 
     public bool IsBallSurronding(Hex hex)
     {
-        for (int i = 0; i < 6; i++)
+        foreach (Hex neighbor in hex.Neighbors())
         {
-            Hex neighbor = hex.Neighbor(i);
             if (IsBallAt(neighbor)) return true;
         }
         return false;
@@ -164,6 +169,67 @@ public class GameBoard : GameObject
         ball.LoadAnimation(_ballAssets);
     }
 
+    /// <summary>
+    /// search for connected balls of the same color, passing through rainbow balls
+    /// 
+    /// returns empty if the region is smaller than 3 balls, including rainbows
+    /// </summary>
+    /// <param name="sourceHex"></param>
+    /// <param name="regionHexes">contains connected color and rainbow balls</param>
+    /// <param name="connectedRainbows">contains only rainbow balls</param>
+    /// <param name="connectedBombs">contains only adjacent bombs</param>
+    private void ColorRegionSearch(Hex sourceHex, out HashSet<Hex> regionHexes, out HashSet<Hex> connectedRainbows, out HashSet<Hex> connectedBombs)
+    {
+        regionHexes = [];
+        connectedRainbows = [];
+        connectedBombs = [];
+        if (!IsValidHex(sourceHex)) return;
+        BallData? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return;
+
+        BallData specifiedBall = mapBall.Value;
+
+        Queue<Hex> pending = new();
+        pending.Enqueue(sourceHex);
+
+        while (0 < pending.Count)
+        {
+            Hex current = pending.Dequeue();
+            regionHexes.Add(current);
+
+            foreach (Hex neighbor in current.Neighbors())
+            {
+                if (hexMap[neighbor] == specifiedBall && !regionHexes.Contains(neighbor))
+                {
+                    pending.Enqueue(neighbor);
+                }
+                else if (hexMap[neighbor] is BallData data)
+                {
+                    if (data.IsRainbow)
+                    {
+                        connectedRainbows.Add(neighbor);
+                        if (!regionHexes.Contains(neighbor))
+                        {
+                            pending.Enqueue(neighbor);
+                        }
+                    }
+                    else if (data.IsBomb)
+                    {
+                        connectedBombs.Add(neighbor);
+                    }
+                }
+            }
+        }
+
+        if (regionHexes.Count < 3)
+        {
+            regionHexes.Clear();
+            connectedRainbows.Clear();
+            connectedBombs.Clear();
+            return;
+        }
+    }
+
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
     // although haven't benchmarked it yet
     public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
@@ -171,34 +237,68 @@ public class GameBoard : GameObject
         if (!IsValidHex(sourceHex)) return [];
         BallData? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
-        BallData specifiedBall = mapBall.Value;
 
-        Queue<Hex> pending = [];
-        pending.Enqueue(sourceHex);
-        HashSet<Hex> connected = [];
+        // color pass
+        HashSet<Hex> affected = [];
+        Queue<Hex> bombs = [];
+        Queue<Hex> pendingOrigins = new();
+        pendingOrigins.Enqueue(sourceHex);
 
-        while (pending.Count > 0)
+        while (0 < pendingOrigins.Count)
         {
-            Hex current = pending.Dequeue();
-            connected.Add(current);
+            Hex current = pendingOrigins.Dequeue();
+            if (hexMap[current] is not BallData currData) continue;
+            if (currData.IsBomb || currData.IsStone) continue;
 
-            for (int i = 0; i < 6; i++)
+            if (currData.IsRainbow)
             {
-                Hex neighbor = current.Neighbor(i);
-                if (IsValidHex(neighbor) && hexMap[neighbor] == specifiedBall && !connected.Contains(neighbor))
+                foreach (Hex neighbor in current.Neighbors())
                 {
-                    pending.Enqueue(neighbor);
+                    if (!affected.Contains(neighbor))
+                    {
+                        pendingOrigins.Enqueue(neighbor);
+                    }
+                }
+            }
+            if (currData.IsColor)
+            {
+                ColorRegionSearch(current, out HashSet<Hex> regionHexes, out HashSet<Hex> rainbows, out HashSet<Hex> moreBombs);
+                affected.UnionWith(regionHexes);
+                foreach (var item in rainbows) pendingOrigins.Enqueue(item);
+                foreach (var item in moreBombs) bombs.Enqueue(item);
+            }
+        }
+
+        // bomb pass
+        while (0 < bombs.Count)
+        {
+            Hex current = bombs.Dequeue();
+            if (hexMap[current] is not BallData currData) continue;
+            Debug.Assert(currData.IsBomb);
+
+            foreach (Hex inRange in current.HexesWithinRange(2))
+            {
+                if (hexMap[inRange] is BallData data)
+                {
+                    if (data.IsBomb)
+                    {
+                        if (!affected.Contains(inRange))
+                        {
+                            bombs.Enqueue(inRange);
+                        }
+                    }
+                    affected.Add(inRange);
                 }
             }
         }
 
-        if (connected.Count < 3)
+        if (affected.Count == 0)
         {
             return [];
         }
 
         List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
-        foreach (Hex hex in connected)
+        foreach (Hex hex in affected)
         {
             if (hexMap[hex] is BallData ball)
             {
@@ -236,9 +336,8 @@ public class GameBoard : GameObject
             if (!floating.Contains(current)) continue;
             floating.Remove(current);
 
-            foreach (var dir in Hex.directions)
+            foreach (var neighbor in current.Neighbors())
             {
-                Hex neighbor = current + dir;
                 if (!IsBallAt(neighbor)) continue;
                 bfsQueue.Enqueue(neighbor);
             }
@@ -294,6 +393,16 @@ public class GameBoard : GameObject
         float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
         Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
+
+        if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
+        {
+            var topRandRow = ComputeClosestHex(new Vector2(0, -400)).R;
+            var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
+            if (hexMap[coord] is BallData ball)
+            {
+                ball.PlayShineAnimation(gameTime);
+            }
+        }
 
         // PROOF OF CONCEPT
         // if (hexMap.MaxR - hexMap.MinR < 7)
@@ -396,12 +505,16 @@ public class GameBoard : GameObject
     {
         ballClosestHex = ComputeClosestHexInner(ballPosition);
 
+        if (IsBallAt(ballClosestHex) || (!IsInfinite && ballClosestHex.R < TopRow))
+        {
+            return true;
+        }
+
         // reduce the collision circle to be more forgiving to players
         Circle collisionCircle = new(ballPosition, BallData.BALL_SIZE / 2 * 0.8f);
 
-        foreach (var dir in Hex.directions)
+        foreach (Hex neighborHex in ballClosestHex.Neighbors())
         {
-            Hex neighborHex = ballClosestHex + dir;
             if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
             {
                 continue;

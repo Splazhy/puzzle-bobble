@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace PuzzleBobble.HexGrid;
@@ -40,7 +41,7 @@ public readonly struct Hex
         return (this - other).Length();
     }
 
-    public static readonly Hex[] directions = [
+    private static readonly Hex[] directions = [
         new(1,0,-1),  new(1, -1, 0), new(0, -1, 1),
         new(-1, 0, 1), new(-1, 1, 0), new(0, 1, -1)
     ];
@@ -51,8 +52,6 @@ public readonly struct Hex
         return directions[direction];
     }
 
-    public Hex Neighbor(int direction) => this + Direction(direction);
-
     public OffsetCoord ToOffsetCoord()
     {
         int col = Q + (R + OffsetCoord.ODD * (R & 1)) / 2;
@@ -61,4 +60,23 @@ public readonly struct Hex
     }
 
     public override string ToString() => $"Hex({Q}, {R}, {S})";
+
+    public IEnumerable<Hex> Neighbors()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            yield return this + Direction(i);
+        }
+    }
+
+    public IEnumerable<Hex> HexesWithinRange(int range)
+    {
+        for (int q = -range; q <= range; q++)
+        {
+            for (int r = Math.Max(-range, -q - range); r <= Math.Min(range, -q + range); r++)
+            {
+                yield return this + new Hex(q, r);
+            }
+        }
+    }
 }

@@ -19,11 +19,9 @@ public class Ball : GameObject
     }
 
     public const float FALLING_SPREAD = 50;
-    public const float MAX_EXPLODE_DELAY = 0.2f;
     public const float MAX_RANDOM_PITCH_RANGE = 0.2f;
 
     private static readonly Random _rand = new();
-    private AnimatedTexture2D? explosionAnimation;
     private AnimatedTexture2D? _previewBallSpriteSheet;
     public Vector2? EstimatedCollisionPosition;
 
@@ -63,17 +61,22 @@ public class Ball : GameObject
         _ballAssets = new BallData.Assets(content);
         Data.LoadAnimation(_ballAssets);
 
-        explosionAnimation = Data.CreateExplosionAnimation(_ballAssets);
-        float delay = MAX_EXPLODE_DELAY * _rand.NextSingle();
-        explosionAnimation.TriggerPlayOnNextDraw(delay);
-
         explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
         explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
-        _soundDelay = delay;
+        _soundDelay = Data.ExplosionDelay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();
 
         _previewBallSpriteSheet = _ballAssets.CreatePreviewBallAnimation();
+
+        if (_state == State.Exploding)
+        {
+            Data.PlayExplosionAnimation();
+        }
+        else
+        {
+            Data.StopExplosionAnimation();
+        }
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -89,7 +92,6 @@ public class Ball : GameObject
                 break;
             case State.Exploding:
                 UpdatePosition(gameTime);
-                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
                 if (!_soundPlayed)
                 {
                     if (_soundDelay <= 0)
@@ -102,7 +104,7 @@ public class Ball : GameObject
                         _soundDelay -= deltaTime;
                     }
                 }
-                if (explosionAnimation.IsFinished(gameTime))
+                if (Data.ExplosionFinished(gameTime))
                 {
                     Destroy();
                 }
@@ -148,19 +150,6 @@ public class Ball : GameObject
 
         switch (_state)
         {
-            case State.Exploding:
-                Debug.Assert(explosionAnimation is not null, "Explosion animation is not loaded.");
-                explosionAnimation.Draw(
-                    spriteBatch,
-                    gameTime,
-                    // FIXME: this position is not accurate (the y position is off by a bit)
-                    // might be due to floating point precision errors of GameBoard.
-                    new Rectangle((int)ScreenPosition.X, (int)ScreenPosition.Y, (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.X), (int)(BallData.EXPLOSION_TEXTURE_SIZE * PixelScale.Y)),
-                    Microsoft.Xna.Framework.Color.White,
-                    0.0f,
-                    new Vector2(BallData.EXPLOSION_TEXTURE_SIZE / 2, BallData.EXPLOSION_TEXTURE_SIZE / 2)
-                );
-                break;
             case State.Stasis:
                 Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition, 0.75f);
                 break;
