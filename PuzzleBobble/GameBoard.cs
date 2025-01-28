@@ -149,9 +149,8 @@ public class GameBoard : GameObject
 
     public bool IsBallSurronding(Hex hex)
     {
-        for (int i = 0; i < 6; i++)
+        foreach (Hex neighbor in hex.Neighbors())
         {
-            Hex neighbor = hex.Neighbor(i);
             if (IsBallAt(neighbor)) return true;
         }
         return false;
@@ -193,9 +192,8 @@ public class GameBoard : GameObject
             Hex current = pending.Dequeue();
             regionHexes.Add(current);
 
-            for (int i = 0; i < 6; i++)
+            foreach (Hex neighbor in current.Neighbors())
             {
-                Hex neighbor = current.Neighbor(i);
                 if (hexMap[neighbor] == specifiedBall && !regionHexes.Contains(neighbor))
                 {
                     pending.Enqueue(neighbor);
@@ -249,9 +247,8 @@ public class GameBoard : GameObject
 
             if (currData.IsRainbow)
             {
-                for (int i = 0; i < 6; i++)
+                foreach (Hex neighbor in current.Neighbors())
                 {
-                    Hex neighbor = current.Neighbor(i);
                     if (!affected.Contains(neighbor))
                     {
                         pendingOrigins.Enqueue(neighbor);
@@ -311,9 +308,8 @@ public class GameBoard : GameObject
             if (!floating.Contains(current)) continue;
             floating.Remove(current);
 
-            foreach (var dir in Hex.directions)
+            foreach (var neighbor in current.Neighbors())
             {
-                Hex neighbor = current + dir;
                 if (!IsBallAt(neighbor)) continue;
                 bfsQueue.Enqueue(neighbor);
             }
@@ -474,9 +470,8 @@ public class GameBoard : GameObject
         // reduce the collision circle to be more forgiving to players
         Circle collisionCircle = new(ballPosition, BallData.BALL_SIZE / 2 * 0.8f);
 
-        foreach (var dir in Hex.directions)
+        foreach (Hex neighborHex in ballClosestHex.Neighbors())
         {
-            Hex neighborHex = ballClosestHex + dir;
             if (!IsBallAt(neighborHex) && (IsInfinite || TopRow <= neighborHex.R))
             {
                 continue;
