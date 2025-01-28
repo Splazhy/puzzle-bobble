@@ -125,6 +125,10 @@ public readonly struct BallData
 
     public void PlayShineAnimation(GameTime gameTime)
     {
+        if (value == (int)SpecialType.Stone)
+        {
+            return;
+        }
         Debug.Assert(animState.shineAnim is not null, "Shine animation is not loaded.");
         animState.shineAnim.Play(gameTime);
     }
