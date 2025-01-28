@@ -72,7 +72,7 @@ public class GameBoard : GameObject
         base.LoadContent(content);
         _ballAssets = new BallData.Assets(content);
 
-        var level = Level.Load("test-colorpass");
+        var level = Level.Load("test-bombpass");
         // var level = Level.Load("3-4-connectHaft");
         // for (int i = 0; i < 1; i++)
         // {
@@ -235,7 +235,7 @@ public class GameBoard : GameObject
 
         // color pass
         HashSet<Hex> affected = [];
-        HashSet<Hex> bombs = [];
+        Queue<Hex> bombs = [];
         Queue<Hex> pendingOrigins = new();
         pendingOrigins.Enqueue(sourceHex);
 
@@ -260,7 +260,30 @@ public class GameBoard : GameObject
                 ColorRegionSearch(current, out HashSet<Hex> regionHexes, out HashSet<Hex> rainbows, out HashSet<Hex> moreBombs);
                 affected.UnionWith(regionHexes);
                 foreach (var item in rainbows) pendingOrigins.Enqueue(item);
-                bombs.UnionWith(moreBombs);
+                foreach (var item in moreBombs) bombs.Enqueue(item);
+            }
+        }
+
+        // bomb pass
+        while (0 < bombs.Count)
+        {
+            Hex current = bombs.Dequeue();
+            if (hexMap[current] is not BallData currData) continue;
+            Debug.Assert(currData.IsBomb);
+
+            foreach (Hex inRange in current.HexesWithinRange(2))
+            {
+                if (hexMap[inRange] is BallData data)
+                {
+                    if (data.IsBomb)
+                    {
+                        if (!affected.Contains(inRange))
+                        {
+                            bombs.Enqueue(inRange);
+                        }
+                    }
+                    affected.Add(inRange);
+                }
             }
         }
 

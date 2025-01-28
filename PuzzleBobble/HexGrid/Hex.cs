@@ -68,4 +68,15 @@ public readonly struct Hex
             yield return this + Direction(i);
         }
     }
+
+    public IEnumerable<Hex> HexesWithinRange(int range)
+    {
+        for (int q = -range; q <= range; q++)
+        {
+            for (int r = Math.Max(-range, -q - range); r <= Math.Min(range, -q + range); r++)
+            {
+                yield return this + new Hex(q, r);
+            }
+        }
+    }
 }
