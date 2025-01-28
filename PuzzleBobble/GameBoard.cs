@@ -60,6 +60,11 @@ public class GameBoard : GameObject
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
+    /// <summary>
+    /// For decorative animations
+    /// </summary>
+    private readonly Random _decoRand = new();
+
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300);
@@ -388,6 +393,16 @@ public class GameBoard : GameObject
         float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
         Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
+
+        if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
+        {
+            var topRandRow = ComputeClosestHex(new Vector2(0, -400)).R;
+            var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
+            if (hexMap[coord] is BallData ball)
+            {
+                ball.PlayShineAnimation(gameTime);
+            }
+        }
 
         // PROOF OF CONCEPT
         // if (hexMap.MaxR - hexMap.MinR < 7)
