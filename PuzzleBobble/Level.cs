@@ -48,14 +48,7 @@ public class Level
 
     public static Level Load(string levelName)
     {
-        // string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
-        string[] lines = new[]
-        {
-            "S B R . . . . .",
-            "S B R . . . . .",
-            "c c c . . . . .",
-            "d d d . . . . .",
-        };
+        string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
         HexMap<BallData> map = [];
         for (int y = 0; y < lines.Length; y++)
         {

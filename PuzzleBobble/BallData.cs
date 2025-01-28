@@ -30,6 +30,12 @@ public readonly struct BallData
         Stone = -3
     }
 
+    public bool IsColor => 0 <= value && value < COLOR_COUNT;
+    public bool IsSpecial => value < 0;
+    public bool IsRainbow => value == (int)SpecialType.Rainbow;
+    public bool IsBomb => value == (int)SpecialType.Bomb;
+    public bool IsStone => value == (int)SpecialType.Stone;
+
     public BallData(int value)
     {
         this.value = value;

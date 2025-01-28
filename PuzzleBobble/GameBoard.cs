@@ -72,15 +72,16 @@ public class GameBoard : GameObject
         base.LoadContent(content);
         _ballAssets = new BallData.Assets(content);
 
-        var level = Level.Load("3-4-connectHaft");
-        for (int i = 0; i < 1; i++)
-        {
-            level.StackDown(Level.Load("3-4-connectHaft"));
-        }
-        for (int i = 0; i < 10; i++)
-        {
-            level.StackUp(Level.Load("3-4-connectHaft"));
-        }
+        var level = Level.Load("test-colorpass");
+        // var level = Level.Load("3-4-connectHaft");
+        // for (int i = 0; i < 1; i++)
+        // {
+        //     level.StackDown(Level.Load("3-4-connectHaft"));
+        // }
+        // for (int i = 0; i < 10; i++)
+        // {
+        //     level.StackUp(Level.Load("3-4-connectHaft"));
+        // }
         hexMap = level.ToHexRectMap();
 
         foreach (var item in hexMap)
@@ -164,6 +165,68 @@ public class GameBoard : GameObject
         ball.LoadAnimation(_ballAssets);
     }
 
+    /// <summary>
+    /// search for connected balls of the same color, passing through rainbow balls
+    /// 
+    /// returns empty if the region is smaller than 3 balls, including rainbows
+    /// </summary>
+    /// <param name="sourceHex"></param>
+    /// <param name="regionHexes">contains connected color and rainbow balls</param>
+    /// <param name="connectedRainbows">contains only rainbow balls</param>
+    /// <param name="connectedBombs">contains only adjacent bombs</param>
+    private void ColorRegionSearch(Hex sourceHex, out HashSet<Hex> regionHexes, out HashSet<Hex> connectedRainbows, out HashSet<Hex> connectedBombs)
+    {
+        regionHexes = [];
+        connectedRainbows = [];
+        connectedBombs = [];
+        if (!IsValidHex(sourceHex)) return;
+        BallData? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return;
+
+        BallData specifiedBall = mapBall.Value;
+
+        Queue<Hex> pending = new();
+        pending.Enqueue(sourceHex);
+
+        while (0 < pending.Count)
+        {
+            Hex current = pending.Dequeue();
+            regionHexes.Add(current);
+
+            for (int i = 0; i < 6; i++)
+            {
+                Hex neighbor = current.Neighbor(i);
+                if (hexMap[neighbor] == specifiedBall && !regionHexes.Contains(neighbor))
+                {
+                    pending.Enqueue(neighbor);
+                }
+                else if (hexMap[neighbor] is BallData data)
+                {
+                    if (data.IsRainbow)
+                    {
+                        connectedRainbows.Add(neighbor);
+                        if (!regionHexes.Contains(neighbor))
+                        {
+                            pending.Enqueue(neighbor);
+                        }
+                    }
+                    else if (data.IsBomb)
+                    {
+                        connectedBombs.Add(neighbor);
+                    }
+                }
+            }
+        }
+
+        if (regionHexes.Count < 3)
+        {
+            regionHexes.Clear();
+            connectedRainbows.Clear();
+            connectedBombs.Clear();
+            return;
+        }
+    }
+
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
     // although haven't benchmarked it yet
     public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
@@ -171,34 +234,46 @@ public class GameBoard : GameObject
         if (!IsValidHex(sourceHex)) return [];
         BallData? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
-        BallData specifiedBall = mapBall.Value;
 
-        Queue<Hex> pending = [];
-        pending.Enqueue(sourceHex);
-        HashSet<Hex> connected = [];
+        // color pass
+        HashSet<Hex> affected = [];
+        HashSet<Hex> bombs = [];
+        Queue<Hex> pendingOrigins = new();
+        pendingOrigins.Enqueue(sourceHex);
 
-        while (pending.Count > 0)
+        while (0 < pendingOrigins.Count)
         {
-            Hex current = pending.Dequeue();
-            connected.Add(current);
+            Hex current = pendingOrigins.Dequeue();
+            if (hexMap[current] is not BallData currData) continue;
+            if (currData.IsBomb || currData.IsStone) continue;
 
-            for (int i = 0; i < 6; i++)
+            if (currData.IsRainbow)
             {
-                Hex neighbor = current.Neighbor(i);
-                if (IsValidHex(neighbor) && hexMap[neighbor] == specifiedBall && !connected.Contains(neighbor))
+                for (int i = 0; i < 6; i++)
                 {
-                    pending.Enqueue(neighbor);
+                    Hex neighbor = current.Neighbor(i);
+                    if (!affected.Contains(neighbor))
+                    {
+                        pendingOrigins.Enqueue(neighbor);
+                    }
                 }
+            }
+            if (currData.IsColor)
+            {
+                ColorRegionSearch(current, out HashSet<Hex> regionHexes, out HashSet<Hex> rainbows, out HashSet<Hex> moreBombs);
+                affected.UnionWith(regionHexes);
+                foreach (var item in rainbows) pendingOrigins.Enqueue(item);
+                bombs.UnionWith(moreBombs);
             }
         }
 
-        if (connected.Count < 3)
+        if (affected.Count == 0)
         {
             return [];
         }
 
         List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
-        foreach (Hex hex in connected)
+        foreach (Hex hex in affected)
         {
             if (hexMap[hex] is BallData ball)
             {
