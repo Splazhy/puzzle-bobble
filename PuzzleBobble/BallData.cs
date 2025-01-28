@@ -18,6 +18,8 @@ public readonly struct BallData
 
     private readonly AnimState animState = new();
 
+    public static readonly int COLOR_COUNT = 12;
+
     public enum SpecialType
     {
         Rainbow = -1,
@@ -28,6 +30,27 @@ public readonly struct BallData
     public BallData(int value)
     {
         this.value = value;
+    }
+
+    public static BallData FromCode(string code)
+    {
+        string firstChar = code.Substring(0, 1);
+        switch (firstChar)
+        {
+            default:
+                var color = firstChar[0] - 'a';
+                if (!(0 <= color && color < COLOR_COUNT))
+                {
+                    throw new ArgumentException($"Invalid color code: {firstChar}");
+                }
+                return new BallData(color);
+            case "R":
+                return new BallData((int)SpecialType.Rainbow);
+            case "B":
+                return new BallData((int)SpecialType.Bomb);
+            case "S":
+                return new BallData((int)SpecialType.Stone);
+        }
     }
 
     public class Assets

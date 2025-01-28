@@ -51,15 +51,15 @@ public class Level
         // string[] lines = System.IO.File.ReadAllLines($"Content/Levels/{levelName}.txt");
         string[] lines = new[]
         {
-            "a a a . . . . .",
-            "b b b . . . . .",
+            "S B R . . . . .",
+            "S B R . . . . .",
             "c c c . . . . .",
             "d d d . . . . .",
         };
         HexMap<BallData> map = [];
         for (int y = 0; y < lines.Length; y++)
         {
-            string[] cells = lines[y].Trim().Split(' ');
+            string[] cells = lines[y].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             for (int x = 0; x < cells.Length; x++)
             {
                 OffsetCoord offset = new(x, y);
@@ -68,7 +68,7 @@ public class Level
                 {
                     "." => null,
                     // TODO
-                    _ => new BallData(_rand.NextSingle() < 0.2 ? _rand.Next(-3, 0) : (int)cells[x][0] - 97)
+                    _ => BallData.FromCode(cells[x]),
                 };
                 map[hex] = value;
             }
