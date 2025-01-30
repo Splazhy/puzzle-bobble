@@ -16,14 +16,14 @@ public class Slingshot : GameObject
     public BallData? Data { get; private set; }
     public BallData? NextData { get; private set; }
     private BallData.Assets? _ballAssets = null;
-    public float BallSpeed = 1000.0f; // IDEA: make this property upgradable
+    public float BallSpeed = 1000.0f / 3; // IDEA: make this property upgradable
 
     // Rotations are in radians, not degrees
     public static readonly float MIN_ROTATION = MathF.PI * -80.0f / 180.0f;
     public static readonly float MAX_ROTATION = MathF.PI * 80.0f / 180.0f;
 
-    private const float MAX_RECOIL = 30.0f;
-    private const float RECOIL_RECOVERY = 100.0f;
+    private const float MAX_RECOIL = 30.0f / 3;
+    private const float RECOIL_RECOVERY = 100.0f / 3;
     private float visualRecoilOffset = 0.0f;
 
     public event BallFiredHandler? BallFired;
@@ -36,7 +36,7 @@ public class Slingshot : GameObject
 
     public Slingshot(Game game) : base("slingshot")
     {
-        Position = new Vector2(0, 300);
+        Position = new Vector2(0, 300 / 3);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
 
@@ -101,7 +101,7 @@ public class Slingshot : GameObject
 
         _staff.TargetPosition = new Vector2(MathF.Cos(Rotation + (MathF.PI / 2)), MathF.Sin(Rotation + (MathF.PI / 2)));
         _staff.TargetPosition.Normalize();
-        _staff.TargetPosition *= 30;
+        _staff.TargetPosition *= 30f / 3;
         _staff.TargetRotation = -Rotation * 0.2f;
 
 
@@ -109,7 +109,7 @@ public class Slingshot : GameObject
         {
             var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
             staffTargetPos2.Normalize();
-            staffTargetPos2 *= 20;
+            staffTargetPos2 *= 20f / 3;
             _staff.TargetPosition2 = staffTargetPos2;
             _staff.TargetRotation2 = 0;
             _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
@@ -151,8 +151,8 @@ public class Slingshot : GameObject
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
 
-        NextData?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + new Vector2(100, 20));
-        Data?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + new Vector2(0, visualRecoilOffset));
+        NextData?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(new Vector2(100f / 3, 20f / 3)));
+        Data?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(new Vector2(0, visualRecoilOffset)));
         _staff.Draw(spriteBatch, gameTime);
     }
 

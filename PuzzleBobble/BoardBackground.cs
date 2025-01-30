@@ -33,22 +33,21 @@ public class BoardBackground : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var BOARD_HALF_WIDTH_PX = GameBoard.BOARD_HALF_WIDTH_PX;
-        var pX = ParentTranslate.X;
-        var sourceY = -_gameBoard.Position.Y / PIXEL_SIZE;
+        var sourceY = -_gameBoard.Position.Y;
         var subPixelY = sourceY - (int)sourceY;
         spriteBatch.Draw(
             background,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX, ParentTranslate.Y - background.Height * PIXEL_SIZE / 2 - subPixelY * PIXEL_SIZE),
+            ParentTranslate + new Vector2(-BOARD_HALF_WIDTH_PX, -background.Height / 2 - subPixelY) * PIXEL_SIZE,
             new Rectangle(0, (int)sourceY, background.Width, background.Height + 1), Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
         );
         spriteBatch.Draw(
             leftBorder,
-            new Vector2(pX - BOARD_HALF_WIDTH_PX - leftBorder.Width * PIXEL_SIZE, ParentTranslate.Y - leftBorder.Height * PIXEL_SIZE / 2),
+            ParentTranslate + new Vector2(-BOARD_HALF_WIDTH_PX - leftBorder.Width, -leftBorder.Height / 2) * PIXEL_SIZE,
             null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
         );
         spriteBatch.Draw(
             rightBorder,
-            new Vector2(pX + BOARD_HALF_WIDTH_PX, ParentTranslate.Y - rightBorder.Height * PIXEL_SIZE / 2),
+            ParentTranslate + new Vector2(+BOARD_HALF_WIDTH_PX, -rightBorder.Height / 2) * PIXEL_SIZE,
             null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
         );
     }

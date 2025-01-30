@@ -104,7 +104,7 @@ public class Guideline : GameObject
             }
             spriteBatch.Draw(
                 selectedTexture,
-                pos + ScreenPosition,
+                ScreenPositionO(pos),
                 null,
                 Color.White * 0.5f * (1.0f - ((pos.Y / _lastCollidePosition?.Y) ?? 0.0f)),
                 0.0f,
@@ -121,7 +121,7 @@ public class Guideline : GameObject
             spriteBatch,
             gameTime,
             _previewBallSpriteSheet,
-            _lastCollidePosition.Value + ScreenPosition
+            ScreenPositionO(_lastCollidePosition.Value)
         );
     }
 

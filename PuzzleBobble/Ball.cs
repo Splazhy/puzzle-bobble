@@ -34,7 +34,7 @@ public class Ball : GameObject
     private BallData.Assets? _ballAssets;
     private State _state; public State GetState() { return _state; }
 
-    private static readonly Vector2 GRAVITY = new(0, 9.8f * 100);
+    private static readonly Vector2 GRAVITY = new(0, 9.8f * 100 / 3);
 
     public Ball(BallData data, State state) : base("ball")
     {
@@ -143,8 +143,8 @@ public class Ball : GameObject
         if (EstimatedCollisionPosition is Vector2 ep)
         {
             Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball sprite sheet is not loaded.");
-            Data.Draw(spriteBatch, gameTime, _ballAssets, ParentTranslate + ep, 0.5f);
-            BallData.DrawPreviewBall(spriteBatch, gameTime, _previewBallSpriteSheet, ParentTranslate + ep, 0.75f);
+            Data.Draw(spriteBatch, gameTime, _ballAssets, ParentTranslate + ep * PIXEL_SIZE, 0.5f);
+            BallData.DrawPreviewBall(spriteBatch, gameTime, _previewBallSpriteSheet, ParentTranslate + ep * PIXEL_SIZE, 0.75f);
         }
 
 

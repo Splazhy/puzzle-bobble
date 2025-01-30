@@ -22,9 +22,9 @@ public class GameBoard : GameObject
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
-    public static readonly float DEFAULT_SPEED = 20.0f;
+    public static readonly float DEFAULT_SPEED = 20.0f / 3;
     public static readonly float LERP_AMOUNT = 5.0f;
-    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f / 3;
 
     private int _topRow;
     public int TopRow
@@ -57,8 +57,8 @@ public class GameBoard : GameObject
     /// For random falling velocity of falling balls
     /// </summary>
     private readonly Random _rand = new();
-    private const float FALLING_SPREAD = 50;
-    private const float EXPLOSION_SPREAD = 50;
+    private const float FALLING_SPREAD = 50f / 3;
+    private const float EXPLOSION_SPREAD = 50f / 3;
 
     /// <summary>
     /// For decorative animations
@@ -67,7 +67,7 @@ public class GameBoard : GameObject
 
     public GameBoard(Game game) : base("gameboard")
     {
-        Position = new Vector2(0, -300);
+        Position = new Vector2(0, -300f / 3);
 
         Velocity.Y = DEFAULT_SPEED;
     }
@@ -115,7 +115,7 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + p);
+            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
         }
 
         DrawChildren(spriteBatch, gameTime);
@@ -360,7 +360,7 @@ public class GameBoard : GameObject
 
     private double GetPreferredPos()
     {
-        return 50 - GetBottomEdgePos();
+        return (50f / 3) - GetBottomEdgePos();
     }
 
     private double GetBottomEdgePos()
@@ -396,7 +396,7 @@ public class GameBoard : GameObject
 
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
         {
-            var topRandRow = ComputeClosestHex(new Vector2(0, -400)).R;
+            var topRandRow = ComputeClosestHex(new Vector2(0, -400f / 3)).R;
             var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
             if (hexMap[coord] is BallData ball)
             {
@@ -431,7 +431,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (400 < SelfToParentRelPos(ball.Position).Y)
+                if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
                 {
                     ball.Destroy();
                 }
