@@ -11,8 +11,9 @@ public readonly struct BallData
 {
     public static readonly int BALL_SIZE = 16;
     public static readonly int EXPLOSION_SIZE = 32;
-    public static readonly int BALL_DRAW_SIZE = BALL_SIZE * GameObject.PIXEL_SIZE;
-    public static readonly int EXPLOSION_DRAW_SIZE = EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
+    public static int BALL_DRAW_SIZE => BALL_SIZE * GameObject.PIXEL_SIZE;
+    public static int EXPLOSION_DRAW_SIZE => EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
+
     public const float MAX_EXPLODE_DELAY = 0.2f;
 
 
