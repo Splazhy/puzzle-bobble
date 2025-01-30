@@ -8,7 +8,6 @@ namespace PuzzleBobble;
 
 public class Game1 : Game
 {
-    public static Vector2 WindowCenter { get; private set; }
     public SpriteFont? Font { get; private set; }
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch? _spriteBatch;
@@ -48,7 +47,6 @@ public class Game1 : Game
 
         base.Initialize();
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
-        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
     }
 
     protected override void LoadContent()
@@ -108,7 +106,6 @@ public class Game1 : Game
 
         // TODO: code that needs to be run on window size change
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
-        WindowCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 }
