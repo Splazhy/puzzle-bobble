@@ -15,7 +15,7 @@ public class Guideline : GameObject
     private readonly Slingshot _slingshot;
 
     private const int STEP_COUNT = 200;
-    private static readonly float STEP_SIZE = BallData.BALL_SIZE;
+    private static readonly float STEP_SIZE = BallData.BALL_SIZE / 2;
     private const float MAX_LENGTH = 4800.0f;
 
     private Texture2D? _texture;
@@ -132,17 +132,17 @@ public class Guideline : GameObject
         for (int i = 0; i < STEP_COUNT; i++)
         {
             // var calculatedPos = GetCalculatedPosition(direction, i * STEP_SIZE);
-            var calculatedPos = GetCalculatedPosition(direction * i * STEP_SIZE);
+            var rawPos = direction * i * STEP_SIZE;
+            var calculatedPos = GetCalculatedPosition(rawPos);
 
             // check collision
             if (_gameBoard.CheckBallCollision(SelfToParentRelPos(calculatedPos), out Hex closestHex))
             {
-                var translatedHexPos = ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(closestHex));
-                lastCollidePos = calculatedPos;
+                lastCollidePos = rawPos;
                 break;
             }
 
-            lastNonCollidePos = calculatedPos;
+            lastNonCollidePos = rawPos;
         }
 
         if (lastCollidePos == Vector2.Zero) return null;
@@ -150,8 +150,9 @@ public class Guideline : GameObject
         for (int subdivs = 0; subdivs < 3; subdivs++)
         {
             var averagePos = (lastNonCollidePos + lastCollidePos) / 2;
+            var calculatedPos = GetCalculatedPosition(averagePos);
 
-            if (_gameBoard.CheckBallCollision(SelfToParentRelPos(averagePos), out _))
+            if (_gameBoard.CheckBallCollision(SelfToParentRelPos(calculatedPos), out _))
             {
                 lastCollidePos = averagePos;
             }
@@ -160,12 +161,11 @@ public class Guideline : GameObject
                 lastNonCollidePos = averagePos;
             }
         }
-        var lastAveragePos = (lastNonCollidePos + lastCollidePos) / 2;
-        // return averagePos;
-        // return lastCollidePos;
-        var hex = _gameBoard.ComputeClosestHex(SelfToParentRelPos(lastAveragePos));
-        return ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(hex));
 
+        var lastAveragePos = (lastNonCollidePos + lastCollidePos) / 2;
+        var lastCalculatedPos = GetCalculatedPosition(lastAveragePos);
+        var hex = _gameBoard.ComputeClosestHex(SelfToParentRelPos(lastCalculatedPos));
+        return ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(hex));
     }
 
     private Vector2 GetCalculatedPosition(Vector2 vec)
@@ -199,7 +199,7 @@ public class Guideline : GameObject
         var x4 = Math.Abs(x3);
 
         // shift coordinates so
-        // left and right edge of board is on Â±0.5 * Width,
+        // left and right edge of board is on ±0.5 * Width,
         // and 0 in the center of the board
         var x5 = x4 - HalfBoardWidth;
 
