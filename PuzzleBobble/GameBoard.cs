@@ -532,7 +532,17 @@ public class GameBoard : GameObject
     public BallData.BallStats GetBallStats()
     {
         BallData.BallStats stats = new();
-        stats.Add(hexMap.GetValues().GetEnumerator());
+        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.Count < 25; row--)
+        {
+            for (int col = 0; col < 8 && stats.Count < 25; col++)
+            {
+                var bd = new OffsetCoord(col, row);
+                if (hexMap[bd] is BallData ball)
+                {
+                    stats.Add(ball);
+                }
+            }
+        }
         stats.Add(children.Concat(pendingChildren).OfType<Ball>().Where(ball =>
             ball.GetState() == Ball.State.Moving
         ).Select(ball => ball.Data).GetEnumerator());

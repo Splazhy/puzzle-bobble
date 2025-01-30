@@ -333,6 +333,20 @@ public readonly struct BallData
     public class BallStats
     {
         public readonly Dictionary<int, int> ColorCounts = [];
+        public int Count = 0;
+
+        public void Add(BallData ball)
+        {
+            if (ColorCounts.TryGetValue(ball.value, out int value))
+            {
+                ColorCounts[ball.value] = ++value;
+            }
+            else
+            {
+                ColorCounts[ball.value] = 1;
+            }
+            Count++;
+        }
 
         public void Add(IEnumerator<BallData> balls)
         {
@@ -346,6 +360,7 @@ public readonly struct BallData
                 {
                     ColorCounts[balls.Current.value] = 1;
                 }
+                Count++;
             }
         }
     }
