@@ -83,7 +83,7 @@ public class Slingshot : GameObject
         if (!IsActive) return;
 
         MouseState mouseState = Mouse.GetState();
-        Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - (Position + ParentTranslate);
+        Vector2 direction = new Vector2(mouseState.X, mouseState.Y) - ScreenPosition;
 
 
         if (mouseState.RightButton == ButtonState.Pressed && !_lastFrameRightClick)
