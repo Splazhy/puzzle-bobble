@@ -8,11 +8,16 @@ namespace PuzzleBobble;
 
 public class GameObject
 {
-    public static readonly int PIXEL_SIZE = 3;
+    public static int PIXEL_SIZE = 3;
     protected Vector2 PixelScale => new(Scale.X * PIXEL_SIZE, Scale.Y * PIXEL_SIZE);
     public Vector2 ParentTranslate { get; set; }
     public Vector2 Position { get; set; }
-    public Vector2 ScreenPosition => Position + ParentTranslate;
+    public Vector2 ScreenPosition => (Position * PIXEL_SIZE) + ParentTranslate;
+    /// <summary>
+    /// calculates location for drawing on screen, with offset on logical position
+    /// </summary>
+    public Vector2 ScreenPositionO(Vector2 offset) => ((Position + offset) * PIXEL_SIZE) + ParentTranslate;
+
     public float Rotation { get; set; }
     public Vector2 Scale { get; set; }
 

@@ -9,10 +9,11 @@ using PuzzleBobble.HexGrid;
 namespace PuzzleBobble;
 public readonly struct BallData
 {
-    public static readonly int BALL_TEXTURE_SIZE = 16;
-    public static readonly int EXPLOSION_TEXTURE_SIZE = 32;
-    public static readonly int BALL_SIZE = BALL_TEXTURE_SIZE * GameObject.PIXEL_SIZE;
-    public static readonly int EXPLOSION_SIZE = EXPLOSION_TEXTURE_SIZE * GameObject.PIXEL_SIZE;
+    public static readonly int BALL_SIZE = 16;
+    public static readonly int EXPLOSION_SIZE = 32;
+    public static int BALL_DRAW_SIZE => BALL_SIZE * GameObject.PIXEL_SIZE;
+    public static int EXPLOSION_DRAW_SIZE => EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
+
     public const float MAX_EXPLODE_DELAY = 0.2f;
 
 
@@ -110,7 +111,7 @@ public readonly struct BallData
         {
             case (int)SpecialType.Rainbow:
                 {
-                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, 0, BALL_TEXTURE_SIZE * 10, BALL_TEXTURE_SIZE), 10, 1, 0.15f, true);
+                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, 0, BALL_SIZE * 10, BALL_SIZE), 10, 1, 0.15f, true);
                     anim.Delay(_rand.NextSingle() * 0.15f * 10);
                     animState.anim = anim;
 
@@ -128,7 +129,7 @@ public readonly struct BallData
                 }
             case (int)SpecialType.Bomb:
                 {
-                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE * 4, BALL_TEXTURE_SIZE), 4, 1, 0.1f, true);
+                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, BALL_SIZE, BALL_SIZE * 4, BALL_SIZE), 4, 1, 0.1f, true);
                     anim.Delay(_rand.NextSingle() * 0.1f * 4);
                     animState.anim = anim;
 
@@ -230,10 +231,10 @@ public readonly struct BallData
         previewBallAnim.Draw(
             spriteBatch,
             gameTime,
-            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
             Color.White * alpha,
             0.0f,
-            new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+            new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
         );
     }
 
@@ -248,10 +249,10 @@ public readonly struct BallData
             animState.explosionAnim.Draw(
                 spriteBatch,
                 gameTime,
-                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_SIZE, EXPLOSION_SIZE),
+                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
                 Color.White * alpha,
                 0.0f,
-                new Vector2(EXPLOSION_TEXTURE_SIZE / 2, EXPLOSION_TEXTURE_SIZE / 2)
+                new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
             );
             return;
         }
@@ -261,11 +262,11 @@ public readonly struct BallData
             default: // Color balls
                 spriteBatch.Draw(
                     assets.BallSpritesheet,
-                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
-                    new Rectangle(value * BALL_TEXTURE_SIZE, 0, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE),
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
+                    new Rectangle(value * BALL_SIZE, 0, BALL_SIZE, BALL_SIZE),
                     Color.White * alpha,
                     0.0f,
-                    new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2),
+                    new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
                     SpriteEffects.None,
                     0
                 );
@@ -278,10 +279,10 @@ public readonly struct BallData
                         atex.Draw(
                         spriteBatch,
                         gameTime,
-                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
                         Color.White * alpha,
                         0.0f,
-                        new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                        new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
                     );
                     }
                     break;
@@ -294,10 +295,10 @@ public readonly struct BallData
                         atex.Draw(
                         spriteBatch,
                         gameTime,
-                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
                         Color.White * alpha,
                         0.0f,
-                        new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                        new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
                     );
                     }
                     break;
@@ -305,11 +306,11 @@ public readonly struct BallData
             case (int)SpecialType.Stone:
                 spriteBatch.Draw(
                     assets.BallSpritesheet,
-                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
-                    new Rectangle(4 * BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE, BALL_TEXTURE_SIZE),
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
+                    new Rectangle(4 * BALL_SIZE, BALL_SIZE, BALL_SIZE, BALL_SIZE),
                     Color.White * alpha,
                     0.0f,
-                    new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2),
+                    new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
                     SpriteEffects.None,
                     0
                 );
@@ -321,10 +322,10 @@ public readonly struct BallData
             at2d.Draw(
                 spriteBatch,
                 gameTime,
-                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_SIZE, BALL_SIZE),
+                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
                 Color.White * alpha,
                 0.0f,
-                new Vector2(BALL_TEXTURE_SIZE / 2, BALL_TEXTURE_SIZE / 2)
+                new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
             );
         }
     }
@@ -332,6 +333,20 @@ public readonly struct BallData
     public class BallStats
     {
         public readonly Dictionary<int, int> ColorCounts = [];
+        public int Count = 0;
+
+        public void Add(BallData ball)
+        {
+            if (ColorCounts.TryGetValue(ball.value, out int value))
+            {
+                ColorCounts[ball.value] = ++value;
+            }
+            else
+            {
+                ColorCounts[ball.value] = 1;
+            }
+            Count++;
+        }
 
         public void Add(IEnumerator<BallData> balls)
         {
@@ -345,6 +360,7 @@ public readonly struct BallData
                 {
                     ColorCounts[balls.Current.value] = 1;
                 }
+                Count++;
             }
         }
     }

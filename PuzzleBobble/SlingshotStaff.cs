@@ -63,7 +63,7 @@ public class SlingshotStaff : GameObject
         spriteBatch.DrawString(
             _debugfont,
             $"pos {Position}\ntpos {TargetPosition}\nvel {Velocity}",
-            ScreenPosition + new Vector2(15, 15),
+            ScreenPositionO(new Vector2(15f / 3, 15f / 3)),
             Color.White
         );
 

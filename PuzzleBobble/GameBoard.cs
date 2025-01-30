@@ -22,9 +22,13 @@ public class GameBoard : GameObject
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
-    public static readonly float DEFAULT_SPEED = 20.0f;
+    public static readonly float FINAL_SPEED = 2f;
+    public static readonly float PUSHDOWN_SPEED = 4f;
     public static readonly float LERP_AMOUNT = 5.0f;
-    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f / 3;
+    public static readonly int DEATH_Y_POS = 86;
+
+    private SpriteFont? _debugfont;
 
     private int _topRow;
     public int TopRow
@@ -57,8 +61,8 @@ public class GameBoard : GameObject
     /// For random falling velocity of falling balls
     /// </summary>
     private readonly Random _rand = new();
-    private const float FALLING_SPREAD = 50;
-    private const float EXPLOSION_SPREAD = 50;
+    private const float FALLING_SPREAD = 50f / 3;
+    private const float EXPLOSION_SPREAD = 50f / 3;
 
     /// <summary>
     /// For decorative animations
@@ -67,15 +71,16 @@ public class GameBoard : GameObject
 
     public GameBoard(Game game) : base("gameboard")
     {
-        Position = new Vector2(0, -300);
+        Position = new Vector2(0, -300f / 3);
 
-        Velocity.Y = DEFAULT_SPEED;
+        Velocity.Y = FINAL_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
         _ballAssets = new BallData.Assets(content);
+        _debugfont = content.Load<SpriteFont>("Fonts/Arial24");
 
         var level = Level.Load("test-bombpass");
         // var level = Level.Load("3-4-connectHaft");
@@ -115,10 +120,17 @@ public class GameBoard : GameObject
             BallData ball = item.Value;
 
             Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition + p);
+            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
         }
 
         DrawChildren(spriteBatch, gameTime);
+
+        spriteBatch.DrawString(
+            _debugfont,
+            $"pos: {Position}\ndelta: {GetPreferredPos() - Position.Y}\nvel: {Velocity}",
+            ScreenPositionO(new Vector2(0, (int)GetBottomEdgePos())),
+            Color.White
+        );
     }
 
     private Hex ComputeClosestHexInner(Vector2 pos)
@@ -360,7 +372,7 @@ public class GameBoard : GameObject
 
     private double GetPreferredPos()
     {
-        return 50 - GetBottomEdgePos();
+        return 8 - GetBottomEdgePos();
     }
 
     private double GetBottomEdgePos()
@@ -390,13 +402,14 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
-        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
+        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 6);
+        float pushDownSpeed = (float)Math.Min(Math.Max(0, (DEATH_Y_POS - GetBottomEdgePos() - Position.Y) / 8), PUSHDOWN_SPEED);
+        Velocity.Y = float.Lerp(Velocity.Y, FINAL_SPEED + pushDownSpeed + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
         {
-            var topRandRow = ComputeClosestHex(new Vector2(0, -400)).R;
+            var topRandRow = ComputeClosestHex(new Vector2(0, -400f / 3)).R;
             var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
             if (hexMap[coord] is BallData ball)
             {
@@ -431,7 +444,7 @@ public class GameBoard : GameObject
 
             if (ball.GetState() == Ball.State.Falling)
             {
-                if (400 < SelfToParentRelPos(ball.Position).Y)
+                if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
                 {
                     ball.Destroy();
                 }
@@ -532,7 +545,17 @@ public class GameBoard : GameObject
     public BallData.BallStats GetBallStats()
     {
         BallData.BallStats stats = new();
-        stats.Add(hexMap.GetValues().GetEnumerator());
+        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.Count < 25; row--)
+        {
+            for (int col = 0; col < 8 && stats.Count < 25; col++)
+            {
+                var bd = new OffsetCoord(col, row);
+                if (hexMap[bd] is BallData ball)
+                {
+                    stats.Add(ball);
+                }
+            }
+        }
         stats.Add(children.Concat(pendingChildren).OfType<Ball>().Where(ball =>
             ball.GetState() == Ball.State.Moving
         ).Select(ball => ball.Data).GetEnumerator());
