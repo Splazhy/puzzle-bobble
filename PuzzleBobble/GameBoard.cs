@@ -22,9 +22,13 @@ public class GameBoard : GameObject
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
-    public static readonly float DEFAULT_SPEED = 20.0f / 3;
+    public static readonly float FINAL_SPEED = 2f;
+    public static readonly float PUSHDOWN_SPEED = 4f;
     public static readonly float LERP_AMOUNT = 5.0f;
     public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f / 3;
+    public static readonly int DEATH_Y_POS = 86;
+
+    private SpriteFont? _debugfont;
 
     private int _topRow;
     public int TopRow
@@ -69,13 +73,14 @@ public class GameBoard : GameObject
     {
         Position = new Vector2(0, -300f / 3);
 
-        Velocity.Y = DEFAULT_SPEED;
+        Velocity.Y = FINAL_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
         _ballAssets = new BallData.Assets(content);
+        _debugfont = content.Load<SpriteFont>("Fonts/Arial24");
 
         var level = Level.Load("test-bombpass");
         // var level = Level.Load("3-4-connectHaft");
@@ -119,6 +124,13 @@ public class GameBoard : GameObject
         }
 
         DrawChildren(spriteBatch, gameTime);
+
+        spriteBatch.DrawString(
+            _debugfont,
+            $"pos: {Position}\ndelta: {GetPreferredPos() - Position.Y}\nvel: {Velocity}",
+            ScreenPositionO(new Vector2(0, (int)GetBottomEdgePos())),
+            Color.White
+        );
     }
 
     private Hex ComputeClosestHexInner(Vector2 pos)
@@ -360,7 +372,7 @@ public class GameBoard : GameObject
 
     private double GetPreferredPos()
     {
-        return (50f / 3) - GetBottomEdgePos();
+        return 8 - GetBottomEdgePos();
     }
 
     private double GetBottomEdgePos()
@@ -390,8 +402,9 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 4);
-        Velocity.Y = float.Lerp(Velocity.Y, DEFAULT_SPEED + catchUpSpeed, LERP_AMOUNT * deltaTime);
+        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 6);
+        float pushDownSpeed = (float)Math.Min(Math.Max(0, (DEATH_Y_POS - GetBottomEdgePos() - Position.Y) / 8), PUSHDOWN_SPEED);
+        Velocity.Y = float.Lerp(Velocity.Y, FINAL_SPEED + pushDownSpeed + catchUpSpeed, LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))

@@ -12,7 +12,6 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private static readonly int DEATH_Y_POS = 260 / 3;
     private SpriteFont? _font;
     private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
@@ -43,8 +42,8 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game)
     {
         _slingshot = new(game);
-        _deathline = new(DEATH_Y_POS);
         _gameBoard = new GameBoard(game);
+        _deathline = new(GameBoard.DEATH_Y_POS);
         BoardBackground boardBackground = new(_gameBoard);
 
         _guideline = new Guideline(
@@ -176,15 +175,15 @@ public class GameScene : AbstractScene
                     }
                 }
 
-                if (DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
+                if (GameBoard.DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
                 {
                     Fail();
                 }
-                else if (DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 4 < _gameBoard.GetMapBottomEdge())
+                else if (GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 3.5 < _gameBoard.GetMapBottomEdge())
                 {
                     _deathline.Show(gameTime);
                 }
-                else if (_gameBoard.GetMapBottomEdge() < DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5.5)
+                else if (_gameBoard.GetMapBottomEdge() < GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5)
                 {
                     _deathline.Hide(gameTime);
                 }
