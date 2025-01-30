@@ -12,7 +12,7 @@ namespace PuzzleBobble.Scene;
 
 public class GameScene : AbstractScene
 {
-    private static readonly int DEATH_Y_POS = 260;
+    private static readonly int DEATH_Y_POS = 260 / 3;
     private SpriteFont? _font;
     private Slingshot? _slingshot;
     private GameBoard? _gameBoard;
