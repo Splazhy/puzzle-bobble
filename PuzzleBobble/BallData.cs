@@ -77,7 +77,7 @@ public readonly struct BallData
         {
             BallSpritesheet = content.Load<Texture2D>("Graphics/balls");
             SpecialBallSpritesheet = content.Load<Texture2D>("Graphics/special_balls");
-            ExplosionSpritesheet = content.Load<Texture2D>("Graphics/balls_explode3");
+            ExplosionSpritesheet = content.Load<Texture2D>("Graphics/balls_explode4");
             ShineSpritesheet = content.Load<Texture2D>("Graphics/ball_shine");
             PreviewBallSpriteSheet = content.Load<Texture2D>("Graphics/ball_preview");
         }
