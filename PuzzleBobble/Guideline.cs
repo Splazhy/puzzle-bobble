@@ -32,6 +32,7 @@ public class Guideline : GameObject
     private Vector2? _lastCollideRawPosition;
 
     private readonly FloatEaser _powerUpEaser = new(TimeSpan.FromSeconds(-1));
+    private readonly FloatEaser _enableEaser = new(TimeSpan.FromSeconds(-1));
     public bool PoweredUp { get; private set; }
 
     public Guideline(GameBoard gameBoard, Slingshot slingshot) : base("guideline")
@@ -49,6 +50,11 @@ public class Guideline : GameObject
         _powerUpEaser.SetEaseBToAFunction(EasingFunctions.ExpoOut);
         _powerUpEaser.SetTimeLengthBToA(TimeSpan.FromSeconds(3), TimeSpan.Zero);
         _powerUpEaser.SetValueB(1.0f);
+
+        _enableEaser.SetValueA(0.0f);
+        _enableEaser.SetEaseFunction(EasingFunctions.PowerInOut(2));
+        _enableEaser.SetTimeLength(TimeSpan.FromSeconds(1), TimeSpan.Zero);
+        _enableEaser.SetValueB(1.0f);
     }
 
     public Vector2? LastCollidePosition
@@ -107,6 +113,8 @@ public class Guideline : GameObject
     {
         Debug.Assert(_texture is not null, "Guideline texture is not loaded");
         Debug.Assert(_previewBallSpriteSheet is not null, "Preview ball spritesheet is not loaded");
+        var enableV = _enableEaser.GetValue(gameTime.TotalGameTime);
+        if (enableV == 0) return;
 
         var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
 
@@ -114,9 +122,9 @@ public class Guideline : GameObject
         var powerUpV = _powerUpEaser.GetValue(gameTime.TotalGameTime);
         var stepSize = 0.3f + (powerUpV * 0.7f);
         var taper = 0.5f + (powerUpV * -0.5f);
-        var cutOff = 2f + (powerUpV * (MAX_LENGTH - 2f));
+        var cutOff = (enableV * 2f) + (powerUpV * (MAX_LENGTH - 2f));
         cutOff *= BallData.BALL_SIZE;
-        var alpha = 0.6f + (powerUpV * -0.2f);
+        var alpha = (enableV * 0.6f) + (powerUpV * -0.2f);
         var previewAlpha = powerUpV;
 
         var selectedTexture = _lastCollidePosition is null ? _textureHollow : _texture;
@@ -261,5 +269,16 @@ public class Guideline : GameObject
 
         Vector2 calculatedPos = new(x5, vec.Y);
         return calculatedPos;
+    }
+
+    public void TurnOff(GameTime gameTime)
+    {
+        if (PoweredUp) SetPowerUp(gameTime, false);
+        _enableEaser.StartEase(gameTime.TotalGameTime, false);
+    }
+
+    public void TurnOn(GameTime gameTime)
+    {
+        _enableEaser.StartEase(gameTime.TotalGameTime, true);
     }
 }

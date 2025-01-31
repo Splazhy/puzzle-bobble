@@ -24,6 +24,7 @@ public class GameScene : AbstractScene
     private readonly Random _rand = new();
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
+    private bool _firstFrame = true;
 
 
     private GameState _state = GameState.Playing;
@@ -101,23 +102,31 @@ public class GameScene : AbstractScene
     private void Fail(GameTime gameTime)
     {
         Debug.Assert(_state == GameState.Playing);
-        Debug.Assert(_gameBoard is not null && _slingshot is not null);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
         _state = GameState.Fail;
         _gameBoard.Fail(gameTime);
         _slingshot.Fail(gameTime);
+        _guideline.TurnOff(gameTime);
     }
 
     private void Success(GameTime gameTime)
     {
         Debug.Assert(_state == GameState.Playing);
-        Debug.Assert(_gameBoard is not null && _slingshot is not null);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
         _state = GameState.Success;
         _gameBoard.Success();
         _slingshot.Success(gameTime);
+        _guideline.TurnOff(gameTime);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null && _guideline != null, "GameBoard, Slingshot, DeathLine, or Guideline is not loaded");
+        if (_firstFrame)
+        {
+            _firstFrame = false;
+            _guideline.TurnOn(gameTime);
+        }
         base.Update(gameTime, parentTranslate);
         if (Keyboard.GetState().IsKeyDown(Keys.P))
         {
@@ -144,7 +153,6 @@ public class GameScene : AbstractScene
         }
 
         UpdateChildren(gameTime);
-        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null, "GameBoard, Slingshot, or DeathLine is not loaded");
         if (_state == GameState.Playing)
         {
             if (_gameBoard.GetMapBallCount() == 0)
@@ -180,7 +188,7 @@ public class GameScene : AbstractScene
         }
 
         // TODO: replace this with proper powerup system
-        _guideline?.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
+        _guideline.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
 
         UpdatePendingAndDestroyedChildren();
     }
