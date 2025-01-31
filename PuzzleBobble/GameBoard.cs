@@ -22,12 +22,6 @@ public class GameBoard : GameObject
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
-    public static readonly float FINAL_SPEED = 2f;
-    public static readonly float PUSHDOWN_SPEED = 4f;
-    public static readonly float LERP_AMOUNT = 5.0f;
-    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f / 3;
-    public static readonly int DEATH_Y_POS = 86;
-
     private SpriteFont? _debugfont;
 
     private int _topRow;
@@ -76,8 +70,6 @@ public class GameBoard : GameObject
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300f / 3);
-
-        Velocity.Y = FINAL_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
@@ -106,6 +98,7 @@ public class GameBoard : GameObject
         }
 
         Position = new Vector2(0, (float)GetPreferredPos());
+        Velocity.Y = ComputePreferredSpeed();
 
         // IsInfinite = true;
 
@@ -119,13 +112,19 @@ public class GameBoard : GameObject
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
-        foreach (var item in hexMap)
+        var minDrawRow = Math.Max(TopRow, ComputeClosestHex(new Vector2(0, -150 - BallData.BALL_SIZE)).R);
+        for (int row = hexMap.MaxR; minDrawRow <= row; row--)
         {
-            Hex hex = item.Key;
-            BallData ball = item.Value;
-
-            Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+            for (int col = 0; col < 8; col++)
+            {
+                var bd = new OffsetCoord(col, row);
+                var hex = bd.ToHex();
+                if (hexMap[hex] is BallData ball)
+                {
+                    Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
+                    ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+                }
+            }
         }
 
         DrawChildren(spriteBatch, gameTime);
@@ -286,7 +285,7 @@ public class GameBoard : GameObject
         }
 
         List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
-        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
+        Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
         return explodingBalls;
     }
 
@@ -323,7 +322,9 @@ public class GameBoard : GameObject
             }
         }
 
-        return TakeBallsFromMap(affected);
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
+        return explodingBalls;
     }
 
     public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
@@ -394,10 +395,30 @@ public class GameBoard : GameObject
     {
         return hexMap.Count;
     }
-
-    public double GetMapBottomEdge()
+    public double GetDistanceFromDeath()
     {
-        return GetBottomEdgePos() + Position.Y;
+        return DEATH_Y_POS - GetBottomEdgePos() - Position.Y;
+    }
+
+    public static readonly int DEATH_Y_POS = 86;
+    public static readonly float FINAL_SPEED = 2f;
+    public static readonly float PUSHDOWN_SPEED = 4f;
+    public static readonly float LERP_AMOUNT = 5.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -30f;
+
+    private float ComputePushbackSpeed(int ballCount)
+    {
+        return EXPLODE_PUSHBACK_BONUS * Math.Max(0, ballCount - 2);
+    }
+
+    private float ComputePreferredSpeed()
+    {
+        double prefDistance = GetPreferredPos() - Position.Y;
+        double deathDistance = GetDistanceFromDeath();
+        float catchUpSpeed = (float)Math.Max(0, prefDistance / 6);
+        float pushDownSpeed = (float)Math.Min(Math.Max(0, deathDistance / 8), PUSHDOWN_SPEED);
+
+        return FINAL_SPEED + pushDownSpeed + catchUpSpeed;
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -407,9 +428,7 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 6);
-        float pushDownSpeed = (float)Math.Min(Math.Max(0, (DEATH_Y_POS - GetBottomEdgePos() - Position.Y) / 8), PUSHDOWN_SPEED);
-        Velocity.Y = float.Lerp(Velocity.Y, FINAL_SPEED + pushDownSpeed + catchUpSpeed, LERP_AMOUNT * deltaTime);
+        Velocity.Y = float.Lerp(Velocity.Y, ComputePreferredSpeed(), LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))

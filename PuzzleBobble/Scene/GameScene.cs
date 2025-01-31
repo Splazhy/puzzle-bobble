@@ -169,15 +169,15 @@ public class GameScene : AbstractScene
                     _boardChanged = false;
                 }
 
-                if (GameBoard.DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
+                if (_gameBoard.GetDistanceFromDeath() <= 0)
                 {
                     Fail();
                 }
-                else if (GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 3.5 < _gameBoard.GetMapBottomEdge())
+                else if (_gameBoard.GetDistanceFromDeath() < GameBoard.HEX_VERTICAL_SPACING * 3.5)
                 {
                     _deathline.Show(gameTime);
                 }
-                else if (_gameBoard.GetMapBottomEdge() < GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5)
+                else if (GameBoard.HEX_VERTICAL_SPACING * 5 < _gameBoard.GetDistanceFromDeath())
                 {
                     _deathline.Hide(gameTime);
                 }

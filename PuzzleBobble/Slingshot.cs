@@ -36,7 +36,7 @@ public class Slingshot : GameObject
 
     public Slingshot(Game game) : base("slingshot")
     {
-        Position = new Vector2(0, 300 / 3);
+        Position = new Vector2(0, 100);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
 
