@@ -49,9 +49,12 @@ public class GameScene : AbstractScene
 
         _slingshot.BallFired += ball =>
         {
-            // semi-hacky solution!
-            _guideline.Recalculate();
-            ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            if (_guideline.PoweredUp)
+            {
+                // semi-hacky solution!
+                _guideline.Recalculate();
+                ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            }
             _gameBoard.AddChildDeferred(ball);
         };
         _gameBoard.BoardChanged += () =>
@@ -175,6 +178,9 @@ public class GameScene : AbstractScene
                 }
             }
         }
+
+        // TODO: replace this with proper powerup system
+        _guideline?.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
 
         UpdatePendingAndDestroyedChildren();
     }

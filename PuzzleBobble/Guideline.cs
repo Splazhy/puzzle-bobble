@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBobble.Easer;
 using PuzzleBobble.HexGrid;
 
 namespace PuzzleBobble;
@@ -29,6 +30,10 @@ public class Guideline : GameObject
     private readonly float HalfBoardWidth = GameBoard.BOARD_HALF_WIDTH_PX - BallData.BALL_SIZE / 2;
 
     private Vector2? _lastCollidePosition;
+    private Vector2? _lastCollideRawPosition;
+
+    private readonly FloatEaser _powerUpEaser = new(TimeSpan.FromSeconds(-1));
+    public bool PoweredUp { get; private set; }
 
     public Guideline(GameBoard gameBoard, Slingshot slingshot) : base("guideline")
     {
@@ -38,6 +43,14 @@ public class Guideline : GameObject
         _cutoffLength = MAX_LENGTH;
         _duration = 45f / _drawCount;
         Position = _slingshot.Position;
+
+        _powerUpEaser.SetValueA(0.0f);
+        _powerUpEaser.SetEaseFunction(EasingFunctions.ExpoIn);
+        _powerUpEaser.SetTimeLength(TimeSpan.FromSeconds(0.75), TimeSpan.Zero);
+
+        _powerUpEaser.SetEaseBToAFunction(EasingFunctions.ExpoOut);
+        _powerUpEaser.SetTimeLengthBToA(TimeSpan.FromSeconds(1), TimeSpan.Zero);
+        _powerUpEaser.SetValueB(1.0f);
     }
 
     public Vector2? LastCollidePosition
@@ -51,6 +64,14 @@ public class Guideline : GameObject
 
             return null;
         }
+    }
+
+    public void SetPowerUp(GameTime gameTime, bool poweredUp)
+    {
+        if (PoweredUp == poweredUp) return;
+        PoweredUp = poweredUp;
+
+        _powerUpEaser.StartEase(gameTime.TotalGameTime, poweredUp);
     }
 
     public override void LoadContent(ContentManager content)
@@ -79,7 +100,8 @@ public class Guideline : GameObject
     public void Recalculate()
     {
         var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
-        _lastCollidePosition = GetEndHexPosition(direction);
+        _lastCollidePosition = GetEndHexPosition(direction, out Vector2? rawPosOutput);
+        _lastCollideRawPosition = rawPosOutput;
     }
 
 
@@ -91,42 +113,74 @@ public class Guideline : GameObject
         var direction = new Vector2(MathF.Cos(Rotation), MathF.Sin(Rotation));
 
         var _progress = (float)(gameTime.TotalGameTime.TotalSeconds / _duration % 1.0);
+        var powerUpV = _powerUpEaser.GetValue(gameTime.TotalGameTime);
+        var stepSize = 0.3f + (powerUpV * 0.7f);
+        var taper = 0.5f + (powerUpV * 0.5f);
+        var cutOff = 2f + (powerUpV * 18f);
+        if (19.99f < cutOff) cutOff = MAX_LENGTH;
+        cutOff *= BallData.BALL_SIZE;
+        var alpha = 0.25f + (powerUpV * 0.15f);
+        var previewAlpha = powerUpV;
 
         var selectedTexture = _lastCollidePosition is null ? _textureHollow : _texture;
         for (int i = 0; i < _drawCount; i++)
         {
-            float subProgress = (_progress % 1.0f) + i;
-            var pos = GetCalculatedPosition(direction * subProgress * BallData.BALL_SIZE);
-            // early break (not sure if this optimization is necessary)
-            if (_lastCollidePosition is not null && pos.Y + BallData.BALL_SIZE / 2 < _lastCollidePosition?.Y)
+            float distance = ((_progress % 1.0f) + i) * BallData.BALL_SIZE * stepSize;
+            if (cutOff < distance) break;
+            float cutOffFrac = distance / cutOff;
+            float scale = 1.0f - (cutOffFrac * taper);
+
+            var collisionFrac = (distance / _lastCollideRawPosition?.Length()) ?? 0;
+            var frac = Math.Max(cutOffFrac, collisionFrac);
+            var pos = GetCalculatedPosition(direction * distance);
+            if (1 < frac) break;
+
+            if (powerUpV < 1)
             {
-                break;
+                spriteBatch.Draw(
+                    _textureHollow,
+                    ScreenPositionO(pos),
+                    null,
+                    Color.White * alpha * (1.0f - frac) * (1f - powerUpV),
+                    0.0f,
+                    _origin,
+                    PixelScale * scale,
+                    SpriteEffects.None,
+                    0
+                );
             }
-            spriteBatch.Draw(
+
+            if (0 < powerUpV)
+            {
+                spriteBatch.Draw(
                 selectedTexture,
                 ScreenPositionO(pos),
                 null,
-                Color.White * 0.5f * (1.0f - ((pos.Y / _lastCollidePosition?.Y) ?? 0.0f)),
+                Color.White * alpha * (1.0f - frac) * powerUpV,
                 0.0f,
                 _origin,
-                PixelScale,
+                PixelScale * scale,
                 SpriteEffects.None,
                 0
             );
+            }
         }
 
         if (_lastCollidePosition is null) return;
 
+        if (previewAlpha == 0) return;
         BallData.DrawPreviewBall(
             spriteBatch,
             gameTime,
             _previewBallSpriteSheet,
-            ScreenPositionO(_lastCollidePosition.Value)
+            ScreenPositionO(_lastCollidePosition.Value),
+            previewAlpha
         );
     }
 
-    private Vector2? GetEndHexPosition(Vector2 direction)
+    private Vector2? GetEndHexPosition(Vector2 direction, out Vector2? rawPosOutput)
     {
+        rawPosOutput = null;
         var lastNonCollidePos = new Vector2(0, 0);
         var lastCollidePos = new Vector2(0, 0);
         for (int i = 0; i < STEP_COUNT; i++)
@@ -163,6 +217,7 @@ public class Guideline : GameObject
         }
 
         var lastAveragePos = (lastNonCollidePos + lastCollidePos) / 2;
+        rawPosOutput = lastAveragePos;
         var lastCalculatedPos = GetCalculatedPosition(lastAveragePos);
         var hex = _gameBoard.ComputeClosestHex(SelfToParentRelPos(lastCalculatedPos));
         return ParentToSelfRelPos(_gameBoard.ConvertHexToCenter(hex));
