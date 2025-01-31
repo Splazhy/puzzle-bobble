@@ -33,4 +33,10 @@
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />
   </Target>
+  <!--
+  https://docs.monogame.net/articles/getting_started/packaging_games.html?tabs=windows#publishaot -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="MonoGame.Framework" />
+    <TrimmerRootAssembly Include="mscorlib" />
+  </ItemGroup>
 </Project>
