@@ -437,10 +437,13 @@ public class GameBoard : GameObject
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
         {
             var topRandRow = ComputeClosestHex(new Vector2(0, -400f / 3)).R;
-            var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
-            if (hexMap[coord] is BallData ball)
+            if (0 < hexMap.MaxR - topRandRow)
             {
-                ball.PlayShineAnimation(gameTime);
+                var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
+                if (hexMap[coord] is BallData ball)
+                {
+                    ball.PlayShineAnimation(gameTime);
+                }
             }
         }
 
