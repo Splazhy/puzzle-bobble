@@ -17,14 +17,13 @@ public class Guideline : GameObject
 
     private const int STEP_COUNT = 200;
     private static readonly float STEP_SIZE = BallData.BALL_SIZE / 2;
-    private const float MAX_LENGTH = 4800.0f;
+    private const float MAX_LENGTH = 100f;
 
     private Texture2D? _texture;
     private Texture2D? _textureHollow;
     private AnimatedTexture2D? _previewBallSpriteSheet;
     private Vector2 _origin;
     private readonly int _drawCount;
-    private readonly float _cutoffLength;
     private readonly float _duration;
 
     private readonly float HalfBoardWidth = GameBoard.BOARD_HALF_WIDTH_PX - BallData.BALL_SIZE / 2;
@@ -40,16 +39,15 @@ public class Guideline : GameObject
         _gameBoard = gameBoard;
         _slingshot = slingshot;
         _drawCount = 96;
-        _cutoffLength = MAX_LENGTH;
         _duration = 45f / _drawCount;
         Position = _slingshot.Position;
 
         _powerUpEaser.SetValueA(0.0f);
-        _powerUpEaser.SetEaseFunction(EasingFunctions.ExpoIn);
-        _powerUpEaser.SetTimeLength(TimeSpan.FromSeconds(0.75), TimeSpan.Zero);
+        _powerUpEaser.SetEaseFunction(EasingFunctions.ExpoInOut);
+        _powerUpEaser.SetTimeLength(TimeSpan.FromSeconds(2), TimeSpan.Zero);
 
         _powerUpEaser.SetEaseBToAFunction(EasingFunctions.ExpoOut);
-        _powerUpEaser.SetTimeLengthBToA(TimeSpan.FromSeconds(1), TimeSpan.Zero);
+        _powerUpEaser.SetTimeLengthBToA(TimeSpan.FromSeconds(3), TimeSpan.Zero);
         _powerUpEaser.SetValueB(1.0f);
     }
 
@@ -115,17 +113,16 @@ public class Guideline : GameObject
         var _progress = (float)(gameTime.TotalGameTime.TotalSeconds / _duration % 1.0);
         var powerUpV = _powerUpEaser.GetValue(gameTime.TotalGameTime);
         var stepSize = 0.3f + (powerUpV * 0.7f);
-        var taper = 0.5f + (powerUpV * 0.5f);
-        var cutOff = 2f + (powerUpV * 18f);
-        if (19.99f < cutOff) cutOff = MAX_LENGTH;
+        var taper = 0.5f + (powerUpV * -0.5f);
+        var cutOff = 2f + (powerUpV * (MAX_LENGTH - 2f));
         cutOff *= BallData.BALL_SIZE;
-        var alpha = 0.25f + (powerUpV * 0.15f);
+        var alpha = 0.6f + (powerUpV * -0.2f);
         var previewAlpha = powerUpV;
 
         var selectedTexture = _lastCollidePosition is null ? _textureHollow : _texture;
         for (int i = 0; i < _drawCount; i++)
         {
-            float distance = ((_progress % 1.0f) + i) * BallData.BALL_SIZE * stepSize;
+            float distance = (_progress + i) * BallData.BALL_SIZE * stepSize;
             if (cutOff < distance) break;
             float cutOffFrac = distance / cutOff;
             float scale = 1.0f - (cutOffFrac * taper);
@@ -135,13 +132,17 @@ public class Guideline : GameObject
             var pos = GetCalculatedPosition(direction * distance);
             if (1 < frac) break;
 
+            float firstBallFade = i == 0 ?
+            (float)EasingFunctions.PowerInOut(2)(_progress)
+             : 1;
+
             if (powerUpV < 1)
             {
                 spriteBatch.Draw(
                     _textureHollow,
                     ScreenPositionO(pos),
                     null,
-                    Color.White * alpha * (1.0f - frac) * (1f - powerUpV),
+                    Color.White * alpha * (1.0f - frac) * (1f - powerUpV) * firstBallFade,
                     0.0f,
                     _origin,
                     PixelScale * scale,
@@ -156,7 +157,7 @@ public class Guideline : GameObject
                 selectedTexture,
                 ScreenPositionO(pos),
                 null,
-                Color.White * alpha * (1.0f - frac) * powerUpV,
+                Color.White * alpha * (1.0f - frac) * powerUpV * firstBallFade,
                 0.0f,
                 _origin,
                 PixelScale * scale,
