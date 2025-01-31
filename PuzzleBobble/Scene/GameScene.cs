@@ -113,7 +113,6 @@ public class GameScene : AbstractScene
         _gameBoard.Success();
     }
 
-
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
@@ -157,7 +156,7 @@ public class GameScene : AbstractScene
                     if (_slingshot.NextData is not BallData data || !bs.Check(data))
                     {
                         var nextBall = bs.GetNextBall(_rand);
-                        _slingshot.SetNextData(nextBall);
+                        _slingshot.SetNextData(gameTime, nextBall);
                     }
                     _boardChanged = false;
                 }
