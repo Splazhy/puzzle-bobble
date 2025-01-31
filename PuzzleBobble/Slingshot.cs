@@ -110,7 +110,7 @@ public class Slingshot : GameObject
 
         if (mouseState.RightButton == ButtonState.Pressed && !_lastFrameRightClick)
         {
-            if (Data is not null && NextData is not null) SwapDatas();
+            if (_state == GameState.Playing && Data is not null && NextData is not null) SwapDatas();
         }
         _lastFrameRightClick = mouseState.RightButton == ButtonState.Pressed;
 
@@ -181,14 +181,18 @@ public class Slingshot : GameObject
 
 
 
-    public void Fail()
+    public void Fail(GameTime gameTime)
     {
         _state = GameState.Fail;
+        _ball?.FadeAway(gameTime);
+        _nextBall?.FadeAway(gameTime);
     }
 
-    public void Success()
+    public void Success(GameTime gameTime)
     {
         _state = GameState.Success;
+        _ball?.FadeAway(gameTime);
+        _nextBall?.FadeAway(gameTime);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

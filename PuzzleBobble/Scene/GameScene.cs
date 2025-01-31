@@ -101,16 +101,16 @@ public class GameScene : AbstractScene
         Debug.Assert(_gameBoard is not null && _slingshot is not null);
         _state = GameState.Fail;
         _gameBoard.Fail(gameTime);
-        _slingshot.Fail();
+        _slingshot.Fail(gameTime);
     }
 
-    private void Success()
+    private void Success(GameTime gameTime)
     {
         Debug.Assert(_state == GameState.Playing);
         Debug.Assert(_gameBoard is not null && _slingshot is not null);
         _state = GameState.Success;
-        _slingshot.Success();
         _gameBoard.Success();
+        _slingshot.Success(gameTime);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -146,7 +146,7 @@ public class GameScene : AbstractScene
         {
             if (_gameBoard.GetMapBallCount() == 0)
             {
-                Success();
+                Success(gameTime);
             }
             else
             {
