@@ -67,6 +67,8 @@ public class GameBoard : GameObject
     /// </summary>
     private readonly Random _decoRand = new();
 
+    private GameState _state = GameState.Playing;
+
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300f / 3);
@@ -413,6 +415,7 @@ public class GameBoard : GameObject
 
     private float ComputePreferredSpeed()
     {
+        if (_state != GameState.Playing) return 0;
         double prefDistance = GetPreferredPos() - Position.Y;
         double deathDistance = GetDistanceFromDeath();
         float catchUpSpeed = (float)Math.Max(0, prefDistance / 6);
@@ -535,6 +538,12 @@ public class GameBoard : GameObject
         {
             BoardChanged?.Invoke();
             SetBallAt(ballClosestHex, ball.Data);
+            ball.Destroy();
+            if (_state == GameState.Fail)
+            {
+                hexMap[ballClosestHex]?.PlayPetrifyAnimation(gameTime);
+                return;
+            }
             var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
             var fallBalls = RemoveFloatingBalls();
 
@@ -581,7 +590,6 @@ public class GameBoard : GameObject
                 }
             }
 
-            ball.Destroy();
         }
     }
 
@@ -637,6 +645,15 @@ public class GameBoard : GameObject
             ball.GetState() == Ball.State.Moving
         ).Select(ball => ball.Data).GetEnumerator());
         return stats;
+    }
+
+    public void Fail(GameTime gameTime)
+    {
+        _state = GameState.Fail;
+        foreach (var item in hexMap)
+        {
+            item.Value.PlayPetrifyAnimation(gameTime);
+        }
     }
 
 }

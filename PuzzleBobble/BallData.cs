@@ -16,6 +16,7 @@ public readonly struct BallData
     public static int EXPLOSION_DRAW_SIZE => EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
 
     public const float MAX_EXPLODE_DELAY = 0.2f;
+    public const float MAX_PETRIFY_DELAY = 1f;
 
 
     private static readonly Random _rand = new();
@@ -96,9 +97,14 @@ public readonly struct BallData
         public AnimatedTexture2D? anim;
         public AnimatedTexture2D? shineAnim;
         public AnimatedTexture2D? explosionAnim;
+        public AnimatedTexture2D? petrifyAnim;
         public float explodeDelay = 0.0f;
+        public float petrifyDelay = 0.0f;
         public bool isExploding = false;
+        public bool isPetrifying = false;
         public bool isAlt = false;
+
+
     }
 
     public void LoadAnimation(Assets assets)
@@ -110,6 +116,15 @@ public readonly struct BallData
         )
             {
                 KeepDrawingAfterFinish = false
+            };
+        animState.petrifyAnim =
+            new AnimatedTexture2D(
+                assets.SpecialBallSpritesheet,
+                new Rectangle(BALL_SIZE * 2, BALL_SIZE, BALL_SIZE * 6, BALL_SIZE),
+                6, 1, 0.1f, false
+        )
+            {
+                KeepDrawingAfterFinish = true
             };
         switch (value)
         {
@@ -150,8 +165,6 @@ public readonly struct BallData
                     break;
                 }
             case (int)SpecialType.Stone:
-
-
                 animState.explosionAnim = new AnimatedTexture2D(
                     assets.ExplosionSpritesheet,
                     new Rectangle(
@@ -183,6 +196,7 @@ public readonly struct BallData
 
         animState.explosionAnim.KeepDrawingAfterFinish = false;
         animState.explodeDelay = _rand.NextSingle() * MAX_EXPLODE_DELAY;
+        animState.petrifyDelay = _rand.NextSingle() * MAX_PETRIFY_DELAY;
     }
 
     public static bool operator ==(BallData a, BallData b) => a.value == b.value;
@@ -212,6 +226,17 @@ public readonly struct BallData
             default:
                 break;
         }
+    }
+
+    public void PlayPetrifyAnimation(GameTime gameTime)
+    {
+        if (value == (int)SpecialType.Stone)
+        {
+            return;
+        }
+        Debug.Assert(animState.petrifyAnim is not null, "Petrify animation is not loaded.");
+        animState.petrifyAnim.Play(gameTime, animState.petrifyDelay);
+        animState.isPetrifying = true;
     }
 
     public bool IsPlayingExplosionAnimation => animState.isExploding;
@@ -278,6 +303,10 @@ public readonly struct BallData
         }
 
         DrawShine(spriteBatch, gameTime, screenPosition, alpha);
+        if (animState.isPetrifying)
+        {
+            DrawPetrify(spriteBatch, gameTime, screenPosition, alpha);
+        }
     }
 
     private void DrawExplode(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
@@ -342,7 +371,7 @@ public readonly struct BallData
                 spriteBatch.Draw(
                     assets.SpecialBallSpritesheet,
                     new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
-                    new Rectangle(0, BALL_SIZE, BALL_SIZE, BALL_SIZE),
+                    new Rectangle(BALL_SIZE * 7, BALL_SIZE, BALL_SIZE, BALL_SIZE),
                     Color.White * alpha,
                     0.0f,
                     new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
@@ -383,6 +412,21 @@ public readonly struct BallData
     private void DrawShine(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
     {
         if (animState.shineAnim is AnimatedTexture2D at2d)
+        {
+            at2d.Draw(
+                spriteBatch,
+                gameTime,
+                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
+                Color.White * alpha,
+                0.0f,
+                new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
+            );
+        }
+    }
+
+    private void DrawPetrify(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
+    {
+        if (animState.petrifyAnim is AnimatedTexture2D at2d)
         {
             at2d.Draw(
                 spriteBatch,

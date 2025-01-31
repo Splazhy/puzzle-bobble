@@ -25,14 +25,8 @@ public class GameScene : AbstractScene
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
 
-    private enum State
-    {
-        Playing,
-        Fail,
-        Success,
-        Paused
-    }
-    private State _state = State.Playing;
+
+    private GameState _state = GameState.Playing;
     private bool _keyPDown = false;
 
     private bool _boardChanged = false;
@@ -83,8 +77,8 @@ public class GameScene : AbstractScene
 
     private void Pause()
     {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Paused;
+        Debug.Assert(_state == GameState.Playing);
+        _state = GameState.Paused;
         foreach (var child in children)
         {
             child.IsActive = false;
@@ -93,18 +87,27 @@ public class GameScene : AbstractScene
 
     private void Unpause()
     {
-        Debug.Assert(_state == State.Paused);
-        _state = State.Playing;
+        Debug.Assert(_state == GameState.Paused);
+        _state = GameState.Playing;
         foreach (var child in children)
         {
             child.IsActive = true;
         }
     }
 
-    private void Fail()
+    private void Fail(GameTime gameTime)
     {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Fail;
+        Debug.Assert(_state == GameState.Playing);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null);
+        _state = GameState.Fail;
+        _gameBoard.Fail(gameTime);
+        _slingshot.Fail();
+    }
+
+    private void Success()
+    {
+        Debug.Assert(_state == GameState.Playing);
+        _state = GameState.Success;
         foreach (var child in children)
         {
             child.IsActive = false;
@@ -128,11 +131,11 @@ public class GameScene : AbstractScene
         {
             if (!_keyPDown)
             {
-                if (_state == State.Paused)
+                if (_state == GameState.Paused)
                 {
                     Unpause();
                 }
-                else if (_state == State.Playing)
+                else if (_state == GameState.Playing)
                 {
                     Pause();
                 }
@@ -150,7 +153,7 @@ public class GameScene : AbstractScene
 
         UpdateChildren(gameTime);
         Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null, "GameBoard, Slingshot, or DeathLine is not loaded");
-        if (_state == State.Playing)
+        if (_state == GameState.Playing)
         {
             if (_gameBoard.GetMapBallCount() == 0)
             {
@@ -171,7 +174,7 @@ public class GameScene : AbstractScene
 
                 if (_gameBoard.GetDistanceFromDeath() <= 0)
                 {
-                    Fail();
+                    Fail(gameTime);
                 }
                 else if (_gameBoard.GetDistanceFromDeath() < GameBoard.HEX_VERTICAL_SPACING * 3.5)
                 {
@@ -194,13 +197,13 @@ public class GameScene : AbstractScene
 
         switch (_state)
         {
-            case State.Paused:
+            case GameState.Paused:
                 spriteBatch.DrawString(_font, "Paused", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
-            case State.Fail:
+            case GameState.Fail:
                 spriteBatch.DrawString(_font, "Fail", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
-            case State.Success:
+            case GameState.Success:
                 spriteBatch.DrawString(_font, "Success", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
         }

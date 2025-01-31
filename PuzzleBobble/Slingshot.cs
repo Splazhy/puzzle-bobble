@@ -34,6 +34,8 @@ public class Slingshot : GameObject
     private bool _lastFrameRightClick = false;
     public bool CheckNextData = true;
 
+    private GameState _state = GameState.Playing;
+
     public Slingshot(Game game) : base("slingshot")
     {
         Position = new Vector2(0, 100);
@@ -104,47 +106,54 @@ public class Slingshot : GameObject
         _staff.TargetPosition *= 30f / 3;
         _staff.TargetRotation = -Rotation * 0.2f;
 
-
-        if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
+        if (_state == GameState.Playing)
         {
-            var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
-            staffTargetPos2.Normalize();
-            staffTargetPos2 *= 20f / 3;
-            _staff.TargetPosition2 = staffTargetPos2;
-            _staff.TargetRotation2 = 0;
-            _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
-
-            // Rotate back to 0 degrees
-            float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new(bd, Ball.State.Moving)
+            if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
             {
-                Position = Position,
-                Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
-            };
-            // I'm thinking `BallFactory` class
-            // then maybe `AbstractBallFactory` class
-            // then maybe `AbstractBallFactorySingleton` class
-            // then maybe `AbstractBallFactorySingletonBuilder` class
-            // then burn the whole project to the ground
-            Debug.Assert(content is not null, "ContentManager is not initialized.");
-            newBall.LoadContent(content);
+                var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
+                staffTargetPos2.Normalize();
+                staffTargetPos2 *= 20f / 3;
+                _staff.TargetPosition2 = staffTargetPos2;
+                _staff.TargetRotation2 = 0;
+                _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
 
-            BallFired?.Invoke(newBall);
+                // Rotate back to 0 degrees
+                float targetRotation = Rotation - MathF.PI / 2.0f;
+                Ball newBall = new(bd, Ball.State.Moving)
+                {
+                    Position = Position,
+                    Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
+                };
+                // I'm thinking `BallFactory` class
+                // then maybe `AbstractBallFactory` class
+                // then maybe `AbstractBallFactorySingleton` class
+                // then maybe `AbstractBallFactorySingletonBuilder` class
+                // then burn the whole project to the ground
+                Debug.Assert(content is not null, "ContentManager is not initialized.");
+                newBall.LoadContent(content);
 
-            _timeSinceLastFired = 0.0f;
+                BallFired?.Invoke(newBall);
 
-            Data = null;
+                _timeSinceLastFired = 0.0f;
 
-            visualRecoilOffset = MAX_RECOIL;
-        }
+                Data = null;
 
-        if (Data is null && NextData is not null)
-        {
-            SwapDatas();
-            CheckNextData = true;
+                visualRecoilOffset = MAX_RECOIL;
+            }
+
+            if (Data is null && NextData is not null)
+            {
+                SwapDatas();
+                CheckNextData = true;
+            }
         }
 
         _staff.Update(gameTime, ScreenPosition);
+    }
+
+    public void Fail()
+    {
+        _state = GameState.Fail;
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
