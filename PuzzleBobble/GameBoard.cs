@@ -54,6 +54,7 @@ public class GameBoard : GameObject
 
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
+    private HexMap<TimeSpan> bombStartTimes = [];
 
     private BallData.Assets? _ballAssets;
 
@@ -93,6 +94,7 @@ public class GameBoard : GameObject
         //     level.StackUp(Level.Load("3-4-connectHaft"));
         // }
         hexMap = level.ToHexRectMap();
+        bombStartTimes.Constraint = hexMap.Constraint;
 
         foreach (var item in hexMap)
         {
@@ -244,15 +246,14 @@ public class GameBoard : GameObject
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
     // although haven't benchmarked it yet
-    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex, out Queue<Hex> bombs)
     {
-        if (!IsValidHex(sourceHex)) return [];
+        bombs = [];
         BallData? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
 
         // color pass
         HashSet<Hex> affected = [];
-        Queue<Hex> bombs = [];
         Queue<Hex> pendingOrigins = new();
         pendingOrigins.Enqueue(sourceHex);
 
@@ -281,6 +282,21 @@ public class GameBoard : GameObject
             }
         }
 
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
+        return explodingBalls;
+    }
+
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBomb(Hex sourceHex)
+    {
+        BallData? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return [];
+        Debug.Assert(mapBall.Value.IsBomb);
+
+        HashSet<Hex> affected = [];
+        Queue<Hex> bombs = [];
+        bombs.Enqueue(sourceHex);
+
         // bomb pass
         while (0 < bombs.Count)
         {
@@ -304,24 +320,7 @@ public class GameBoard : GameObject
             }
         }
 
-        if (affected.Count == 0)
-        {
-            return [];
-        }
-
-        List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
-        foreach (Hex hex in affected)
-        {
-            if (hexMap[hex] is BallData ball)
-            {
-                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
-                hexMap[hex] = null;
-            }
-        }
-
-        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
-
-        return explodingBalls;
+        return TakeBallsFromMap(affected);
     }
 
     public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
@@ -355,19 +354,22 @@ public class GameBoard : GameObject
             }
         }
 
-        if (floating.Count == 0) return [];
+        return TakeBallsFromMap(floating);
+    }
 
-        List<KeyValuePair<Vector2, BallData>> fallingBalls = [];
-        foreach (Hex hex in floating)
+    private List<KeyValuePair<Vector2, BallData>> TakeBallsFromMap(HashSet<Hex> affected)
+    {
+        List<KeyValuePair<Vector2, BallData>> takenBalls = [];
+        foreach (Hex hex in affected)
         {
             if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
+                takenBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
 
-        return fallingBalls;
+        return takenBalls;
     }
 
     private double GetPreferredPos()
@@ -428,57 +430,28 @@ public class GameBoard : GameObject
         UpdateChildren(gameTime);
 
         var allBalls = children.OfType<Ball>();
-
         foreach (var ball in allBalls)
         {
-            float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
-            if (0 < ball.Velocity.X && right < ball.Position.X)
-            {
-                ball.BounceOverX(right);
-            }
-            float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
-            if (ball.Velocity.X < 0 && ball.Position.X < left)
-            {
-                ball.BounceOverX(left);
-            }
+            UpdateBall(gameTime, ball);
+        }
 
-            if (ball.GetState() == Ball.State.Falling)
+        foreach (var item in bombStartTimes)
+        {
+            Hex hex = item.Key;
+            TimeSpan startTime = item.Value;
+            if (
+                hexMap[hex] is BallData bomb &&
+                startTime + TimeSpan.FromSeconds(1.5) < gameTime.TotalGameTime
+            )
             {
-                if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
-                {
-                    ball.Destroy();
-                }
-            }
-
-            if (ball.GetState() == Ball.State.Stasis)
-            {
-                if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
-                {
-                    ball.Unstasis();
-                }
-                continue;
-            }
-
-            if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
-
-            if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
-            {
-                ball.SetStasis();
-                continue;
-            }
-
-            if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
-            {
-                SetBallAt(ballClosestHex, ball.Data);
-                var explodingBalls = ExplodeBalls(ballClosestHex);
+                var explodingBalls = ExplodeBomb(hex);
+                bombStartTimes[hex] = null;
                 var fallBalls = RemoveFloatingBalls();
-
                 pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
                 {
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
                         Position = explodingBall.Key,
-                        // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
                     };
                     return b;
                 }));
@@ -491,23 +464,103 @@ public class GameBoard : GameObject
                     };
                     return b;
                 }));
-
-                if (explodingBalls.Count == 0)
-                {
-                    var data = hexMap[ballClosestHex];
-                    Debug.Assert(data is not null && settleSfx is not null);
-                    // Let this ball shine ( ◡̀_◡́)ᕤ
-                    data.Value.PlayShineAnimation(gameTime);
-                    settleSfx.Play();
-                }
-
-                ball.Destroy();
             }
         }
-        ;
 
         UpdatePendingAndDestroyedChildren();
     }
+
+    private void UpdateBall(GameTime gameTime, Ball ball)
+    {
+        float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
+        if (0 < ball.Velocity.X && right < ball.Position.X)
+        {
+            ball.BounceOverX(right);
+        }
+        float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
+        if (ball.Velocity.X < 0 && ball.Position.X < left)
+        {
+            ball.BounceOverX(left);
+        }
+
+        if (ball.GetState() == Ball.State.Falling)
+        {
+            if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
+            {
+                ball.Destroy();
+            }
+        }
+
+        if (ball.GetState() == Ball.State.Stasis)
+        {
+            if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
+            {
+                ball.Unstasis();
+            }
+            return;
+        }
+
+        if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) return;
+
+        if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
+        {
+            ball.SetStasis();
+            return;
+        }
+
+        if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
+        {
+            SetBallAt(ballClosestHex, ball.Data);
+            var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
+            var fallBalls = RemoveFloatingBalls();
+
+            foreach (var hex in bombs)
+            {
+                if (hexMap[hex] is BallData bomb)
+                {
+                    Debug.Assert(bomb.IsBomb);
+                    bombStartTimes[hex] = gameTime.TotalGameTime;
+                    bomb.PlayAltAnimation(gameTime);
+                }
+            }
+
+            pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
+            {
+                var b = new Ball(explodingBall.Value, Ball.State.Exploding)
+                {
+                    Position = explodingBall.Key,
+                    // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
+                };
+                return b;
+            }));
+            pendingChildren.AddRange(fallBalls.ConvertAll(fallingBall =>
+            {
+                var b = new Ball(fallingBall.Value, Ball.State.Falling)
+                {
+                    Position = fallingBall.Key,
+                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
+                };
+                return b;
+            }));
+
+            if (explodingBalls.Count == 0)
+            {
+                var data = hexMap[ballClosestHex];
+                Debug.Assert(data is not null && settleSfx is not null);
+                // Let this ball shine ( ◡̀_◡́)ᕤ
+                data.Value.PlayShineAnimation(gameTime);
+                settleSfx.Play();
+                if (data.Value.IsBomb)
+                {
+                    bombStartTimes[ballClosestHex] = gameTime.TotalGameTime;
+                    data.Value.PlayAltAnimation(gameTime);
+                }
+            }
+
+            ball.Destroy();
+        }
+    }
+
 
     public bool CheckBallCollision(Vector2 ballPosition, out Hex ballClosestHex)
     {

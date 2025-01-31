@@ -66,6 +66,7 @@ public readonly struct BallData
     public class Assets
     {
         public readonly Texture2D BallSpritesheet;
+        public readonly Texture2D SpecialBallSpritesheet;
         public readonly Texture2D ExplosionSpritesheet;
         public readonly Texture2D ShineSpritesheet;
         public readonly Texture2D PreviewBallSpriteSheet;
@@ -73,6 +74,7 @@ public readonly struct BallData
         public Assets(ContentManager content)
         {
             BallSpritesheet = content.Load<Texture2D>("Graphics/balls");
+            SpecialBallSpritesheet = content.Load<Texture2D>("Graphics/special_balls");
             ExplosionSpritesheet = content.Load<Texture2D>("Graphics/balls_explode3");
             ShineSpritesheet = content.Load<Texture2D>("Graphics/ball_shine");
             PreviewBallSpriteSheet = content.Load<Texture2D>("Graphics/ball_preview");
@@ -95,6 +97,7 @@ public readonly struct BallData
         public AnimatedTexture2D? explosionAnim;
         public float explodeDelay = 0.0f;
         public bool isExploding = false;
+        public bool isAlt = false;
     }
 
     public void LoadAnimation(Assets assets)
@@ -111,7 +114,7 @@ public readonly struct BallData
         {
             case (int)SpecialType.Rainbow:
                 {
-                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, 0, BALL_SIZE * 10, BALL_SIZE), 10, 1, 0.15f, true);
+                    var anim = new AnimatedTexture2D(assets.SpecialBallSpritesheet, new Rectangle(0, BALL_SIZE * 2, BALL_SIZE * 8, BALL_SIZE), 8, 1, 0.15f, true);
                     anim.Delay(_rand.NextSingle() * 0.15f * 10);
                     animState.anim = anim;
 
@@ -129,7 +132,7 @@ public readonly struct BallData
                 }
             case (int)SpecialType.Bomb:
                 {
-                    var anim = new AnimatedTexture2D(assets.BallSpritesheet, new Rectangle(0, BALL_SIZE, BALL_SIZE * 4, BALL_SIZE), 4, 1, 0.1f, true);
+                    var anim = new AnimatedTexture2D(assets.SpecialBallSpritesheet, new Rectangle(BALL_SIZE, 0, BALL_SIZE * 4, BALL_SIZE), 4, 1, 0.15f, true);
                     anim.Delay(_rand.NextSingle() * 0.1f * 4);
                     animState.anim = anim;
 
@@ -196,6 +199,20 @@ public readonly struct BallData
         animState.shineAnim.Play(gameTime);
     }
 
+    public void PlayAltAnimation(GameTime gameTime)
+    {
+        switch (value)
+        {
+            case (int)SpecialType.Bomb:
+                Debug.Assert(animState.anim is not null, "Bomb ball animation state is not loaded.");
+                animState.anim.Play(gameTime);
+                animState.isAlt = true;
+                break;
+            default:
+                break;
+        }
+    }
+
     public bool IsPlayingExplosionAnimation => animState.isExploding;
 
     public void PlayExplosionAnimation(GameTime gameTime)
@@ -245,18 +262,39 @@ public readonly struct BallData
     {
         if (animState.isExploding)
         {
-            Debug.Assert(animState.explosionAnim is not null, "Explosion animation is not loaded.");
-            animState.explosionAnim.Draw(
-                spriteBatch,
-                gameTime,
-                new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
-                Color.White * alpha,
-                0.0f,
-                new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
-            );
+            DrawExplode(spriteBatch, gameTime, screenPosition, alpha);
             return;
         }
 
+        if (!animState.isAlt)
+        {
+
+            DrawMain(spriteBatch, gameTime, assets, screenPosition, alpha);
+        }
+        else
+        {
+            DrawAlt(spriteBatch, gameTime, assets, screenPosition, alpha);
+        }
+
+        DrawShine(spriteBatch, gameTime, screenPosition, alpha);
+    }
+
+    private void DrawExplode(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
+    {
+        Debug.Assert(animState.explosionAnim is not null, "Explosion animation is not loaded.");
+        animState.explosionAnim.Draw(
+            spriteBatch,
+            gameTime,
+            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
+            Color.White * alpha,
+            0.0f,
+            new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
+        );
+    }
+
+
+    private void DrawMain(SpriteBatch spriteBatch, GameTime gameTime, Assets assets, Vector2 screenPosition, float alpha)
+    {
         switch (value)
         {
             default: // Color balls
@@ -288,6 +326,37 @@ public readonly struct BallData
                     break;
                 }
             case (int)SpecialType.Bomb:
+                spriteBatch.Draw(
+                        assets.SpecialBallSpritesheet,
+                        new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
+                        new Rectangle(0, 0, BALL_SIZE, BALL_SIZE),
+                        Color.White * alpha,
+                        0.0f,
+                        new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
+                        SpriteEffects.None,
+                        0
+                    );
+                break;
+            case (int)SpecialType.Stone:
+                spriteBatch.Draw(
+                    assets.SpecialBallSpritesheet,
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
+                    new Rectangle(0, BALL_SIZE, BALL_SIZE, BALL_SIZE),
+                    Color.White * alpha,
+                    0.0f,
+                    new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
+                    SpriteEffects.None,
+                    0
+                );
+                break;
+        }
+    }
+
+    private void DrawAlt(SpriteBatch spriteBatch, GameTime gameTime, Assets assets, Vector2 screenPosition, float alpha)
+    {
+        switch (value)
+        {
+            case (int)SpecialType.Bomb:
                 {
                     Debug.Assert(animState.anim is not null, "Bomb ball animation state is not loaded.");
                     if (animState.anim is AnimatedTexture2D atex)
@@ -303,20 +372,15 @@ public readonly struct BallData
                     }
                     break;
                 }
-            case (int)SpecialType.Stone:
-                spriteBatch.Draw(
-                    assets.BallSpritesheet,
-                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BALL_DRAW_SIZE, BALL_DRAW_SIZE),
-                    new Rectangle(4 * BALL_SIZE, BALL_SIZE, BALL_SIZE, BALL_SIZE),
-                    Color.White * alpha,
-                    0.0f,
-                    new Vector2(BALL_SIZE / 2, BALL_SIZE / 2),
-                    SpriteEffects.None,
-                    0
-                );
+            default:
                 break;
         }
+    }
 
+
+
+    private void DrawShine(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
+    {
         if (animState.shineAnim is AnimatedTexture2D at2d)
         {
             at2d.Draw(
