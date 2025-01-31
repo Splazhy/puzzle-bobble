@@ -32,7 +32,7 @@ public class Slingshot : GameObject
     private readonly SlingshotStaff _staff;
 
     private bool _lastFrameRightClick = false;
-    public bool RecheckNextData;
+    public bool CheckNextData = true;
 
     public Slingshot(Game game) : base("slingshot")
     {
@@ -53,12 +53,12 @@ public class Slingshot : GameObject
         NextData?.LoadAnimation(_ballAssets);
     }
 
-    public void SetNextData(BallData data)
+    public void SetNextData(BallData? data)
     {
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
         NextData = data;
         NextData?.LoadAnimation(_ballAssets);
-        RecheckNextData = false;
+        CheckNextData = false;
     }
 
     private void SwapDatas()
@@ -89,7 +89,7 @@ public class Slingshot : GameObject
         if (mouseState.RightButton == ButtonState.Pressed && !_lastFrameRightClick)
         {
             SwapDatas();
-            RecheckNextData = true;
+            CheckNextData = true;
         }
         _lastFrameRightClick = mouseState.RightButton == ButtonState.Pressed;
 
@@ -141,6 +141,7 @@ public class Slingshot : GameObject
         if (Data is null && NextData is not null)
         {
             SwapDatas();
+            CheckNextData = true;
         }
 
         _staff.Update(gameTime, ScreenPosition);

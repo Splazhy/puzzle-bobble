@@ -35,6 +35,8 @@ public class GameScene : AbstractScene
     private State _state = State.Playing;
     private bool _keyPDown = false;
 
+    private bool _boardChanged = false;
+
     public GameScene() : base("scene_game")
     {
     }
@@ -57,6 +59,10 @@ public class GameScene : AbstractScene
             _guideline.Recalculate();
             ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
             _gameBoard.AddChildDeferred(ball);
+        };
+        _gameBoard.BoardChanged += () =>
+        {
+            _boardChanged = true;
         };
         children = [
             boardBackground,
@@ -152,27 +158,15 @@ public class GameScene : AbstractScene
             }
             else
             {
-                var newBallNeeded = _slingshot.NextData == null;
-                BallData.BallStats? bs = null;
-                if (!newBallNeeded && _slingshot.RecheckNextData)
+                if (_slingshot.CheckNextData || _boardChanged)
                 {
-                    bs = _gameBoard.GetBallStats();
-                    var colors = bs.ColorCounts.Keys.ToHashSet();
-                    if (_slingshot.NextData is BallData nd)
+                    var bs = _gameBoard.GetBallStats();
+                    if (_slingshot.NextData is not BallData data || !bs.Check(data))
                     {
-                        newBallNeeded = newBallNeeded || !colors.Contains(nd.value);
+                        var nextBall = bs.GetNextBall(_rand);
+                        _slingshot.SetNextData(nextBall);
                     }
-                }
-                if (newBallNeeded)
-                {
-                    // TODO: move this into BallData or smth
-                    bs ??= _gameBoard.GetBallStats();
-                    var colors = bs.ColorCounts.Keys.ToList();
-                    if (0 < colors.Count)
-                    {
-                        var color = colors[_rand.Next(colors.Count)];
-                        _slingshot.SetNextData(new BallData(color));
-                    }
+                    _boardChanged = false;
                 }
 
                 if (GameBoard.DEATH_Y_POS < _gameBoard.GetMapBottomEdge())

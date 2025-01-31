@@ -58,6 +58,9 @@ public class GameBoard : GameObject
 
     private BallData.Assets? _ballAssets;
 
+    public delegate void BoardChangedHandler();
+    public event BoardChangedHandler? BoardChanged;
+
     /// <summary>
     /// For random falling velocity of falling balls
     /// </summary>
@@ -444,6 +447,7 @@ public class GameBoard : GameObject
                 startTime + TimeSpan.FromSeconds(1.5) < gameTime.TotalGameTime
             )
             {
+                BoardChanged?.Invoke();
                 var explodingBalls = ExplodeBomb(hex);
                 bombStartTimes[hex] = null;
                 var fallBalls = RemoveFloatingBalls();
@@ -510,6 +514,7 @@ public class GameBoard : GameObject
 
         if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
         {
+            BoardChanged?.Invoke();
             SetBallAt(ballClosestHex, ball.Data);
             var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
             var fallBalls = RemoveFloatingBalls();

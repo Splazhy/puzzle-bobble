@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -426,6 +427,23 @@ public readonly struct BallData
                 }
                 Count++;
             }
+        }
+
+        public BallData? GetNextBall(Random rand)
+        {
+            var colors = ColorCounts.Keys.Where(k => 0 <= k).ToList();
+            if (colors.Count == 0)
+            {
+                return new BallData((int)SpecialType.Bomb);
+            }
+            var color = colors[rand.Next(colors.Count)];
+            return new BallData(color);
+        }
+
+        public bool Check(BallData ball)
+        {
+            return ColorCounts.TryGetValue(ball.value, out int value)
+                    && 0 < value;
         }
     }
 }
