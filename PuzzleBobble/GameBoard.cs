@@ -537,13 +537,26 @@ public class GameBoard : GameObject
         if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
         {
             BoardChanged?.Invoke();
-            SetBallAt(ballClosestHex, ball.Data);
-            ball.Destroy();
+            if (_state == GameState.Success)
+            {
+                ball.Destroy();
+                pendingChildren.Add(new Ball(ball.Data, Ball.State.Exploding)
+                {
+                    Position = ConvertHexToCenterInner(ballClosestHex)
+                });
+                return;
+            }
+
             if (_state == GameState.Fail)
             {
+                SetBallAt(ballClosestHex, ball.Data);
+                ball.Destroy();
                 hexMap[ballClosestHex]?.PlayPetrifyAnimation(gameTime);
                 return;
             }
+
+            SetBallAt(ballClosestHex, ball.Data);
+            ball.Destroy();
             var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
             var fallBalls = RemoveFloatingBalls();
 
@@ -654,6 +667,11 @@ public class GameBoard : GameObject
         {
             item.Value.PlayPetrifyAnimation(gameTime);
         }
+    }
+
+    public void Success()
+    {
+        _state = GameState.Success;
     }
 
 }

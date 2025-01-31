@@ -156,6 +156,11 @@ public class Slingshot : GameObject
         _state = GameState.Fail;
     }
 
+    public void Success()
+    {
+        _state = GameState.Success;
+    }
+
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");

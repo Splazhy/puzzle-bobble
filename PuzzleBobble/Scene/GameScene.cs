@@ -107,22 +107,12 @@ public class GameScene : AbstractScene
     private void Success()
     {
         Debug.Assert(_state == GameState.Playing);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null);
         _state = GameState.Success;
-        foreach (var child in children)
-        {
-            child.IsActive = false;
-        }
+        _slingshot.Success();
+        _gameBoard.Success();
     }
 
-    private void Success()
-    {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Success;
-        foreach (var child in children)
-        {
-            child.IsActive = false;
-        }
-    }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
