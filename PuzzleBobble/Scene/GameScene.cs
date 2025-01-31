@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using PuzzleBobble.HexGrid;
+using Myra.Graphics2D;
+using Myra.Graphics2D.UI;
 
 namespace PuzzleBobble.Scene;
 
@@ -17,6 +16,7 @@ public class GameScene : AbstractScene
     private GameBoard? _gameBoard;
     private Guideline? _guideline;
     private DeathLine? _deathline;
+    private Desktop? _desktop;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -28,7 +28,8 @@ public class GameScene : AbstractScene
 
 
     private GameState _state = GameState.Playing;
-    private bool _keyPDown = false;
+    private TimeSpan? _finishTime = null;
+    private bool _escKeyDown = false;
 
     private bool _boardChanged = false;
 
@@ -76,7 +77,38 @@ public class GameScene : AbstractScene
         base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
 
-        if (_gameBoard is null) return;
+
+        var resumeBtn = new Button
+        {
+            Content = new Label { Text = "Resume" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        resumeBtn.Click += (sender, args) => Unpause();
+
+        Button menuBtn = new()
+        {
+            Content = new Label { Text = "Back to Menu" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        menuBtn.Click += (sender, args) => ChangeScene(new MenuScene());
+
+        var pauseMenu = new VerticalStackPanel
+        {
+            Widgets = {
+                new Label { Text = "Paused", HorizontalAlignment = HorizontalAlignment.Center },
+                resumeBtn,
+                menuBtn
+            },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        _desktop = new Desktop
+        {
+            Root = pauseMenu
+        };
     }
 
     private void Pause()
@@ -104,6 +136,7 @@ public class GameScene : AbstractScene
         Debug.Assert(_state == GameState.Playing);
         Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
         _state = GameState.Fail;
+        _finishTime = gameTime.TotalGameTime;
         _gameBoard.Fail(gameTime);
         _slingshot.Fail(gameTime);
         _guideline.TurnOff(gameTime);
@@ -114,6 +147,7 @@ public class GameScene : AbstractScene
         Debug.Assert(_state == GameState.Playing);
         Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
         _state = GameState.Success;
+        _finishTime = gameTime.TotalGameTime;
         _gameBoard.Success();
         _slingshot.Success(gameTime);
         _guideline.TurnOff(gameTime);
@@ -128,9 +162,9 @@ public class GameScene : AbstractScene
             _guideline.TurnOn(gameTime);
         }
         base.Update(gameTime, parentTranslate);
-        if (Keyboard.GetState().IsKeyDown(Keys.P))
+        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
         {
-            if (!_keyPDown)
+            if (!_escKeyDown)
             {
                 if (_state == GameState.Paused)
                 {
@@ -140,16 +174,21 @@ public class GameScene : AbstractScene
                 {
                     Pause();
                 }
-                _keyPDown = true;
+                _escKeyDown = true;
             }
         }
         else
         {
-            _keyPDown = false;
+            _escKeyDown = false;
         }
-        if (Keyboard.GetState().IsKeyDown(Keys.Q))
+
+        if (_state == GameState.Fail || _state == GameState.Success)
         {
-            ChangeScene(new MenuScene());
+            Debug.Assert(_finishTime is not null, "Finish time is not set.");
+            if (TimeSpan.FromSeconds(3) < gameTime.TotalGameTime - _finishTime)
+            {
+                ChangeScene(new MenuScene());
+            }
         }
 
         UpdateChildren(gameTime);
@@ -195,8 +234,9 @@ public class GameScene : AbstractScene
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        Debug.Assert(_desktop is not null, "Desktop is not loaded.");
         DrawChildren(spriteBatch, gameTime);
-        spriteBatch.DrawString(_font, "Press q to go back to menu\nPress p to pause", new Vector2(100, 200), Color.White);
+        spriteBatch.DrawString(_font, "Press esc to pause", new Vector2(100, 200), Color.White);
 
         switch (_state)
         {
@@ -211,4 +251,14 @@ public class GameScene : AbstractScene
                 break;
         }
     }
+
+    public override Desktop? DrawMyra()
+    {
+        if (_state == GameState.Paused)
+        {
+            return _desktop;
+        }
+        return null;
+    }
+
 }

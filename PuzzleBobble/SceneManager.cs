@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Myra.Graphics2D.UI;
 using PuzzleBobble.Scene;
 
 namespace PuzzleBobble;
@@ -49,5 +50,10 @@ public class SceneManager
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         CurrentScene.Draw(spriteBatch, gameTime);
+    }
+
+    public Desktop? DrawMyra()
+    {
+        return CurrentScene.DrawMyra();
     }
 }
