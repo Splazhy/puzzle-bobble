@@ -234,14 +234,12 @@ public class Guideline : GameObject
 
     private Vector2 GetCalculatedPosition(Vector2 vec)
     {
-        // Debug.Assert(progress >= 0.0f && progress <= 1.0f, "Progress must be between 0 and 1");
-
-        // var actualScale = PixelScale * (1.0f - progress);
-        // var lengthFromSlingshot = _cutoffLength * progress;
-        // var vecToEndPos = direction * lengthFromSlingshot;
-        // var vecToEndPos = vec;
-
         // exploiting modulo and absolute to do reflections
+        // general idea is to have the line "loop" over 2 board lengths, (modulo)
+        // then "fold" half of the board into itself (abs)
+        // most code is just moving the 0 point around
+        // so modulo and abs can do its thing
+        // see https://youtu.be/YZBg4M-MO8A
 
         // shift coordinates so
         // left edge of "negative" board is 0,
