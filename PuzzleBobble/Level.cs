@@ -78,6 +78,20 @@ public class Level
         return new Level(map);
     }
 
+    public static Level Generate(Random random)
+    {
+        var level = Load("3-4-connectHaft");
+        for (int i = 0; i < 1; i++)
+        {
+            level.StackDown(Load("3-4-connectHaft"));
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            level.StackUp(Load("3-4-connectHaft"));
+        }
+        return level;
+    }
+
     public HexMap<BallData> ToHexRectMap()
     {
         return Map;

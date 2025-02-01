@@ -80,16 +80,7 @@ public class GameBoard : GameObject
         _ballAssets = new BallData.Assets(content);
         _debugfont = content.Load<SpriteFont>("Fonts/Arial24");
 
-        var level = Level.Load("test-bombpass");
-        // var level = Level.Load("3-4-connectHaft");
-        // for (int i = 0; i < 1; i++)
-        // {
-        //     level.StackDown(Level.Load("3-4-connectHaft"));
-        // }
-        // for (int i = 0; i < 10; i++)
-        // {
-        //     level.StackUp(Level.Load("3-4-connectHaft"));
-        // }
+        var level = Level.Generate(new Random());
         hexMap = level.ToHexRectMap();
         bombStartTimes.Constraint = hexMap.Constraint;
 
