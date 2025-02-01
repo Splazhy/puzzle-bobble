@@ -22,12 +22,6 @@ public class GameBoard : GameObject
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
 
-    public static readonly float FINAL_SPEED = 2f;
-    public static readonly float PUSHDOWN_SPEED = 4f;
-    public static readonly float LERP_AMOUNT = 5.0f;
-    public static readonly float EXPLODE_PUSHBACK_BONUS = -50.0f / 3;
-    public static readonly int DEATH_Y_POS = 86;
-
     private SpriteFont? _debugfont;
 
     private int _topRow;
@@ -54,8 +48,12 @@ public class GameBoard : GameObject
 
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
+    private HexMap<TimeSpan> bombStartTimes = [];
 
     private BallData.Assets? _ballAssets;
+
+    public delegate void BoardChangedHandler();
+    public event BoardChangedHandler? BoardChanged;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -69,11 +67,11 @@ public class GameBoard : GameObject
     /// </summary>
     private readonly Random _decoRand = new();
 
+    private GameState _state = GameState.Playing;
+
     public GameBoard(Game game) : base("gameboard")
     {
         Position = new Vector2(0, -300f / 3);
-
-        Velocity.Y = FINAL_SPEED;
     }
 
     public override void LoadContent(ContentManager content)
@@ -93,6 +91,7 @@ public class GameBoard : GameObject
         //     level.StackUp(Level.Load("3-4-connectHaft"));
         // }
         hexMap = level.ToHexRectMap();
+        bombStartTimes.Constraint = hexMap.Constraint;
 
         foreach (var item in hexMap)
         {
@@ -101,6 +100,7 @@ public class GameBoard : GameObject
         }
 
         Position = new Vector2(0, (float)GetPreferredPos());
+        Velocity.Y = ComputePreferredSpeed();
 
         // IsInfinite = true;
 
@@ -114,13 +114,19 @@ public class GameBoard : GameObject
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
-        foreach (var item in hexMap)
+        var minDrawRow = Math.Max(TopRow, ComputeClosestHex(new Vector2(0, -150 - BallData.BALL_SIZE)).R);
+        for (int row = hexMap.MaxR; minDrawRow <= row; row--)
         {
-            Hex hex = item.Key;
-            BallData ball = item.Value;
-
-            Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-            ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+            for (int col = 0; col < 8; col++)
+            {
+                var bd = new OffsetCoord(col, row);
+                var hex = bd.ToHex();
+                if (hexMap[hex] is BallData ball)
+                {
+                    Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
+                    ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+                }
+            }
         }
 
         DrawChildren(spriteBatch, gameTime);
@@ -244,15 +250,14 @@ public class GameBoard : GameObject
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
     // although haven't benchmarked it yet
-    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex)
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex, out Queue<Hex> bombs)
     {
-        if (!IsValidHex(sourceHex)) return [];
+        bombs = [];
         BallData? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
 
         // color pass
         HashSet<Hex> affected = [];
-        Queue<Hex> bombs = [];
         Queue<Hex> pendingOrigins = new();
         pendingOrigins.Enqueue(sourceHex);
 
@@ -281,6 +286,21 @@ public class GameBoard : GameObject
             }
         }
 
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
+        return explodingBalls;
+    }
+
+    public List<KeyValuePair<Vector2, BallData>> ExplodeBomb(Hex sourceHex)
+    {
+        BallData? mapBall = hexMap[sourceHex];
+        if (mapBall is null) return [];
+        Debug.Assert(mapBall.Value.IsBomb);
+
+        HashSet<Hex> affected = [];
+        Queue<Hex> bombs = [];
+        bombs.Enqueue(sourceHex);
+
         // bomb pass
         while (0 < bombs.Count)
         {
@@ -304,23 +324,8 @@ public class GameBoard : GameObject
             }
         }
 
-        if (affected.Count == 0)
-        {
-            return [];
-        }
-
-        List<KeyValuePair<Vector2, BallData>> explodingBalls = [];
-        foreach (Hex hex in affected)
-        {
-            if (hexMap[hex] is BallData ball)
-            {
-                explodingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
-                hexMap[hex] = null;
-            }
-        }
-
-        Velocity.Y = EXPLODE_PUSHBACK_BONUS * explodingBalls.Count;
-
+        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
         return explodingBalls;
     }
 
@@ -355,19 +360,22 @@ public class GameBoard : GameObject
             }
         }
 
-        if (floating.Count == 0) return [];
+        return TakeBallsFromMap(floating);
+    }
 
-        List<KeyValuePair<Vector2, BallData>> fallingBalls = [];
-        foreach (Hex hex in floating)
+    private List<KeyValuePair<Vector2, BallData>> TakeBallsFromMap(HashSet<Hex> affected)
+    {
+        List<KeyValuePair<Vector2, BallData>> takenBalls = [];
+        foreach (Hex hex in affected)
         {
             if (hexMap[hex] is BallData ball)
             {
-                fallingBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
+                takenBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
                 hexMap[hex] = null;
             }
         }
 
-        return fallingBalls;
+        return takenBalls;
     }
 
     private double GetPreferredPos()
@@ -389,10 +397,31 @@ public class GameBoard : GameObject
     {
         return hexMap.Count;
     }
-
-    public double GetMapBottomEdge()
+    public double GetDistanceFromDeath()
     {
-        return GetBottomEdgePos() + Position.Y;
+        return DEATH_Y_POS - GetBottomEdgePos() - Position.Y;
+    }
+
+    public static readonly int DEATH_Y_POS = 86;
+    public static readonly float FINAL_SPEED = 2f;
+    public static readonly float PUSHDOWN_SPEED = 4f;
+    public static readonly float LERP_AMOUNT = 5.0f;
+    public static readonly float EXPLODE_PUSHBACK_BONUS = -30f;
+
+    private float ComputePushbackSpeed(int ballCount)
+    {
+        return EXPLODE_PUSHBACK_BONUS * Math.Max(0, ballCount - 2);
+    }
+
+    private float ComputePreferredSpeed()
+    {
+        if (_state != GameState.Playing) return 0;
+        double prefDistance = GetPreferredPos() - Position.Y;
+        double deathDistance = GetDistanceFromDeath();
+        float catchUpSpeed = (float)Math.Max(0, prefDistance / 6);
+        float pushDownSpeed = (float)Math.Min(Math.Max(0, deathDistance / 8), PUSHDOWN_SPEED);
+
+        return FINAL_SPEED + pushDownSpeed + catchUpSpeed;
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
@@ -402,18 +431,19 @@ public class GameBoard : GameObject
 
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        float catchUpSpeed = (float)Math.Max(0, (GetPreferredPos() - Position.Y) / 6);
-        float pushDownSpeed = (float)Math.Min(Math.Max(0, (DEATH_Y_POS - GetBottomEdgePos() - Position.Y) / 8), PUSHDOWN_SPEED);
-        Velocity.Y = float.Lerp(Velocity.Y, FINAL_SPEED + pushDownSpeed + catchUpSpeed, LERP_AMOUNT * deltaTime);
+        Velocity.Y = float.Lerp(Velocity.Y, ComputePreferredSpeed(), LERP_AMOUNT * deltaTime);
         UpdatePosition(gameTime);
 
         if (_decoRand.NextSingle() < (gameTime.ElapsedGameTime.TotalSeconds / 7.5))
         {
             var topRandRow = ComputeClosestHex(new Vector2(0, -400f / 3)).R;
-            var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
-            if (hexMap[coord] is BallData ball)
+            if (0 < hexMap.MaxR - topRandRow)
             {
-                ball.PlayShineAnimation(gameTime);
+                var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
+                if (hexMap[coord] is BallData ball)
+                {
+                    ball.PlayShineAnimation(gameTime);
+                }
             }
         }
 
@@ -428,57 +458,29 @@ public class GameBoard : GameObject
         UpdateChildren(gameTime);
 
         var allBalls = children.OfType<Ball>();
-
         foreach (var ball in allBalls)
         {
-            float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
-            if (0 < ball.Velocity.X && right < ball.Position.X)
-            {
-                ball.BounceOverX(right);
-            }
-            float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
-            if (ball.Velocity.X < 0 && ball.Position.X < left)
-            {
-                ball.BounceOverX(left);
-            }
+            UpdateBall(gameTime, ball);
+        }
 
-            if (ball.GetState() == Ball.State.Falling)
+        foreach (var item in bombStartTimes)
+        {
+            Hex hex = item.Key;
+            TimeSpan startTime = item.Value;
+            if (
+                hexMap[hex] is BallData bomb &&
+                startTime + TimeSpan.FromSeconds(1.5) < gameTime.TotalGameTime
+            )
             {
-                if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
-                {
-                    ball.Destroy();
-                }
-            }
-
-            if (ball.GetState() == Ball.State.Stasis)
-            {
-                if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
-                {
-                    ball.Unstasis();
-                }
-                continue;
-            }
-
-            if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) continue;
-
-            if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
-            {
-                ball.SetStasis();
-                continue;
-            }
-
-            if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
-            {
-                SetBallAt(ballClosestHex, ball.Data);
-                var explodingBalls = ExplodeBalls(ballClosestHex);
+                BoardChanged?.Invoke();
+                var explodingBalls = ExplodeBomb(hex);
+                bombStartTimes[hex] = null;
                 var fallBalls = RemoveFloatingBalls();
-
                 pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
                 {
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
                         Position = explodingBall.Key,
-                        // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
                     };
                     return b;
                 }));
@@ -491,23 +493,122 @@ public class GameBoard : GameObject
                     };
                     return b;
                 }));
-
-                if (explodingBalls.Count == 0)
-                {
-                    var data = hexMap[ballClosestHex];
-                    Debug.Assert(data is not null && settleSfx is not null);
-                    // Let this ball shine ( ◡̀_◡́)ᕤ
-                    data.Value.PlayShineAnimation(gameTime);
-                    settleSfx.Play();
-                }
-
-                ball.Destroy();
             }
         }
-        ;
 
         UpdatePendingAndDestroyedChildren();
     }
+
+    private void UpdateBall(GameTime gameTime, Ball ball)
+    {
+        float right = BOARD_HALF_WIDTH_PX - HEX_INRADIUS;
+        if (0 < ball.Velocity.X && right < ball.Position.X)
+        {
+            ball.BounceOverX(right);
+        }
+        float left = -BOARD_HALF_WIDTH_PX + HEX_INRADIUS;
+        if (ball.Velocity.X < 0 && ball.Position.X < left)
+        {
+            ball.BounceOverX(left);
+        }
+
+        if (ball.GetState() == Ball.State.Falling)
+        {
+            if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
+            {
+                ball.Destroy();
+            }
+        }
+
+        if (ball.GetState() == Ball.State.Stasis)
+        {
+            if (GetTopEdgePos() + BallData.BALL_SIZE / 2 < ball.Position.Y)
+            {
+                ball.Unstasis();
+            }
+            return;
+        }
+
+        if (!(ball.GetState() == Ball.State.Moving || ball.GetState() == Ball.State.Falling)) return;
+
+        if (IsInfinite && ball.GetState() == Ball.State.Moving && ball.Position.Y < GetTopEdgePos() + BallData.BALL_SIZE / 2)
+        {
+            ball.SetStasis();
+            return;
+        }
+
+        if (CheckBallCollisionInner(ball.Position, out Hex ballClosestHex))
+        {
+            BoardChanged?.Invoke();
+            if (_state == GameState.Success)
+            {
+                ball.Destroy();
+                pendingChildren.Add(new Ball(ball.Data, Ball.State.Exploding)
+                {
+                    Position = ConvertHexToCenterInner(ballClosestHex)
+                });
+                return;
+            }
+
+            if (_state == GameState.Fail)
+            {
+                SetBallAt(ballClosestHex, ball.Data);
+                ball.Destroy();
+                hexMap[ballClosestHex]?.PlayPetrifyAnimation(gameTime);
+                return;
+            }
+
+            SetBallAt(ballClosestHex, ball.Data);
+            ball.Destroy();
+            var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
+            var fallBalls = RemoveFloatingBalls();
+
+            foreach (var hex in bombs)
+            {
+                if (hexMap[hex] is BallData bomb)
+                {
+                    Debug.Assert(bomb.IsBomb);
+                    bombStartTimes[hex] = gameTime.TotalGameTime;
+                    bomb.PlayAltAnimation(gameTime);
+                }
+            }
+
+            pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
+            {
+                var b = new Ball(explodingBall.Value, Ball.State.Exploding)
+                {
+                    Position = explodingBall.Key,
+                    // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
+                };
+                return b;
+            }));
+            pendingChildren.AddRange(fallBalls.ConvertAll(fallingBall =>
+            {
+                var b = new Ball(fallingBall.Value, Ball.State.Falling)
+                {
+                    Position = fallingBall.Key,
+                    Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
+                };
+                return b;
+            }));
+
+            if (explodingBalls.Count == 0)
+            {
+                var data = hexMap[ballClosestHex];
+                Debug.Assert(data is not null && settleSfx is not null);
+                // Let this ball shine ( ◡̀_◡́)ᕤ
+                data.Value.PlayShineAnimation(gameTime);
+                settleSfx.Play();
+                if (data.Value.IsBomb)
+                {
+                    bombStartTimes[ballClosestHex] = gameTime.TotalGameTime;
+                    data.Value.PlayAltAnimation(gameTime);
+                }
+            }
+
+        }
+    }
+
 
     public bool CheckBallCollision(Vector2 ballPosition, out Hex ballClosestHex)
     {
@@ -560,6 +661,20 @@ public class GameBoard : GameObject
             ball.GetState() == Ball.State.Moving
         ).Select(ball => ball.Data).GetEnumerator());
         return stats;
+    }
+
+    public void Fail(GameTime gameTime)
+    {
+        _state = GameState.Fail;
+        foreach (var item in hexMap)
+        {
+            item.Value.PlayPetrifyAnimation(gameTime);
+        }
+    }
+
+    public void Success()
+    {
+        _state = GameState.Success;
     }
 
 }

@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -10,6 +12,7 @@ public class MenuScene : AbstractScene
 {
     private Game? _game;
     private Desktop? _desktop;
+    private bool _escKeyDown = true;
 
     public MenuScene() : base("scene_menu")
     {
@@ -85,8 +88,23 @@ public class MenuScene : AbstractScene
         };
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        _desktop?.Render();
+        Debug.Assert(_game is not null, "Game is not loaded.");
+        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        {
+            if (!_escKeyDown) _game.Exit();
+            _escKeyDown = true;
+        }
+        else
+        {
+            _escKeyDown = false;
+        }
     }
+
+    public override Desktop? DrawMyra()
+    {
+        return _desktop;
+    }
+
 }

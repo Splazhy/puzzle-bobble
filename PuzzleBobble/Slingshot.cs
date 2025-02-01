@@ -30,17 +30,22 @@ public class Slingshot : GameObject
     public delegate void BallFiredHandler(Ball ball);
 
     private readonly SlingshotStaff _staff;
+    private SlingshotBall? _ball;
+    private SlingshotBall? _nextBall;
 
     private bool _lastFrameRightClick = false;
-    public bool RecheckNextData;
+    public bool CheckNextData = true;
+
+    private GameState _state = GameState.Playing;
 
     public Slingshot(Game game) : base("slingshot")
     {
-        Position = new Vector2(0, 300 / 3);
+        Position = new Vector2(0, 100);
         firerate = 3.0f;
         _timeSinceLastFired = 1 / firerate;
 
         _staff = new SlingshotStaff();
+        children.Add(_staff);
     }
 
     public override void LoadContent(ContentManager content)
@@ -52,23 +57,40 @@ public class Slingshot : GameObject
         Data?.LoadAnimation(_ballAssets);
         NextData?.LoadAnimation(_ballAssets);
     }
+    private static readonly Vector2 NEXT_BALL_POSITION = new(33, 6);
 
-    public void SetNextData(BallData data)
+    public void SetNextData(GameTime gameTime, BallData? data)
     {
+        if (_nextBall is not null)
+        {
+            _nextBall.TargetPosition = NEXT_BALL_POSITION + new Vector2(0, 10);
+            _nextBall.FadeAway(gameTime);
+        }
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
+        Debug.Assert(content is not null, "ContentManager is not initialized.");
         NextData = data;
         NextData?.LoadAnimation(_ballAssets);
-        RecheckNextData = false;
+        if (NextData is BallData bd)
+        {
+            _nextBall = new SlingshotBall(gameTime, _ballAssets, bd, NEXT_BALL_POSITION);
+            _nextBall.LoadContent(content);
+            children.Add(_nextBall);
+        }
+        CheckNextData = false;
     }
 
     private void SwapDatas()
     {
         (NextData, Data) = (Data, NextData);
+        CheckNextData = true;
+        (_ball, _nextBall) = (_nextBall, _ball);
+        SetDisplayBallPositions();
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
+
         // TODO: Implement `IsJustPressed` method for new InputManager class
         // This code executes multiple times per a short key press,
         // resulting in undesired behavior.
@@ -88,8 +110,7 @@ public class Slingshot : GameObject
 
         if (mouseState.RightButton == ButtonState.Pressed && !_lastFrameRightClick)
         {
-            SwapDatas();
-            RecheckNextData = true;
+            if (_state == GameState.Playing && Data is not null && NextData is not null) SwapDatas();
         }
         _lastFrameRightClick = mouseState.RightButton == ButtonState.Pressed;
 
@@ -104,55 +125,82 @@ public class Slingshot : GameObject
         _staff.TargetPosition *= 30f / 3;
         _staff.TargetRotation = -Rotation * 0.2f;
 
-
-        if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
+        if (_state == GameState.Playing)
         {
-            var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
-            staffTargetPos2.Normalize();
-            staffTargetPos2 *= 20f / 3;
-            _staff.TargetPosition2 = staffTargetPos2;
-            _staff.TargetRotation2 = 0;
-            _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
-
-            // Rotate back to 0 degrees
-            float targetRotation = Rotation - MathF.PI / 2.0f;
-            Ball newBall = new(bd, Ball.State.Moving)
+            if (Data is BallData bd && mouseState.LeftButton == ButtonState.Pressed && _timeSinceLastFired > 1 / firerate)
             {
-                Position = Position,
-                Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
-            };
-            // I'm thinking `BallFactory` class
-            // then maybe `AbstractBallFactory` class
-            // then maybe `AbstractBallFactorySingleton` class
-            // then maybe `AbstractBallFactorySingletonBuilder` class
-            // then burn the whole project to the ground
-            Debug.Assert(content is not null, "ContentManager is not initialized.");
-            newBall.LoadContent(content);
+                var staffTargetPos2 = new Vector2(MathF.Cos(Rotation - (MathF.PI / 2)), MathF.Sin(Rotation - (MathF.PI / 2)));
+                staffTargetPos2.Normalize();
+                staffTargetPos2 *= 20f / 3;
+                _staff.TargetPosition2 = staffTargetPos2;
+                _staff.TargetRotation2 = 0;
+                _staff.ChangeUntil = gameTime.TotalGameTime + TimeSpan.FromSeconds(0.1);
 
-            BallFired?.Invoke(newBall);
+                // Rotate back to 0 degrees
+                float targetRotation = Rotation - MathF.PI / 2.0f;
+                Ball newBall = new(bd, Ball.State.Moving)
+                {
+                    Position = Position,
+                    Velocity = new Vector2(MathF.Cos(targetRotation), MathF.Sin(targetRotation)) * BallSpeed,
+                };
+                // I'm thinking `BallFactory` class
+                // then maybe `AbstractBallFactory` class
+                // then maybe `AbstractBallFactorySingleton` class
+                // then maybe `AbstractBallFactorySingletonBuilder` class
+                // then burn the whole project to the ground
+                Debug.Assert(content is not null, "ContentManager is not initialized.");
+                newBall.LoadContent(content);
 
-            _timeSinceLastFired = 0.0f;
+                BallFired?.Invoke(newBall);
 
-            Data = null;
+                _timeSinceLastFired = 0.0f;
 
-            visualRecoilOffset = MAX_RECOIL;
+                Data = null;
+                Debug.Assert(_ball is not null, "Slingshot ball GameObject is null.");
+                _ball.Destroy();
+
+                visualRecoilOffset = MAX_RECOIL;
+            }
+
+            if (Data is null && NextData is not null) SwapDatas();
         }
 
-        if (Data is null && NextData is not null)
-        {
-            SwapDatas();
-        }
+        SetDisplayBallPositions();
 
-        _staff.Update(gameTime, ScreenPosition);
+        UpdateChildren(gameTime);
+        UpdatePendingAndDestroyedChildren();
+        if (_ball is not null && _ball.Destroyed) _ball = null;
+        if (_nextBall is not null && _nextBall.Destroyed) _nextBall = null;
+    }
+
+    private void SetDisplayBallPositions()
+    {
+        if (_ball is not null) { _ball.TargetPosition = new Vector2(0, 0); }
+        if (_nextBall is not null) { _nextBall.TargetPosition = NEXT_BALL_POSITION; }
+    }
+
+
+
+    public void Fail(GameTime gameTime)
+    {
+        _state = GameState.Fail;
+        _ball?.FadeAway(gameTime);
+        _nextBall?.FadeAway(gameTime);
+    }
+
+    public void Success(GameTime gameTime)
+    {
+        _state = GameState.Success;
+        _ball?.FadeAway(gameTime);
+        _nextBall?.FadeAway(gameTime);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
+        DrawChildren(spriteBatch, gameTime);
 
-        NextData?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(new Vector2(100f / 3, 20f / 3)));
-        Data?.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(new Vector2(0, visualRecoilOffset)));
         _staff.Draw(spriteBatch, gameTime);
     }
 

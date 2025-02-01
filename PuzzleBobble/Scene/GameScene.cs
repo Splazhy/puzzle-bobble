@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using PuzzleBobble.HexGrid;
+using Myra.Graphics2D;
+using Myra.Graphics2D.UI;
 
 namespace PuzzleBobble.Scene;
 
@@ -17,6 +16,7 @@ public class GameScene : AbstractScene
     private GameBoard? _gameBoard;
     private Guideline? _guideline;
     private DeathLine? _deathline;
+    private Desktop? _desktop;
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -24,16 +24,14 @@ public class GameScene : AbstractScene
     private readonly Random _rand = new();
     private const float FALLING_SPREAD = 50;
     private const float EXPLOSION_SPREAD = 50;
+    private bool _firstFrame = true;
 
-    private enum State
-    {
-        Playing,
-        Fail,
-        Success,
-        Paused
-    }
-    private State _state = State.Playing;
-    private bool _keyPDown = false;
+
+    private GameState _state = GameState.Playing;
+    private TimeSpan? _finishTime = null;
+    private bool _escKeyDown = false;
+
+    private bool _boardChanged = false;
 
     public GameScene() : base("scene_game")
     {
@@ -53,10 +51,17 @@ public class GameScene : AbstractScene
 
         _slingshot.BallFired += ball =>
         {
-            // semi-hacky solution!
-            _guideline.Recalculate();
-            ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            if (_guideline.PoweredUp)
+            {
+                // semi-hacky solution!
+                _guideline.Recalculate();
+                ball.EstimatedCollisionPosition = _guideline.LastCollidePosition - _gameBoard.Position;
+            }
             _gameBoard.AddChildDeferred(ball);
+        };
+        _gameBoard.BoardChanged += () =>
+        {
+            _boardChanged = true;
         };
         children = [
             boardBackground,
@@ -72,13 +77,44 @@ public class GameScene : AbstractScene
         base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
 
-        if (_gameBoard is null) return;
+
+        var resumeBtn = new Button
+        {
+            Content = new Label { Text = "Resume" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        resumeBtn.Click += (sender, args) => Unpause();
+
+        Button menuBtn = new()
+        {
+            Content = new Label { Text = "Back to Menu" },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(20, 10),
+        };
+        menuBtn.Click += (sender, args) => ChangeScene(new MenuScene());
+
+        var pauseMenu = new VerticalStackPanel
+        {
+            Widgets = {
+                new Label { Text = "Paused", HorizontalAlignment = HorizontalAlignment.Center },
+                resumeBtn,
+                menuBtn
+            },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        _desktop = new Desktop
+        {
+            Root = pauseMenu
+        };
     }
 
     private void Pause()
     {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Paused;
+        Debug.Assert(_state == GameState.Playing);
+        _state = GameState.Paused;
         foreach (var child in children)
         {
             child.IsActive = false;
@@ -87,128 +123,142 @@ public class GameScene : AbstractScene
 
     private void Unpause()
     {
-        Debug.Assert(_state == State.Paused);
-        _state = State.Playing;
+        Debug.Assert(_state == GameState.Paused);
+        _state = GameState.Playing;
         foreach (var child in children)
         {
             child.IsActive = true;
         }
     }
 
-    private void Fail()
+    private void Fail(GameTime gameTime)
     {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Fail;
-        foreach (var child in children)
-        {
-            child.IsActive = false;
-        }
+        Debug.Assert(_state == GameState.Playing);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
+        _state = GameState.Fail;
+        _finishTime = gameTime.TotalGameTime;
+        _gameBoard.Fail(gameTime);
+        _slingshot.Fail(gameTime);
+        _guideline.TurnOff(gameTime);
     }
 
-    private void Success()
+    private void Success(GameTime gameTime)
     {
-        Debug.Assert(_state == State.Playing);
-        _state = State.Success;
-        foreach (var child in children)
-        {
-            child.IsActive = false;
-        }
+        Debug.Assert(_state == GameState.Playing);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
+        _state = GameState.Success;
+        _finishTime = gameTime.TotalGameTime;
+        _gameBoard.Success();
+        _slingshot.Success(gameTime);
+        _guideline.TurnOff(gameTime);
     }
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
-        base.Update(gameTime, parentTranslate);
-        if (Keyboard.GetState().IsKeyDown(Keys.P))
+        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null && _guideline != null, "GameBoard, Slingshot, DeathLine, or Guideline is not loaded");
+        if (_firstFrame)
         {
-            if (!_keyPDown)
+            _firstFrame = false;
+            _guideline.TurnOn(gameTime);
+        }
+        base.Update(gameTime, parentTranslate);
+        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        {
+            if (!_escKeyDown)
             {
-                if (_state == State.Paused)
+                if (_state == GameState.Paused)
                 {
                     Unpause();
                 }
-                else if (_state == State.Playing)
+                else if (_state == GameState.Playing)
                 {
                     Pause();
                 }
-                _keyPDown = true;
+                _escKeyDown = true;
             }
         }
         else
         {
-            _keyPDown = false;
+            _escKeyDown = false;
         }
-        if (Keyboard.GetState().IsKeyDown(Keys.Q))
+
+        if (_state == GameState.Fail || _state == GameState.Success)
         {
-            ChangeScene(new MenuScene());
+            Debug.Assert(_finishTime is not null, "Finish time is not set.");
+            if (TimeSpan.FromSeconds(3) < gameTime.TotalGameTime - _finishTime)
+            {
+                ChangeScene(new MenuScene());
+            }
         }
 
         UpdateChildren(gameTime);
-        Debug.Assert(_gameBoard != null && _slingshot != null && _deathline != null, "GameBoard, Slingshot, or DeathLine is not loaded");
-        if (_state == State.Playing)
+        if (_state == GameState.Playing)
         {
             if (_gameBoard.GetMapBallCount() == 0)
             {
-                Success();
+                Success(gameTime);
             }
             else
             {
-                var newBallNeeded = _slingshot.NextData == null;
-                BallData.BallStats? bs = null;
-                if (!newBallNeeded && _slingshot.RecheckNextData)
+                if (_slingshot.CheckNextData || _boardChanged)
                 {
-                    bs = _gameBoard.GetBallStats();
-                    var colors = bs.ColorCounts.Keys.ToHashSet();
-                    if (_slingshot.NextData is BallData nd)
+                    var bs = _gameBoard.GetBallStats();
+                    if (_slingshot.NextData is not BallData data || !bs.Check(data))
                     {
-                        newBallNeeded = newBallNeeded || !colors.Contains(nd.value);
+                        var nextBall = bs.GetNextBall(_rand);
+                        _slingshot.SetNextData(gameTime, nextBall);
                     }
-                }
-                if (newBallNeeded)
-                {
-                    // TODO: move this into BallData or smth
-                    bs ??= _gameBoard.GetBallStats();
-                    var colors = bs.ColorCounts.Keys.ToList();
-                    if (0 < colors.Count)
-                    {
-                        var color = colors[_rand.Next(colors.Count)];
-                        _slingshot.SetNextData(new BallData(color));
-                    }
+                    _boardChanged = false;
                 }
 
-                if (GameBoard.DEATH_Y_POS < _gameBoard.GetMapBottomEdge())
+                if (_gameBoard.GetDistanceFromDeath() <= 0)
                 {
-                    Fail();
+                    Fail(gameTime);
                 }
-                else if (GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 3.5 < _gameBoard.GetMapBottomEdge())
+                else if (_gameBoard.GetDistanceFromDeath() < GameBoard.HEX_VERTICAL_SPACING * 3.5)
                 {
                     _deathline.Show(gameTime);
                 }
-                else if (_gameBoard.GetMapBottomEdge() < GameBoard.DEATH_Y_POS - GameBoard.HEX_VERTICAL_SPACING * 5)
+                else if (GameBoard.HEX_VERTICAL_SPACING * 5 < _gameBoard.GetDistanceFromDeath())
                 {
                     _deathline.Hide(gameTime);
                 }
             }
         }
 
+        // TODO: replace this with proper powerup system
+        _guideline.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
+
         UpdatePendingAndDestroyedChildren();
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
+        Debug.Assert(_desktop is not null, "Desktop is not loaded.");
         DrawChildren(spriteBatch, gameTime);
-        spriteBatch.DrawString(_font, "Press q to go back to menu\nPress p to pause", new Vector2(100, 200), Color.White);
+        spriteBatch.DrawString(_font, "Press esc to pause", new Vector2(100, 200), Color.White);
 
         switch (_state)
         {
-            case State.Paused:
+            case GameState.Paused:
                 spriteBatch.DrawString(_font, "Paused", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
-            case State.Fail:
+            case GameState.Fail:
                 spriteBatch.DrawString(_font, "Fail", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
-            case State.Success:
+            case GameState.Success:
                 spriteBatch.DrawString(_font, "Success", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
         }
     }
+
+    public override Desktop? DrawMyra()
+    {
+        if (_state == GameState.Paused)
+        {
+            return _desktop;
+        }
+        return null;
+    }
+
 }

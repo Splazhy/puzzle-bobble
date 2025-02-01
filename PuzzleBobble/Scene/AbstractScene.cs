@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Myra.Graphics2D.UI;
 
 namespace PuzzleBobble.Scene;
 
@@ -22,4 +23,9 @@ public abstract class AbstractScene : GameObject
     }
 
     public abstract void Initialize(Game game);
+
+    public virtual Desktop? DrawMyra()
+    {
+        return null;
+    }
 }

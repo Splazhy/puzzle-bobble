@@ -60,9 +60,6 @@ public class Game1 : Game
     {
         if (!IsActive) return;
 
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-
         _stopwatch.Restart();
         _sceneManager.Update(gameTime, _screenCenter);
         _stopwatch.Stop();
@@ -96,6 +93,7 @@ public class Game1 : Game
         _stopwatch.Stop();
         _drawCallTimeMeasured = _stopwatch.Elapsed;
 
+        _sceneManager.DrawMyra()?.Render();
 
         base.Draw(gameTime);
     }
