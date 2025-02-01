@@ -80,14 +80,14 @@ public class Level
 
     public static Level Generate(Random random)
     {
-        var level = Load("3-4-connectHaft");
+        var level = Load("3-4-connectHalf");
         for (int i = 0; i < 1; i++)
         {
-            level.StackDown(Load("3-4-connectHaft"));
+            level.StackDown(Load("3-4-connectHalf"));
         }
         for (int i = 0; i < 10; i++)
         {
-            level.StackUp(Load("3-4-connectHaft"));
+            level.StackUp(Load("3-4-connectHalf"));
         }
         return level;
     }
