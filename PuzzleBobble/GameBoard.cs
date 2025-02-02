@@ -24,6 +24,7 @@ public class GameBoard : GameObject
     public static readonly int BOARD_WIDTH = 8;
 
     private SpriteFont? _debugfont;
+    private Texture2D? _topBorder;
 
     private int _topRow;
     public int TopRow
@@ -104,6 +105,8 @@ public class GameBoard : GameObject
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
 
+        _topBorder = content.Load<Texture2D>("Graphics/border_top");
+
         base.LoadContent(content);
     }
 
@@ -111,6 +114,22 @@ public class GameBoard : GameObject
     {
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
+        Debug.Assert(_topBorder is not null, "Top border is not loaded.");
+
+        if (!IsInfinite)
+        {
+            spriteBatch.Draw(
+                _topBorder,
+                ScreenPositionO(new Vector2(0, (float)GetTopEdgePos())),
+                null,
+                Color.White,
+                0,
+                new Vector2(_topBorder.Width / 2, _topBorder.Height),
+                PIXEL_SIZE,
+                SpriteEffects.None,
+                0
+            );
+        }
 
         if (DebugOptions.GAMEBOARD_DRAW_ENTIRE_GRID)
         {

@@ -8,7 +8,7 @@ namespace PuzzleBobble;
 public class BoardBackground : GameObject
 {
     private readonly GameBoard _gameBoard;
-    private Texture2D? background;
+    private Texture2D? backgrounds;
     private Texture2D? leftBorder;
     private Texture2D? rightBorder;
 
@@ -21,21 +21,31 @@ public class BoardBackground : GameObject
     {
         base.LoadContent(content);
 
-        background = content.Load<Texture2D>("Graphics/board_bg");
+        backgrounds = content.Load<Texture2D>("Graphics/board_bg_parallax");
         leftBorder = content.Load<Texture2D>("Graphics/border_left");
         rightBorder = content.Load<Texture2D>("Graphics/border_right");
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        Debug.Assert(background is not null, "Background is not loaded.");
+        Debug.Assert(backgrounds is not null, "Backgrounds are not loaded.");
         Debug.Assert(leftBorder is not null, "Left border is not loaded.");
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
-        ParallaxDraw(spriteBatch, background,
-            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX, -background.Height / 2) * PIXEL_SIZE,
-            new Rectangle(0, 0, background.Width, background.Height),
+        var tileWidth = backgrounds.Width / 3;
+        ParallaxDraw(spriteBatch, backgrounds,
+            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX, -backgrounds.Height / 2) * PIXEL_SIZE,
+            new Rectangle(0, 0, tileWidth, backgrounds.Height),
+            _gameBoard.Position.Y, 4);
+        ParallaxDraw(spriteBatch, backgrounds,
+            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX, -backgrounds.Height / 2) * PIXEL_SIZE,
+            new Rectangle(tileWidth * 1, 0, tileWidth, backgrounds.Height),
             _gameBoard.Position.Y, 3);
+        ParallaxDraw(spriteBatch, backgrounds,
+            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX, -backgrounds.Height / 2) * PIXEL_SIZE,
+            new Rectangle(tileWidth * 2, 0, tileWidth, backgrounds.Height),
+            _gameBoard.Position.Y, 2);
+
         ParallaxDraw(spriteBatch, leftBorder,
             new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX - leftBorder.Width, -leftBorder.Height / 2) * PIXEL_SIZE,
             new Rectangle(0, 0, leftBorder.Width, leftBorder.Height),
