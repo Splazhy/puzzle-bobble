@@ -741,7 +741,7 @@ public class GameBoard : GameObject
         if (hexMap.Count == 0) return;
         while (true)
         {
-            var row = pwupRand.Next(Math.Max(hexMap.MinR, hexMap.MaxR - 10), hexMap.MaxR + 1);
+            var row = pwupRand.Next(Math.Max(hexMap.MinR, hexMap.MaxR - 6), hexMap.MaxR + 1);
             bool stagger = (row & 1) == 1;
             var col = pwupRand.Next(0, stagger ? 8 : 9);
             var coord = new OffsetCoord(col, row);
