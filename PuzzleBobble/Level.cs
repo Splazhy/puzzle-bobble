@@ -291,8 +291,19 @@ public class Level
                 }
 
                 usedLevelNames.Add(levelName);
-                // TODO: level color manipulation
-                level.StackUp(newLevel);
+
+                Level coloredLevel = new(newLevel);
+                var availableColors = ballColorsUsed.Take(usingTypeCount).ToList();
+                var colorChanges = new List<KeyValuePair<int, int>>();
+                foreach (var color in newLevel.BallColorsInLevel)
+                {
+                    var newColor = availableColors[random.Next(availableColors.Count)];
+                    colorChanges.Add(new KeyValuePair<int, int>(color, newColor));
+                    availableColors.Remove(newColor);
+                }
+                coloredLevel.ChangeColor(colorChanges);
+
+                level.StackUp(coloredLevel);
                 break;
             }
         }
