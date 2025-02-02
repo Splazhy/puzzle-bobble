@@ -199,7 +199,7 @@ public class Level
 
     private static Level Load(string levelName)
     {
-        string textContent = System.IO.File.ReadAllText($"Content/Levels/{levelName}.txt");
+        string textContent = Levels.GetLevel(levelName);
         byte[] hash = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(textContent));
 
         if (levels.TryGetValue(levelName, out var level))
@@ -221,11 +221,9 @@ public class Level
 
     private static void LoadAllToMemory()
     {
-        string[] levelNames = System.IO.Directory.GetFiles("Content/Levels", "*.txt")
-            .Select(System.IO.Path.GetFileNameWithoutExtension)
-            .OfType<string>()
+        List<string> levelNames = Levels.GetLevelNames()
             .Where(name => !name.StartsWith("test"))
-            .ToArray();
+            .ToList();
         foreach (var levelName in levelNames)
         {
             Load(levelName);
