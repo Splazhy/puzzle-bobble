@@ -32,23 +32,33 @@ public class BoardBackground : GameObject
         Debug.Assert(leftBorder is not null, "Left border is not loaded.");
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
-        var BOARD_HALF_WIDTH_PX = GameBoard.BOARD_HALF_WIDTH_PX;
-        var sourceY = -(_gameBoard.Position.Y / 3);
+        ParallaxDraw(spriteBatch, background,
+            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX, -background.Height / 2) * PIXEL_SIZE,
+            new Rectangle(0, 0, background.Width, background.Height),
+            _gameBoard.Position.Y, 3);
+        ParallaxDraw(spriteBatch, leftBorder,
+            new Vector2(-GameBoard.BOARD_HALF_WIDTH_PX - leftBorder.Width, -leftBorder.Height / 2) * PIXEL_SIZE,
+            new Rectangle(0, 0, leftBorder.Width, leftBorder.Height),
+            _gameBoard.Position.Y, 1);
+        ParallaxDraw(spriteBatch, rightBorder,
+            new Vector2(GameBoard.BOARD_HALF_WIDTH_PX, -rightBorder.Height / 2) * PIXEL_SIZE,
+            new Rectangle(0, 0, rightBorder.Width, rightBorder.Height),
+            _gameBoard.Position.Y, 1);
+    }
+
+    private void ParallaxDraw(SpriteBatch spriteBatch, Texture2D sheet, Vector2 pos, Rectangle sourceRect, float gameBoardY, float divFactor)
+    {
+        var sourceY = divFactor == 0 ? 0 : -(gameBoardY / divFactor);
         var subPixelY = sourceY - (int)sourceY;
+        var finalSourceRect = sourceRect;
+        finalSourceRect.Offset(0, (int)sourceY);
+        finalSourceRect.Inflate(0, 1);
         spriteBatch.Draw(
-            background,
-            ParentTranslate + new Vector2(-BOARD_HALF_WIDTH_PX, -background.Height / 2 - subPixelY) * PIXEL_SIZE,
-            new Rectangle(0, (int)sourceY, background.Width, background.Height + 1), Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
+            sheet,
+            ParentTranslate + pos - new Vector2(0, subPixelY) * PIXEL_SIZE,
+            finalSourceRect,
+            Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
         );
-        spriteBatch.Draw(
-            leftBorder,
-            ParentTranslate + new Vector2(-BOARD_HALF_WIDTH_PX - leftBorder.Width, -leftBorder.Height / 2) * PIXEL_SIZE,
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
-        spriteBatch.Draw(
-            rightBorder,
-            ParentTranslate + new Vector2(+BOARD_HALF_WIDTH_PX, -rightBorder.Height / 2) * PIXEL_SIZE,
-            null, Color.White, 0, Vector2.Zero, PIXEL_SIZE, SpriteEffects.None, 0
-        );
+
     }
 }
