@@ -95,6 +95,12 @@ public class Levels
              . a a a a b . 
             """
 },
+{"2-intermezzo",
+            """
+            a b a b b a b a
+             a b a b a b a
+            """
+},
 {"3-2-babycrown",
             """
             a . . a c . . b
@@ -175,6 +181,12 @@ public class Levels
              . b d a c c .
             """
 },
+{"4-intermezzo",
+            """
+            a b c d d c b a
+             a b c d c b a
+            """
+},
 {"5-6-Hat",
             """
             . . . . . d . .
@@ -207,6 +219,12 @@ public class Levels
              b g c . . a b 
             . . . d f . e g
              f a e g . h c
+            """
+},
+{"6-intermezzo",
+            """
+            a b c e f c b a
+             a b c d c b a
             """
 },
 {"6-8-pyramid",
