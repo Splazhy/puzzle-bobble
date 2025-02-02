@@ -60,7 +60,6 @@ public class GameBoard : GameObject
     /// </summary>
     private readonly Random _rand = new();
     private const float FALLING_SPREAD = 50f / 3;
-    private const float EXPLOSION_SPREAD = 50f / 3;
 
     /// <summary>
     /// For decorative animations
@@ -586,7 +585,6 @@ public class GameBoard : GameObject
                 var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                 {
                     Position = explodingBall.Key,
-                    // Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * EXPLOSION_SPREAD)
                 };
                 return b;
             }));
