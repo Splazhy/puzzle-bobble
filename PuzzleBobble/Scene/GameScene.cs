@@ -41,7 +41,8 @@ public class GameScene : AbstractScene
         Precognition,
         Lucky,
         Special,
-        RainbowRush
+        RainbowRush,
+        BombsAway
     }
 
     private static string GetPowerUpName(PowerUp powerUp)
@@ -60,8 +61,10 @@ public class GameScene : AbstractScene
     private int _specialsPending;
     private int _rainbowRushPending;
     private TimeSpan? _lastRainbowRushTime = null;
-    private Random _ballSpawnRand = new();
+    private int _bombsAwayPending;
+    private TimeSpan? _lastBombsAwayTime = null;
 
+    private readonly Random _ballSpawnRand = new();
     private SaveData? _saveData;
     private long _playHistoryId;
     private TimeSpan? _lastUpdateTime;
@@ -303,6 +306,25 @@ public class GameScene : AbstractScene
                         if (_rainbowRushPending == 0) { _lastRainbowRushTime = null; }
                     }
                 }
+                if (0 < _bombsAwayPending)
+                {
+                    if (_lastBombsAwayTime is null || _lastBombsAwayTime + TimeSpan.FromSeconds(0.6) < gameTime.TotalGameTime)
+                    {
+                        _lastBombsAwayTime = gameTime.TotalGameTime;
+                        var ballData = new BallData((int)BallData.SpecialType.Bomb);
+                        var ball = new Ball(ballData, Ball.State.Moving);
+
+                        var rotation = _ballSpawnRand.NextSingle() * MathF.PI * (20f / 180f);
+                        rotation *= _ballSpawnRand.Next(2) % 2 == 0 ? 1 : -1;
+                        ball.Velocity = new Vector2(MathF.Sin(rotation), -MathF.Cos(rotation)) * _slingshot.BallSpeed;
+
+                        var ballXRange = (GameBoard.BOARD_HALF_WIDTH_PX - GameBoard.HEX_INRADIUS) * 0.65f;
+                        ball.Position = _slingshot.Position + new Vector2(_ballSpawnRand.Next((int)-ballXRange, (int)(ballXRange + 1)), 75);
+                        _gameBoard.AddChildDeferred(ball);
+                        _bombsAwayPending--;
+                        if (_bombsAwayPending == 0) { _lastBombsAwayTime = null; }
+                    }
+                }
 
 
                 if (_gameBoard.GetDistanceFromDeath() <= 0)
@@ -351,6 +373,10 @@ public class GameScene : AbstractScene
                 case PowerUp.RainbowRush:
                     _rainbowRushPending += 3;
                     _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(2);
+                    break;
+                case PowerUp.BombsAway:
+                    _bombsAwayPending += 2;
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(5);
                     break;
             }
         }
