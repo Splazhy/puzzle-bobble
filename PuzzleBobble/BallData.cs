@@ -12,8 +12,12 @@ public readonly struct BallData
 {
     public static readonly int BALL_SIZE = 16;
     public static readonly int EXPLOSION_SIZE = 32;
+    public static readonly int BOMB_EXPLOSION_WIDTH = 80;
+    public static readonly int BOMB_EXPLOSION_HEIGHT = 72;
     public static int BALL_DRAW_SIZE => BALL_SIZE * GameObject.PIXEL_SIZE;
     public static int EXPLOSION_DRAW_SIZE => EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
+    public static int BOMB_EXPLOSION_DRAW_WIDTH => BOMB_EXPLOSION_WIDTH * GameObject.PIXEL_SIZE;
+    public static int BOMB_EXPLOSION_DRAW_HEIGHT => BOMB_EXPLOSION_HEIGHT * GameObject.PIXEL_SIZE;
 
     public const float MAX_EXPLODE_DELAY = 0.2f;
     public const float MAX_PETRIFY_DELAY = 1f;
@@ -115,6 +119,8 @@ public readonly struct BallData
         public readonly Texture2D BallSpritesheet;
         public readonly Texture2D SpecialBallSpritesheet;
         public readonly Texture2D ExplosionSpritesheet;
+        public readonly Texture2D BombExplosionSpritesheet;
+        public readonly Texture2D StoneExplosionSpritesheet;
         public readonly Texture2D ShineSpritesheet;
         public readonly Texture2D PreviewBallSpriteSheet;
 
@@ -123,6 +129,8 @@ public readonly struct BallData
             BallSpritesheet = content.Load<Texture2D>("Graphics/balls");
             SpecialBallSpritesheet = content.Load<Texture2D>("Graphics/special_balls");
             ExplosionSpritesheet = content.Load<Texture2D>("Graphics/balls_explode4");
+            BombExplosionSpritesheet = content.Load<Texture2D>("Graphics/bomb_explode");
+            StoneExplosionSpritesheet = content.Load<Texture2D>("Graphics/rock_explode");
             ShineSpritesheet = content.Load<Texture2D>("Graphics/ball_shine");
             PreviewBallSpriteSheet = content.Load<Texture2D>("Graphics/ball_preview");
         }
@@ -148,8 +156,6 @@ public readonly struct BallData
         public bool isExploding = false;
         public bool isPetrifying = false;
         public bool isAlt = false;
-
-
     }
 
     public void LoadAnimation(Assets assets)
@@ -198,25 +204,25 @@ public readonly struct BallData
                     animState.anim = anim;
 
                     animState.explosionAnim = new AnimatedTexture2D(
-                        assets.ExplosionSpritesheet,
+                        assets.BombExplosionSpritesheet,
                         new Rectangle(
                             0,
-                            11 * (assets.ExplosionSpritesheet.Height / 12),
-                            assets.ExplosionSpritesheet.Width,
-                            assets.ExplosionSpritesheet.Height / 12
+                            0,
+                            assets.BombExplosionSpritesheet.Width,
+                            assets.BombExplosionSpritesheet.Height
                         ),
-                        7, 1, 0.02f, false
+                        6, 1, 0.075f, false
                     );
                     break;
                 }
             case (int)SpecialType.Stone:
                 animState.explosionAnim = new AnimatedTexture2D(
-                    assets.ExplosionSpritesheet,
+                    assets.StoneExplosionSpritesheet,
                     new Rectangle(
                         0,
-                        11 * (assets.ExplosionSpritesheet.Height / 12),
-                        assets.ExplosionSpritesheet.Width,
-                        assets.ExplosionSpritesheet.Height / 12
+                        0,
+                        assets.StoneExplosionSpritesheet.Width,
+                        assets.StoneExplosionSpritesheet.Height
                     ),
                     7, 1, 0.02f, false
                 );
@@ -362,14 +368,30 @@ public readonly struct BallData
     private void DrawExplode(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
     {
         Debug.Assert(animState.explosionAnim is not null, "Explosion animation is not loaded.");
-        animState.explosionAnim.Draw(
-            spriteBatch,
-            gameTime,
-            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
-            Color.White * alpha,
-            0.0f,
-            new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
-        );
+        switch (value)
+        {
+            case (int)SpecialType.Bomb:
+                animState.explosionAnim.Draw(
+                    spriteBatch,
+                    gameTime,
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BOMB_EXPLOSION_DRAW_WIDTH, BOMB_EXPLOSION_DRAW_HEIGHT),
+                    Color.White * alpha,
+                    0.0f,
+                    new Vector2(BOMB_EXPLOSION_WIDTH / 2, BOMB_EXPLOSION_HEIGHT / 2)
+                );
+                break;
+
+            default:
+                animState.explosionAnim.Draw(
+                    spriteBatch,
+                    gameTime,
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
+                    Color.White * alpha,
+                    0.0f,
+                    new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
+                );
+                break;
+        }
     }
 
 
