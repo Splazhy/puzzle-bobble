@@ -604,8 +604,11 @@ public class GameBoard : GameObject
                 if (hexMap[hex] is BallData bomb)
                 {
                     Debug.Assert(bomb.IsBomb);
-                    bombStartTimes[hex] = gameTime.TotalGameTime;
-                    bomb.PlayAltAnimation(gameTime);
+                    if (bombStartTimes[hex] is null)
+                    {
+                        bombStartTimes[hex] = gameTime.TotalGameTime;
+                        bomb.PlayAltAnimation(gameTime);
+                    }
                 }
             }
 
