@@ -227,7 +227,7 @@ public class GameScene : AbstractScene
         }
 
         // TODO: replace this with proper powerup system
-        _guideline.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
+        // _guideline.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
 
         UpdatePendingAndDestroyedChildren();
     }
