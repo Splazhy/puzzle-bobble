@@ -145,6 +145,11 @@ public class GameScene : AbstractScene
         base.LoadContent(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
 
+        Debug.Assert(_gameBoard != null);
+        _gameBoard.AddChildDeferred(new MouseTipDisplay()
+        {
+            Position = new Vector2(0, 30),
+        });
 
         var resumeBtn = new Button
         {

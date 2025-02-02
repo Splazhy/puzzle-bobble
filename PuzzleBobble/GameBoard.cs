@@ -99,7 +99,7 @@ public class GameBoard : GameObject
             ball.LoadAnimation(_ballAssets);
         }
 
-        Position = new Vector2(0, (float)GetPreferredPos());
+        Position = new Vector2(0, (float)GetPreferredPos() - 20);
         Velocity.Y = ComputePreferredSpeed();
 
         // IsInfinite = true;
