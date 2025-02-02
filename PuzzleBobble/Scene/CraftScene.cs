@@ -23,6 +23,9 @@ public class CraftScene : AbstractScene
 
     public override Color BackgroundColor => new(69, 41, 63);
 
+    private Texture2D? _cauldronTexture;
+    private Texture2D? _homeDecorTexture;
+
 
     public CraftScene() : base("scene_craft")
     {
@@ -69,6 +72,8 @@ public class CraftScene : AbstractScene
     {
         _itemAssets = new ItemData.Assets(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
+        _cauldronTexture = content.Load<Texture2D>("Graphics/cauldron");
+        _homeDecorTexture = content.Load<Texture2D>("Graphics/home_decor");
         SetupMyra();
         base.LoadContent(content);
     }
@@ -202,7 +207,6 @@ public class CraftScene : AbstractScene
 
         var rightPanel = new Panel
         {
-            Background = new SolidBrush(new Color(158, 69, 57)),
             Widgets =
             {
                 rightGrid
@@ -255,6 +259,36 @@ public class CraftScene : AbstractScene
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_itemAssets is not null);
+        Debug.Assert(_cauldronTexture is not null);
+        Debug.Assert(_homeDecorTexture is not null);
+
+        spriteBatch.Draw(
+            _cauldronTexture,
+            ScreenPositionO(new Vector2(-123, 70)),
+            null,
+            Color.White,
+            0,
+            new Vector2(_cauldronTexture.Width / 2, 17),
+            PIXEL_SIZE,
+            SpriteEffects.None,
+            0
+        );
+
+        spriteBatch.Draw(
+            _homeDecorTexture,
+            ScreenPositionO(new Vector2(90, 0)),
+            null,
+            Color.White,
+            0,
+            new Vector2(_homeDecorTexture.Width / 2, _homeDecorTexture.Height / 2),
+            PIXEL_SIZE,
+            SpriteEffects.None,
+            0
+        );
+
+
+
+
         foreach (var ((item, count), index) in inventory.Select((e, i) => (e, i)))
         {
             item.Draw(spriteBatch, _itemAssets, new Vector2(0, 16 * index * PIXEL_SIZE), Vector2.Zero);
