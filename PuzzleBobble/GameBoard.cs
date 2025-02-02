@@ -292,11 +292,14 @@ public class GameBoard : GameObject
         // color pass
         HashSet<Hex> affected = [];
         Queue<Hex> pendingOrigins = new();
+        HashSet<Hex> doneOrigins = [];
         pendingOrigins.Enqueue(sourceHex);
 
         while (0 < pendingOrigins.Count)
         {
             Hex current = pendingOrigins.Dequeue();
+            if (doneOrigins.Contains(current)) continue;
+            doneOrigins.Add(current);
             if (hexMap[current] is not BallData currData) continue;
             if (currData.IsBomb || currData.IsStone) continue;
 
