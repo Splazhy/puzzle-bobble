@@ -60,7 +60,7 @@ public class Levels
 {"12-12-seaHorse",
             """
             . e . d b . . e
-             S . . h c g .
+             S . . h c g S
             . . a g . e . g
              h k . j . . b
             l h . . . a g k
