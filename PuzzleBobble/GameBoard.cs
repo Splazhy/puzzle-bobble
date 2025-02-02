@@ -287,7 +287,8 @@ public class GameBoard : GameObject
             {
                 ColorRegionSearch(current, out HashSet<Hex> regionHexes, out HashSet<Hex> rainbows, out HashSet<Hex> moreBombs);
                 affected.UnionWith(regionHexes);
-                foreach (var item in rainbows) pendingOrigins.Enqueue(item);
+                // having rainbows recursively explode more regions is too OP
+                // foreach (var item in rainbows) pendingOrigins.Enqueue(item);
                 foreach (var item in moreBombs) bombs.Enqueue(item);
             }
         }
