@@ -40,7 +40,17 @@ public class GameScene : AbstractScene
     {
         Precognition,
         Lucky,
-        Special
+        Special,
+        RainbowRush
+    }
+
+    private static string GetPowerUpName(PowerUp powerUp)
+    {
+        return powerUp switch
+        {
+            PowerUp.RainbowRush => "Rainbow Rush",
+            _ => powerUp.ToString()
+        };
     }
 
     private readonly Dictionary<PowerUp, TimeSpan> _powerUpEndTimes = [];
@@ -48,6 +58,9 @@ public class GameScene : AbstractScene
     private TimeSpan? _timeUntilNextPowerUp = null;
     private readonly Random _powerUpRand = new();
     private int _specialsPending;
+    private int _rainbowRushPending;
+    private TimeSpan? _lastRainbowRushTime = null;
+    private Random _ballSpawnRand = new();
 
     private SaveData? _saveData;
     private long _playHistoryId;
@@ -271,6 +284,27 @@ public class GameScene : AbstractScene
                     _boardChanged = false;
                 }
 
+                if (0 < _rainbowRushPending)
+                {
+                    if (_lastRainbowRushTime is null || _lastRainbowRushTime + TimeSpan.FromSeconds(0.3) < gameTime.TotalGameTime)
+                    {
+                        _lastRainbowRushTime = gameTime.TotalGameTime;
+                        var ballData = new BallData((int)BallData.SpecialType.Rainbow);
+                        var ball = new Ball(ballData, Ball.State.Moving);
+
+                        var rotation = _ballSpawnRand.NextSingle() * MathF.PI * (50f / 180f) + (MathF.PI * 20f / 180f);
+                        rotation *= _ballSpawnRand.Next(2) % 2 == 0 ? 1 : -1;
+                        ball.Velocity = new Vector2(MathF.Sin(rotation), -MathF.Cos(rotation)) * _slingshot.BallSpeed;
+
+                        var ballXRange = GameBoard.BOARD_HALF_WIDTH_PX - GameBoard.HEX_INRADIUS;
+                        ball.Position = _slingshot.Position + new Vector2(_ballSpawnRand.Next(-ballXRange, ballXRange + 1), 75);
+                        _gameBoard.AddChildDeferred(ball);
+                        _rainbowRushPending--;
+                        if (_rainbowRushPending == 0) { _lastRainbowRushTime = null; }
+                    }
+                }
+
+
                 if (_gameBoard.GetDistanceFromDeath() <= 0)
                 {
                     Fail(gameTime);
@@ -312,7 +346,11 @@ public class GameScene : AbstractScene
                     break;
                 case PowerUp.Special:
                     _specialsPending++;
-                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(1.5);
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(2);
+                    break;
+                case PowerUp.RainbowRush:
+                    _rainbowRushPending += 3;
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(2);
                     break;
             }
         }
@@ -379,7 +417,7 @@ public class GameScene : AbstractScene
 
         foreach (var ((pwup, endTime), index) in _powerUpEndTimes.Select((item, index) => (item, index)))
         {
-            var powerUpString = pwup.ToString();
+            var powerUpString = GetPowerUpName(pwup);
             var drawPosX = ScreenPositionO(new Vector2(GameBoard.BOARD_HALF_WIDTH_PX + 20, 0)).X;
             var drawPosY = ScreenPosition.Y - index * 30;
             var secsLeft = (endTime - gameTime.TotalGameTime).TotalSeconds;
