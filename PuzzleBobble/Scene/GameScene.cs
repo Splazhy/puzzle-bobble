@@ -50,6 +50,7 @@ public class GameScene : AbstractScene
         return powerUp switch
         {
             PowerUp.RainbowRush => "Rainbow Rush",
+            PowerUp.BombsAway => "Bombs Away",
             _ => powerUp.ToString()
         };
     }
