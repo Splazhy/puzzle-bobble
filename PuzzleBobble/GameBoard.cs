@@ -36,7 +36,7 @@ public class GameBoard : GameObject
         }
     }
 
-    bool IsInfinite;
+    public bool IsInfinite { get; private set; }
 
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
@@ -428,6 +428,11 @@ public class GameBoard : GameObject
     private double GetTopEdgePos()
     {
         return hexLayout.HexToCenterPixel(new Hex(0, TopRow)).Y - BallData.BALL_SIZE / 2;
+    }
+
+    public double GetMapTopEdgePos()
+    {
+        return GetTopEdgePos() + Position.Y;
     }
 
     public int GetMapBallCount()

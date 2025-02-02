@@ -69,6 +69,7 @@ public class GameScene : AbstractScene
     private long _playHistoryId;
     private TimeSpan? _lastUpdateTime;
     private TimeSpan _startTime;
+    private bool _topPassed;
 
     public override Color BackgroundColor => new(49, 54, 56);
 
@@ -421,10 +422,11 @@ public class GameScene : AbstractScene
         _saveData.UpdatePlayHistoryEntry(_playHistoryId, elapsedTime, _state == GameState.Paused ? GameState.Playing : _state);
     }
 
-
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_desktop is not null, "Desktop is not loaded.");
+        Debug.Assert(_font is not null, "Font is not loaded.");
+        Debug.Assert(_gameBoard is not null, "GameBoard is not loaded.");
         DrawChildren(spriteBatch, gameTime);
         spriteBatch.DrawString(_font, "Press esc to pause", new Vector2(100, 200), Color.White);
 
@@ -451,7 +453,25 @@ public class GameScene : AbstractScene
             var alpha = EasingFunctions.PowerInOut(2)(Math.Min(1, secsLeft));
             spriteBatch.DrawString(_font, powerUpString, new Vector2(drawPosX, drawPosY), Color.White * (float)alpha);
         }
+
+        if (!_gameBoard.IsInfinite && !_topPassed)
+        {
+            var distanceFromTop = YOU_ARE_HERE_POS - _gameBoard.GetMapTopEdgePos();
+            distanceFromTop /= GameBoard.HEX_VERTICAL_SPACING;
+            var text = distanceFromTop <= 0 ? "- You are here" : $"^ {distanceFromTop:F2} rows to go";
+            var alpha2 = (distanceFromTop + 0.3) / 1.5;
+            alpha2 = Math.Min(Math.Max(0, alpha2), 1);
+            if (alpha2 == 0)
+            {
+                _topPassed = true;
+            }
+
+            var measures = _font.MeasureString(text);
+            spriteBatch.DrawString(_font, text, ScreenPositionO(new Vector2(GameBoard.BOARD_HALF_WIDTH_PX + 20, YOU_ARE_HERE_POS)) - new Vector2(0, measures.Y / 2), Color.White * (float)alpha2);
+        }
     }
+    private readonly int YOU_ARE_HERE_POS = -150 + 18;
+
 
     public override Desktop? DrawMyra()
     {
