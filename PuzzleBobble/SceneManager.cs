@@ -17,7 +17,7 @@ public class SceneManager
     {
         _game = game;
         _saveData = saveData;
-        CurrentScene = new GameScene();
+        CurrentScene = new MenuScene();
         CurrentScene.SceneChanged += ChangeScene;
     }
 
