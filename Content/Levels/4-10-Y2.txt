@@ -1,8 +1,8 @@
 d d c . . R d b
  b c R . c c a
 . S S S S S S .
- . b a c c b .
-. . a R a b . .
+ . b a B c b .
+. . a c a b . .
  . . S S S . .
 . . . d B . . .
  . . c b b . .
