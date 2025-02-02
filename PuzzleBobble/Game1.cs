@@ -19,6 +19,8 @@ public class Game1 : Game
     private TimeSpan _drawOrdersTimeMeasured;
     private TimeSpan _drawCallTimeMeasured;
     private readonly Stopwatch _stopwatch = new();
+
+    private readonly SaveData _saveData;
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this)
@@ -31,7 +33,10 @@ public class Game1 : Game
         };
         IsFixedTimeStep = false;
 
-        _sceneManager = new SceneManager(this);
+        // there will be only one save data
+        _saveData = new(1);
+
+        _sceneManager = new SceneManager(this, _saveData);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
@@ -43,7 +48,7 @@ public class Game1 : Game
     protected override void Initialize()
     {
         Myra.MyraEnvironment.Game = this;
-        _sceneManager.Initialize(this);
+        _sceneManager.Initialize();
 
         base.Initialize();
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
@@ -108,4 +113,11 @@ public class Game1 : Game
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
+
+    protected override void EndRun()
+    {
+        _saveData.Close();
+        base.EndRun();
+    }
+
 }

@@ -49,12 +49,20 @@ public class GameScene : AbstractScene
     private readonly Random _powerUpRand = new();
     private int _specialsPending;
 
+    private SaveData? _saveData;
+    private long _playHistoryId;
+    private TimeSpan? _lastUpdateTime;
+    private TimeSpan _startTime;
+
     public GameScene() : base("scene_game")
     {
     }
 
-    public override void Initialize(Game game)
+    public override void Initialize(Game game, SaveData sd)
     {
+        _saveData = sd;
+        _playHistoryId = sd.CreateNewPlayHistoryEntry(DateTime.Now);
+
         _slingshot = new(game);
         _gameBoard = new GameBoard(game);
         _deathline = new(GameBoard.DEATH_Y_POS);
@@ -82,6 +90,27 @@ public class GameScene : AbstractScene
         _gameBoard.PowerUpObtained += () =>
         {
             _powerUpsPending++;
+        };
+        _gameBoard.BallsObtained += (balls) =>
+        {
+            Dictionary<string, int> _ballObtainedCounts = [];
+
+            foreach (var ball in balls)
+            {
+                if (_ballObtainedCounts.ContainsKey(ball.ToSQLValue()))
+                {
+                    _ballObtainedCounts[ball.ToSQLValue()]++;
+                }
+                else
+                {
+                    _ballObtainedCounts[ball.ToSQLValue()] = 1;
+                }
+            }
+
+            foreach (var (ball, count) in _ballObtainedCounts)
+            {
+                _saveData.AddToPlayHistoryDetail(_playHistoryId, $"ball-{ball}", count);
+            }
         };
         children = [
             boardBackground,
@@ -301,7 +330,31 @@ public class GameScene : AbstractScene
         }
 
         UpdatePendingAndDestroyedChildren();
+
+        UpdateSaveData(gameTime);
     }
+
+    private void UpdateSaveData(GameTime gameTime)
+    {
+        if (_lastUpdateTime is not TimeSpan ut)
+        {
+            _lastUpdateTime = gameTime.TotalGameTime;
+            _startTime = gameTime.TotalGameTime;
+            return;
+        }
+
+        if (gameTime.TotalGameTime < _lastUpdateTime + TimeSpan.FromSeconds(1))
+        {
+            return;
+        }
+        _lastUpdateTime = gameTime.TotalGameTime;
+
+        Debug.Assert(_saveData is not null, "SaveData is not loaded.");
+
+        var elapsedTime = ((_finishTime ?? gameTime.TotalGameTime) - _startTime).TotalSeconds;
+        _saveData.UpdatePlayHistoryEntry(_playHistoryId, elapsedTime, _state == GameState.Paused ? GameState.Playing : _state);
+    }
+
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {

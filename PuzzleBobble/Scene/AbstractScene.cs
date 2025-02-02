@@ -22,7 +22,7 @@ public abstract class AbstractScene : GameObject
         SceneChanged?.Invoke(this, newScene);
     }
 
-    public abstract void Initialize(Game game);
+    public abstract void Initialize(Game game, SaveData sd);
 
     public virtual Desktop? DrawMyra()
     {

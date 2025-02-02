@@ -50,13 +50,17 @@ public class GameBoard : GameObject
 
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
-    private HexMap<TimeSpan> bombStartTimes = [];
-    private HexMap<TimeSpan> powerUpStartTimes = [];
+    private readonly HexMap<TimeSpan> bombStartTimes = [];
+    private readonly HexMap<TimeSpan> powerUpStartTimes = [];
 
     private BallData.Assets? _ballAssets;
 
     public delegate void BoardChangedHandler();
     public event BoardChangedHandler? BoardChanged;
+
+    public delegate void BallsObtainedHandler(IEnumerable<BallData> balls);
+    public event BallsObtainedHandler? BallsObtained;
+
 
     /// <summary>
     /// For random falling velocity of falling balls
@@ -504,6 +508,8 @@ public class GameBoard : GameObject
                     bombStartTimes[item2.Key] = null;
                 }
 
+                BallsObtained?.Invoke(explodingBalls.Concat(fallBalls).Select(kv => kv.Value));
+
                 pendingChildren.AddRange(explodingBalls.ConvertAll((explodingBall) =>
                 {
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
@@ -621,6 +627,8 @@ public class GameBoard : GameObject
                 }
                 bombStartTimes[item.Key] = null;
             }
+
+            BallsObtained?.Invoke(explodingBalls.Concat(fallBalls).Select(kv => kv.Value));
 
             pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
             {

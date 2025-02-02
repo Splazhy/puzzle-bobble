@@ -10,11 +10,13 @@ namespace PuzzleBobble;
 public class SceneManager
 {
     private readonly Game _game;
+    private readonly SaveData _saveData;
     public AbstractScene CurrentScene { get; private set; }
 
-    public SceneManager(Game game)
+    public SceneManager(Game game, SaveData saveData)
     {
         _game = game;
+        _saveData = saveData;
         CurrentScene = new GameScene();
         CurrentScene.SceneChanged += ChangeScene;
     }
@@ -28,13 +30,13 @@ public class SceneManager
         CurrentScene = newScene;
         CurrentScene.SceneChanged += ChangeScene;
 
-        CurrentScene.Initialize(_game);
+        CurrentScene.Initialize(_game, _saveData);
         CurrentScene.LoadContent(_game.Content);
     }
 
-    public void Initialize(Game game)
+    public void Initialize()
     {
-        CurrentScene.Initialize(game);
+        CurrentScene.Initialize(_game, _saveData);
     }
 
     public void LoadContent(ContentManager content)

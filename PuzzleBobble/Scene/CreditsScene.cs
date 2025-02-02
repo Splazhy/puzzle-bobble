@@ -17,7 +17,7 @@ public class CreditsScene : AbstractScene
     {
     }
 
-    public override void Initialize(Game game)
+    public override void Initialize(Game game, SaveData sd)
     {
     }
 

@@ -85,6 +85,21 @@ public readonly struct BallData
         };
     }
 
+    public string ToSQLValue()
+    {
+        if (IsColor)
+        {
+            return value.ToString();
+        }
+        return value switch
+        {
+            (int)SpecialType.Rainbow => "rainbow",
+            (int)SpecialType.Bomb => "bomb",
+            (int)SpecialType.Stone => "stone",
+            _ => throw new ArgumentException($"Invalid special ball type: {value}")
+        };
+    }
+
     public static int RandomColor(Random rand)
     {
         return rand.Next(COLOR_COUNT);
