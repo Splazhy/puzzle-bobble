@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 
@@ -130,9 +131,29 @@ public class SaveData
         db.Close();
     }
 
+    public SQLiteTransaction BeginTransaction()
+    {
+        CleanupCachedStmts();
+        return db.BeginTransaction();
+    }
+
+    public void CleanupCachedStmts()
+    {
+        _updatePlayHistoryEntryStmt?.Dispose();
+        _upsertPlayHistoryDetailStmt?.Dispose(); ;
+        _getPlayHistoryStmt?.Dispose();
+        _addToInventoryStmt?.Dispose();
+        _updatePlayHistoryEntryStmt = null;
+        _upsertPlayHistoryDetailStmt = null;
+        _getPlayHistoryStmt = null;
+        _addToInventoryStmt = null;
+    }
+
+
+
     public long CreateNewPlayHistoryEntry(DateTime startTime)
     {
-        var stmt = new SQLiteCommand(
+        using var stmt = new SQLiteCommand(
             """
             INSERT INTO "PlayHistory"
             (saveId, startTime, duration, status, accountedFor)
@@ -150,7 +171,7 @@ public class SaveData
         return db.LastInsertRowId;
     }
 
-    private SQLiteCommand _updatePlayHistoryEntryStmt;
+    private SQLiteCommand? _updatePlayHistoryEntryStmt;
 
     public void UpdatePlayHistoryEntry(long playHistoryId, double duration, GameState status)
     {
@@ -169,7 +190,7 @@ public class SaveData
         _updatePlayHistoryEntryStmt.ExecuteNonQuery();
     }
 
-    private SQLiteCommand _upsertPlayHistoryDetailStmt;
+    private SQLiteCommand? _upsertPlayHistoryDetailStmt;
     public void AddToPlayHistoryDetail(long playHistoryId, string stat, int value)
     {
         _upsertPlayHistoryDetailStmt ??= new SQLiteCommand(
@@ -186,6 +207,117 @@ public class SaveData
         _upsertPlayHistoryDetailStmt.Parameters.AddWithValue("@stat", stat);
         _upsertPlayHistoryDetailStmt.Parameters.AddWithValue("@value", value);
         _upsertPlayHistoryDetailStmt.ExecuteNonQuery();
+    }
+
+    public List<long> GetUnaccountedPlayHistoryEntries()
+    {
+        using var stmt = new SQLiteCommand(
+            """
+            SELECT playHistoryId
+            FROM "PlayHistory"
+            WHERE saveId = @saveId AND accountedFor = 0
+            """,
+            db
+        );
+        stmt.Parameters.AddWithValue("@saveId", SaveId);
+        using var reader = stmt.ExecuteReader();
+        var result = new List<long>();
+        while (reader.Read())
+        {
+            result.Add(reader.GetInt64(0));
+        }
+        return result;
+    }
+
+    public void SetPlayHistoryAccountedFor(long playHistoryId)
+    {
+        using var stmt = new SQLiteCommand(
+            """
+            UPDATE "PlayHistory"
+            SET accountedFor = 1
+            WHERE playHistoryId = @playHistoryId
+            """,
+            db
+        );
+        stmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
+        stmt.ExecuteNonQuery();
+    }
+
+    public class PlayHistory
+    {
+        public long PlayHistoryId;
+        public DateTime StartTime;
+        public double Duration;
+        public GameState Status;
+        public bool AccountedFor;
+    }
+
+    private SQLiteCommand? _getPlayHistoryStmt;
+
+    public PlayHistory GetPlayHistory(long playHistoryId)
+    {
+        _getPlayHistoryStmt ??= new SQLiteCommand(
+                    """
+            SELECT startTime, duration, status, accountedFor
+            FROM "PlayHistory"
+            WHERE playHistoryId = @playHistoryId
+            """,
+                    db
+                );
+        _getPlayHistoryStmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
+        using var reader = _getPlayHistoryStmt.ExecuteReader();
+        if (!reader.Read())
+        {
+            throw new Exception("Play history not found");
+        }
+        return new PlayHistory
+        {
+            PlayHistoryId = playHistoryId,
+            StartTime = DateTime.Parse(reader.GetString(0), System.Globalization.CultureInfo.InvariantCulture),
+            Duration = reader.GetDouble(1),
+            Status = (GameState)reader.GetInt32(2),
+            AccountedFor = reader.GetBoolean(3),
+        };
+    }
+
+    public List<KeyValuePair<string, int>> GetPlayHistoryDetails(long playHistoryId)
+    {
+        using var stmt = new SQLiteCommand(
+            """
+            SELECT stat, value
+            FROM "PlayHistoryDetail"
+            WHERE playHistoryId = @playHistoryId
+            """,
+            db
+        );
+        stmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
+        using var reader = stmt.ExecuteReader();
+        var result = new List<KeyValuePair<string, int>>();
+        while (reader.Read())
+        {
+            result.Add(new KeyValuePair<string, int>(reader.GetString(0), reader.GetInt32(1)));
+        }
+        return result;
+    }
+
+    private SQLiteCommand? _addToInventoryStmt;
+
+    public void AddToInventory(string itemId, int count)
+    {
+        _addToInventoryStmt ??= new SQLiteCommand(
+            """
+            INSERT INTO "Inventory"
+            (saveId, itemId, count)
+            VALUES (@saveId, @itemId, @count)
+            ON CONFLICT (saveId, itemId) DO UPDATE SET count = count + excluded.count
+            """,
+            db
+        );
+        _addToInventoryStmt.Parameters.Clear();
+        _addToInventoryStmt.Parameters.AddWithValue("@saveId", SaveId);
+        _addToInventoryStmt.Parameters.AddWithValue("@itemId", itemId);
+        _addToInventoryStmt.Parameters.AddWithValue("@count", count);
+        _addToInventoryStmt.ExecuteNonQuery();
     }
 
 }

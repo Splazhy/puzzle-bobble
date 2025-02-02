@@ -4,12 +4,17 @@ using Microsoft.Xna.Framework.Graphics;
 using Myra.Graphics2D.UI;
 using Myra.Graphics2D;
 using Myra.Graphics2D.Brushes;
+using Microsoft.Xna.Framework.Input;
 
 namespace PuzzleBobble.Scene;
 
 public class CraftScene : AbstractScene
 {
     private Desktop? _desktop;
+    private bool _escKeyDown = true;
+
+    private SaveData? _saveData;
+
 
     public CraftScene() : base("scene_craft")
     {
@@ -17,13 +22,46 @@ public class CraftScene : AbstractScene
 
     public override void Initialize(Game game, SaveData sd)
     {
+        _saveData = sd;
 
+        using var transaction = _saveData.BeginTransaction();
+        var unaccountedPlays = _saveData.GetUnaccountedPlayHistoryEntries();
+        foreach (var play in unaccountedPlays)
+        {
+            var info = _saveData.GetPlayHistory(play);
+            if (info.Status != GameState.Success)
+            {
+                if (info.Status == GameState.Playing)
+                {
+                    _saveData.UpdatePlayHistoryEntry(play, info.Duration, GameState.Fail);
+                }
+                continue;
+            }
+            var details = _saveData.GetPlayHistoryDetails(play);
+            foreach (var (statItem, count) in details)
+            {
+                if (statItem.StartsWith("ball-"))
+                {
+                    var ballId = statItem[5..];
+                    _saveData.AddToInventory($"ingredient-{ballId}", count);
+                }
+            }
+        }
+
+        transaction.Commit();
+        _saveData.CleanupCachedStmts();
     }
 
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
+        SetupMyra();
+    }
+
+    private void SetupMyra()
+    {
         // Grid
+
         var mainGrid = new Grid
         {
             RowSpacing = 8,
@@ -155,17 +193,35 @@ public class CraftScene : AbstractScene
         };
 
         CraftBtn.Click += (sender, args) =>
-       {
-           rightBottom.Widgets.Clear();
-           rightBottom.Widgets.Add(CraftLabel);
+        {
+            rightBottom.Widgets.Clear();
+            rightBottom.Widgets.Add(CraftLabel);
 
-           Grid.SetRow(rightBottom, 2);
-       };
+            Grid.SetRow(rightBottom, 2);
+        };
 
         _desktop = new Desktop
         {
             Root = mainGrid
         };
+    }
+
+
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    {
+        base.Update(gameTime, parentTranslate);
+        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        {
+            if (!_escKeyDown)
+            {
+                ChangeScene(new MenuScene());
+                _escKeyDown = true;
+            }
+        }
+        else
+        {
+            _escKeyDown = false;
+        }
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
