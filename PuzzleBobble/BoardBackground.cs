@@ -33,7 +33,7 @@ public class BoardBackground : GameObject
         Debug.Assert(rightBorder is not null, "Right border is not loaded.");
 
         var BOARD_HALF_WIDTH_PX = GameBoard.BOARD_HALF_WIDTH_PX;
-        var sourceY = -_gameBoard.Position.Y;
+        var sourceY = -(_gameBoard.Position.Y / 3);
         var subPixelY = sourceY - (int)sourceY;
         spriteBatch.Draw(
             background,
