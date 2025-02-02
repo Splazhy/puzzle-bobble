@@ -413,19 +413,20 @@ public class GameBoard : GameObject
     public static readonly float FINAL_SPEED = 2f;
     public static readonly float PUSHDOWN_SPEED = 4f;
     public static readonly float LERP_AMOUNT = 5.0f;
-    public static readonly float EXPLODE_PUSHBACK_BONUS = -30f;
 
     private float ComputePushbackSpeed(int ballCount)
     {
-        return EXPLODE_PUSHBACK_BONUS * Math.Max(0, ballCount - 2);
+        if (ballCount < 3) return 0;
+        // higher ball count means more pushback, but not as much as linear
+        return -48 * MathF.Log2(ballCount);
     }
 
     private float ComputePreferredSpeed()
     {
         if (_state != GameState.Playing) return 0;
-        double prefDistance = GetPreferredPos() - Position.Y;
+        double prefDistance = Math.Max(0, GetPreferredPos() - Position.Y);
         double deathDistance = GetDistanceFromDeath();
-        float catchUpSpeed = (float)Math.Max(0, prefDistance / 6);
+        float catchUpSpeed = (float)Math.Max(0, Math.Pow(prefDistance / 10, 1.6));
         float pushDownSpeed = (float)Math.Min(Math.Max(0, deathDistance / 8), PUSHDOWN_SPEED);
 
         return FINAL_SPEED + pushDownSpeed + catchUpSpeed;
