@@ -42,7 +42,7 @@ The code in this repository is licensed under the [MIT License](./LICENSE).
 ### Assets
 The art assets in the `Content/Graphics/` folder are licensed under [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
 
-The audio assets in the `Content/Audio/Sfx` folder are created/distributed by [Kenney](www.kenney.nl), licensed under [Creative Commons Zero, CC0](http://creativecommons.org/publicdomain/zero/1.0/). Thanks Kenney!
+Some audio assets in the `Content/Audio/Sfx` folder are created/distributed by [Kenney](www.kenney.nl), licensed under [Creative Commons Zero, CC0](http://creativecommons.org/publicdomain/zero/1.0/) (thanks Kenney!) and some are provided by [Pixabay](https://pixabay.com/) under [Pixabay's Content License](https://pixabay.com/th/service/license-summary/).
 
 ## References
 
