@@ -246,7 +246,8 @@ public readonly struct BallData
         }
 
         animState.explosionAnim.KeepDrawingAfterFinish = false;
-        animState.explodeDelay = _rand.NextSingle() * MAX_EXPLODE_DELAY;
+        if (IsBomb) { animState.explodeDelay = 0; }
+        else { animState.explodeDelay = _rand.NextSingle() * MAX_EXPLODE_DELAY; }
         animState.petrifyDelay = _rand.NextSingle() * MAX_PETRIFY_DELAY;
     }
 
