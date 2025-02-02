@@ -62,6 +62,7 @@ public class CraftScene : AbstractScene
                 {
                     _saveData.UpdatePlayHistoryEntry(play, info.Duration, GameState.Fail);
                 }
+                _saveData.SetPlayHistoryAccountedFor(play);
                 continue;
             }
             var details = _saveData.GetPlayHistoryDetails(play);
