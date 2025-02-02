@@ -14,6 +14,8 @@ public struct OffsetCoord
 
     public readonly Hex ToHex()
     {
+        // & 1 is a way to check if the number is odd
+        // % 2 has an annoying behavior for negative numbers
         int q = Col - (Row + ODD * (Row & 1)) / 2;
         int r = Row;
         return new Hex(q, r);

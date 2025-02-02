@@ -44,6 +44,11 @@ public readonly struct BallData
         this.value = value;
     }
 
+    public BallData(BallData other)
+    {
+        value = other.value;
+    }
+
     public static BallData FromCode(string code)
     {
         string firstChar = code.Substring(0, 1);
@@ -63,6 +68,26 @@ public readonly struct BallData
             case "S":
                 return new BallData((int)SpecialType.Stone);
         }
+    }
+
+    public static string ToCode(BallData ball)
+    {
+        if (ball.IsColor)
+        {
+            return ((char)('a' + ball.value)).ToString();
+        }
+        return ball.value switch
+        {
+            (int)SpecialType.Rainbow => "R",
+            (int)SpecialType.Bomb => "B",
+            (int)SpecialType.Stone => "S",
+            _ => throw new ArgumentException($"Invalid special ball type: {ball.value}")
+        };
+    }
+
+    public static int RandomColor(Random rand)
+    {
+        return rand.Next(COLOR_COUNT);
     }
 
     public class Assets
@@ -437,6 +462,30 @@ public readonly struct BallData
                 new Vector2(BALL_SIZE / 2, BALL_SIZE / 2)
             );
         }
+    }
+
+    public static string HexMapToString(HexMap<BallData> map)
+    {
+        List<string> lines = [];
+        for (int row = map.MinR; row <= map.MaxR; row++)
+        {
+            List<string> cells = [];
+            bool stagger = (row & 1) == 1;
+            for (int col = 0; col < (stagger ? 7 : 8); col++)
+            {
+                var data = map[new OffsetCoord(col, row)];
+                if (data is BallData bd)
+                {
+                    cells.Add(ToCode(bd));
+                }
+                else
+                {
+                    cells.Add(".");
+                }
+            }
+            lines.Add((stagger ? " " : "") + string.Join(" ", cells));
+        }
+        return string.Join("\n", lines);
     }
 
     public class BallStats

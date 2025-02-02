@@ -82,6 +82,7 @@ public class GameBoard : GameObject
 
         var level = Level.Generate(new Random());
         hexMap = level.ToHexRectMap();
+        _topRow = hexMap.MinR;
         bombStartTimes.Constraint = hexMap.Constraint;
 
         foreach (var item in hexMap)

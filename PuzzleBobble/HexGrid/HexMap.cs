@@ -48,7 +48,7 @@ public class HexMap<T> : IEnumerable<KeyValuePair<Hex, T>> where T : struct
                 {
                     if (r < offset.Col) return false;
 
-                    if (reduceRightByHalfHex && offset.Col == r && offset.Row % 2 == 1) return false;
+                    if (reduceRightByHalfHex && offset.Col == r && (offset.Row & 1) == 1) return false;
                 }
                 return true;
             };
