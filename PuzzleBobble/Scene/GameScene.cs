@@ -257,7 +257,7 @@ public class GameScene : AbstractScene
 
         if (_timeUntilNextPowerUp is null)
         {
-            _timeUntilNextPowerUp = gameTime.TotalGameTime + TimeSpan.FromSeconds(5 + _powerUpRand.NextSingle() * 1);
+            _timeUntilNextPowerUp = gameTime.TotalGameTime + TimeSpan.FromSeconds(15 + _powerUpRand.NextSingle() * 15);
         }
         else if (_timeUntilNextPowerUp < gameTime.TotalGameTime)
         {
