@@ -90,6 +90,11 @@ public readonly struct BallData
         return rand.Next(COLOR_COUNT);
     }
 
+    public static int RandomUsefulSpecial(Random rand)
+    {
+        return rand.Next((int)SpecialType.Bomb, (int)SpecialType.Rainbow + 1);
+    }
+
     public class Assets
     {
         public readonly Texture2D BallSpritesheet;
@@ -265,6 +270,11 @@ public readonly struct BallData
     }
 
     public bool IsPlayingExplosionAnimation => animState.isExploding;
+    public bool IsPlayingShineAnimation(GameTime gameTime)
+    {
+        Debug.Assert(animState.shineAnim is not null, "Shine animation is not loaded.");
+        return !animState.shineAnim.IsFinished(gameTime);
+    }
 
     public void PlayExplosionAnimation(GameTime gameTime)
     {
@@ -492,17 +502,23 @@ public readonly struct BallData
     {
         public readonly Dictionary<int, int> ColorCounts = [];
         public int Count = 0;
+        public int ColorCount = 0;
 
         public void Add(BallData ball)
         {
-            if (ColorCounts.TryGetValue(ball.value, out int value))
+            if (ball.IsColor)
             {
-                ColorCounts[ball.value] = ++value;
+                if (ColorCounts.TryGetValue(ball.value, out int value))
+                {
+                    ColorCounts[ball.value] = ++value;
+                }
+                else
+                {
+                    ColorCounts[ball.value] = 1;
+                }
+                ColorCount++;
             }
-            else
-            {
-                ColorCounts[ball.value] = 1;
-            }
+
             Count++;
         }
 
@@ -510,14 +526,19 @@ public readonly struct BallData
         {
             while (balls.MoveNext())
             {
-                if (ColorCounts.TryGetValue(balls.Current.value, out int value))
+                if (balls.Current.IsColor)
                 {
-                    ColorCounts[balls.Current.value] = ++value;
+                    if (ColorCounts.TryGetValue(balls.Current.value, out int value))
+                    {
+                        ColorCounts[balls.Current.value] = ++value;
+                    }
+                    else
+                    {
+                        ColorCounts[balls.Current.value] = 1;
+                    }
+                    ColorCount++;
                 }
-                else
-                {
-                    ColorCounts[balls.Current.value] = 1;
-                }
+
                 Count++;
             }
         }
@@ -535,6 +556,7 @@ public readonly struct BallData
 
         public bool Check(BallData ball)
         {
+            if (!ball.IsColor) return true;
             return ColorCounts.TryGetValue(ball.value, out int value)
                     && 0 < value;
         }

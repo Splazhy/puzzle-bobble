@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
+using PuzzleBobble.Easer;
 
 namespace PuzzleBobble.Scene;
 
@@ -32,6 +35,19 @@ public class GameScene : AbstractScene
     private bool _escKeyDown = false;
 
     private bool _boardChanged = false;
+
+    enum PowerUp
+    {
+        Precognition,
+        Lucky,
+        Special
+    }
+
+    private readonly Dictionary<PowerUp, TimeSpan> _powerUpEndTimes = [];
+    private int _powerUpsPending;
+    private TimeSpan? _timeUntilNextPowerUp = null;
+    private readonly Random _powerUpRand = new();
+    private int _specialsPending;
 
     public GameScene() : base("scene_game")
     {
@@ -62,6 +78,10 @@ public class GameScene : AbstractScene
         _gameBoard.BoardChanged += () =>
         {
             _boardChanged = true;
+        };
+        _gameBoard.PowerUpObtained += () =>
+        {
+            _powerUpsPending++;
         };
         children = [
             boardBackground,
@@ -202,10 +222,19 @@ public class GameScene : AbstractScene
             {
                 if (_slingshot.CheckNextData || _boardChanged)
                 {
-                    var bs = _gameBoard.GetBallStats();
+                    var bs = _gameBoard.GetBallStats(_powerUpEndTimes.ContainsKey(PowerUp.Lucky));
                     if (_slingshot.NextData is not BallData data || !bs.Check(data))
                     {
-                        var nextBall = bs.GetNextBall(_rand);
+                        BallData? nextBall;
+                        if (0 < _specialsPending)
+                        {
+                            _specialsPending--;
+                            nextBall = new BallData(BallData.RandomUsefulSpecial(_rand));
+                        }
+                        else
+                        {
+                            nextBall = bs.GetNextBall(_rand);
+                        }
                         _slingshot.SetNextData(gameTime, nextBall);
                     }
                     _boardChanged = false;
@@ -226,8 +255,50 @@ public class GameScene : AbstractScene
             }
         }
 
-        // TODO: replace this with proper powerup system
-        // _guideline.SetPowerUp(gameTime, Mouse.GetState().RightButton == ButtonState.Pressed);
+        if (_timeUntilNextPowerUp is null)
+        {
+            _timeUntilNextPowerUp = gameTime.TotalGameTime + TimeSpan.FromSeconds(5 + _powerUpRand.NextSingle() * 1);
+        }
+        else if (_timeUntilNextPowerUp < gameTime.TotalGameTime)
+        {
+            _gameBoard.PlacePowerUp(_powerUpRand, gameTime);
+            _timeUntilNextPowerUp = null;
+        }
+
+        while (0 < _powerUpsPending)
+        {
+            _powerUpsPending--;
+            var powerUps = Enum.GetValues<PowerUp>();
+            var chosenPowerUp = powerUps[_powerUpRand.Next(powerUps.Length)];
+            switch (chosenPowerUp)
+            {
+                case PowerUp.Precognition:
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(15);
+                    _guideline.SetPowerUp(gameTime, true);
+                    break;
+                case PowerUp.Lucky:
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(5);
+                    break;
+                case PowerUp.Special:
+                    _specialsPending++;
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(1.5);
+                    break;
+            }
+        }
+
+        foreach (var (powerUp, endTime) in _powerUpEndTimes)
+        {
+            if (endTime < gameTime.TotalGameTime)
+            {
+                switch (powerUp)
+                {
+                    case PowerUp.Precognition:
+                        _guideline.SetPowerUp(gameTime, false);
+                        break;
+                }
+                _powerUpEndTimes.Remove(powerUp);
+            }
+        }
 
         UpdatePendingAndDestroyedChildren();
     }
@@ -249,6 +320,16 @@ public class GameScene : AbstractScene
             case GameState.Success:
                 spriteBatch.DrawString(_font, "Success", new Vector2(100, ScreenPosition.Y), Color.White);
                 break;
+        }
+
+        foreach (var ((pwup, endTime), index) in _powerUpEndTimes.Select((item, index) => (item, index)))
+        {
+            var powerUpString = pwup.ToString();
+            var drawPosX = ScreenPositionO(new Vector2(GameBoard.BOARD_HALF_WIDTH_PX + 20, 0)).X;
+            var drawPosY = ScreenPosition.Y - index * 30;
+            var secsLeft = (endTime - gameTime.TotalGameTime).TotalSeconds;
+            var alpha = EasingFunctions.PowerInOut(2)(Math.Min(1, secsLeft));
+            spriteBatch.DrawString(_font, powerUpString, new Vector2(drawPosX, drawPosY), Color.White * (float)alpha);
         }
     }
 

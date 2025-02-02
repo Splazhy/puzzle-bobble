@@ -21,6 +21,7 @@ public class GameBoard : GameObject
     public static readonly double HEX_SIZE = HEX_WIDTH / Math.Sqrt(3);
     public static readonly double HEX_HEIGHT = HEX_SIZE * 2;
     public static readonly double HEX_VERTICAL_SPACING = HEX_HEIGHT * 0.75;
+    public static readonly int BOARD_WIDTH = 8;
 
     private SpriteFont? _debugfont;
 
@@ -39,16 +40,18 @@ public class GameBoard : GameObject
     private readonly HexLayout hexLayout = new(
         HexOrientation.POINTY,
         new Vector2Double(HEX_SIZE, HEX_SIZE),
-        new Vector2Double(HEX_INRADIUS * -7, HEX_SIZE) // -(HEX_WIDTH / 2 + HEX_WIDTH * 3) and HEX_HEIGHT / 2
+        new Vector2Double(HEX_INRADIUS * (1 - BOARD_WIDTH), HEX_SIZE) // -(HEX_WIDTH / 2 + HEX_WIDTH * 3) and HEX_HEIGHT / 2
     );
 
-    public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * 8;
-    public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * 4;
+
+    public static readonly int BOARD_WIDTH_PX = HEX_WIDTH * BOARD_WIDTH;
+    public static readonly int BOARD_HALF_WIDTH_PX = HEX_WIDTH * BOARD_WIDTH / 2;
 
 
     private SoundEffect? settleSfx;
     private HexMap<BallData> hexMap = [];
     private HexMap<TimeSpan> bombStartTimes = [];
+    private HexMap<TimeSpan> powerUpStartTimes = [];
 
     private BallData.Assets? _ballAssets;
 
@@ -255,7 +258,7 @@ public class GameBoard : GameObject
 
     // why keyvaluepair instead of tuple: https://stackoverflow.com/a/40826656/3623350
     // although haven't benchmarked it yet
-    public List<KeyValuePair<Vector2, BallData>> ExplodeBalls(Hex sourceHex, out Queue<Hex> bombs)
+    private List<KeyValuePair<Hex, BallData>> ExplodeBalls(Hex sourceHex, out Queue<Hex> bombs)
     {
         bombs = [];
         BallData? mapBall = hexMap[sourceHex];
@@ -292,12 +295,12 @@ public class GameBoard : GameObject
             }
         }
 
-        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        List<KeyValuePair<Hex, BallData>> explodingBalls = TakeBallsFromMap(affected);
         Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
         return explodingBalls;
     }
 
-    public List<KeyValuePair<Vector2, BallData>> ExplodeBomb(Hex sourceHex)
+    private List<KeyValuePair<Hex, BallData>> ExplodeBomb(Hex sourceHex)
     {
         BallData? mapBall = hexMap[sourceHex];
         if (mapBall is null) return [];
@@ -330,12 +333,12 @@ public class GameBoard : GameObject
             }
         }
 
-        List<KeyValuePair<Vector2, BallData>> explodingBalls = TakeBallsFromMap(affected);
+        List<KeyValuePair<Hex, BallData>> explodingBalls = TakeBallsFromMap(affected);
         Velocity.Y += ComputePushbackSpeed(explodingBalls.Count);
         return explodingBalls;
     }
 
-    public List<KeyValuePair<Vector2, BallData>> RemoveFloatingBalls()
+    private List<KeyValuePair<Hex, BallData>> RemoveFloatingBalls()
     {
         HashSet<Hex> floating = [];
         floating.UnionWith(hexMap.GetKeys());
@@ -369,14 +372,14 @@ public class GameBoard : GameObject
         return TakeBallsFromMap(floating);
     }
 
-    private List<KeyValuePair<Vector2, BallData>> TakeBallsFromMap(HashSet<Hex> affected)
+    private List<KeyValuePair<Hex, BallData>> TakeBallsFromMap(HashSet<Hex> affected)
     {
-        List<KeyValuePair<Vector2, BallData>> takenBalls = [];
+        List<KeyValuePair<Hex, BallData>> takenBalls = [];
         foreach (Hex hex in affected)
         {
             if (hexMap[hex] is BallData ball)
             {
-                takenBalls.Add(new KeyValuePair<Vector2, BallData>(ConvertHexToCenterInner(hex), ball));
+                takenBalls.Add(new KeyValuePair<Hex, BallData>(hex, ball));
                 hexMap[hex] = null;
             }
         }
@@ -447,10 +450,18 @@ public class GameBoard : GameObject
             if (0 < hexMap.MaxR - topRandRow)
             {
                 var coord = new OffsetCoord(_decoRand.Next(0, 8), _decoRand.Next(topRandRow, hexMap.MaxR + 1));
-                if (hexMap[coord] is BallData ball)
+                if (hexMap[coord] is BallData ball && !ball.IsPlayingShineAnimation(gameTime))
                 {
                     ball.PlayShineAnimation(gameTime);
                 }
+            }
+        }
+        foreach (var (hex, startTime) in powerUpStartTimes)
+        {
+            var ball = hexMap[hex];
+            if (ball is BallData bd && !bd.IsPlayingShineAnimation(gameTime))
+            {
+                bd.PlayShineAnimation(gameTime);
             }
         }
 
@@ -481,13 +492,23 @@ public class GameBoard : GameObject
             {
                 BoardChanged?.Invoke();
                 var explodingBalls = ExplodeBomb(hex);
-                bombStartTimes[hex] = null;
                 var fallBalls = RemoveFloatingBalls();
-                pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
+
+                foreach (var item2 in explodingBalls.Concat(fallBalls))
+                {
+                    if (powerUpStartTimes[item2.Key] is not null)
+                    {
+                        PowerUpObtained?.Invoke();
+                        powerUpStartTimes[item2.Key] = null;
+                    }
+                    bombStartTimes[item2.Key] = null;
+                }
+
+                pendingChildren.AddRange(explodingBalls.ConvertAll((explodingBall) =>
                 {
                     var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                     {
-                        Position = explodingBall.Key,
+                        Position = ConvertHexToCenterInner(explodingBall.Key)
                     };
                     return b;
                 }));
@@ -495,11 +516,19 @@ public class GameBoard : GameObject
                 {
                     var b = new Ball(fallingBall.Value, Ball.State.Falling)
                     {
-                        Position = fallingBall.Key,
+                        Position = ConvertHexToCenterInner(fallingBall.Key),
                         Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
                     };
                     return b;
                 }));
+            }
+        }
+
+        foreach (var (hex, startTime) in powerUpStartTimes)
+        {
+            if (startTime + TimeSpan.FromSeconds(10) < gameTime.TotalGameTime)
+            {
+                powerUpStartTimes[hex] = null;
             }
         }
 
@@ -580,11 +609,21 @@ public class GameBoard : GameObject
                 }
             }
 
+            foreach (var item in explodingBalls.Concat(fallBalls))
+            {
+                if (powerUpStartTimes[item.Key] is not null)
+                {
+                    PowerUpObtained?.Invoke();
+                    powerUpStartTimes[item.Key] = null;
+                }
+                bombStartTimes[item.Key] = null;
+            }
+
             pendingChildren.AddRange(explodingBalls.ConvertAll(explodingBall =>
             {
                 var b = new Ball(explodingBall.Value, Ball.State.Exploding)
                 {
-                    Position = explodingBall.Key,
+                    Position = ConvertHexToCenterInner(explodingBall.Key),
                 };
                 return b;
             }));
@@ -592,7 +631,7 @@ public class GameBoard : GameObject
             {
                 var b = new Ball(fallingBall.Value, Ball.State.Falling)
                 {
-                    Position = fallingBall.Key,
+                    Position = ConvertHexToCenterInner(fallingBall.Key),
                     Velocity = new Vector2((_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD, (_rand.NextSingle() >= 0.5f ? -1 : 1) * _rand.NextSingle() * FALLING_SPREAD)
                 };
                 return b;
@@ -649,14 +688,17 @@ public class GameBoard : GameObject
         return false;
     }
 
-    public BallData.BallStats GetBallStats()
+    public BallData.BallStats GetBallStats(bool lucky)
     {
         BallData.BallStats stats = new();
-        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.Count < 25; row--)
+        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 3); row--)
         {
-            for (int col = 0; col < 8 && stats.Count < 25; col++)
+            for (int i = 0; i < 8 && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 3); i++)
             {
-                var bd = new OffsetCoord(col, row);
+                var col = (BOARD_WIDTH / 2) +
+                    (i / 2) * (i % 2 == 0 ? 1 : -1) +
+                    (i % 2 == 0 ? 0 : -1);
+                var bd = new OffsetCoord(i, row);
                 if (hexMap[bd] is BallData ball)
                 {
                     stats.Add(ball);
@@ -682,5 +724,25 @@ public class GameBoard : GameObject
     {
         _state = GameState.Success;
     }
+
+    public void PlacePowerUp(Random pwupRand, GameTime gameTime)
+    {
+        if (hexMap.Count == 0) return;
+        while (true)
+        {
+            var row = pwupRand.Next(Math.Max(hexMap.MinR, hexMap.MaxR - 10), hexMap.MaxR + 1);
+            bool stagger = (row & 1) == 1;
+            var col = pwupRand.Next(0, stagger ? 8 : 9);
+            var coord = new OffsetCoord(col, row);
+            if (hexMap[coord] is BallData ball)
+            {
+                powerUpStartTimes[coord] = gameTime.TotalGameTime;
+                break;
+            }
+        }
+    }
+
+    public event PowerUpObtainedHandler? PowerUpObtained;
+    public delegate void PowerUpObtainedHandler();
 
 }
