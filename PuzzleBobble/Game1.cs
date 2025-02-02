@@ -77,11 +77,13 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.RosyBrown);
 
         _spriteBatch.Begin(samplerState: SamplerState.PointWrap, blendState: BlendState.AlphaBlend);
-        // TODO: hide/show these using debug options
-        _spriteBatch.DrawString(Font, $"Update Time: {_updateTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 10), Color.White);
-        _spriteBatch.DrawString(Font, $"Draw Orders Time: {_drawOrdersTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 40), Color.White);
-        _spriteBatch.DrawString(Font, $"Draw Call Time: {_drawCallTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 70), Color.White);
-        _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 100), Color.White);
+        if (DebugOptions.SHOW_TIMINGS)
+        {
+            _spriteBatch.DrawString(Font, $"Update Time: {_updateTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 10), Color.White);
+            _spriteBatch.DrawString(Font, $"Draw Orders Time: {_drawOrdersTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 40), Color.White);
+            _spriteBatch.DrawString(Font, $"Draw Call Time: {_drawCallTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 70), Color.White);
+            _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 100), Color.White);
+        }
 
         _stopwatch.Restart();
         _sceneManager.Draw(_spriteBatch, gameTime);

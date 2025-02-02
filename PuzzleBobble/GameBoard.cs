@@ -105,29 +105,43 @@ public class GameBoard : GameObject
         // better than nothing I guess ( ͡° ͜ʖ ͡°)
         Debug.Assert(_ballAssets is not null, "Ball assets are not loaded.");
 
-        var minDrawRow = Math.Max(TopRow, ComputeClosestHex(new Vector2(0, -150 - BallData.BALL_SIZE)).R);
-        for (int row = hexMap.MaxR; minDrawRow <= row; row--)
+        if (DebugOptions.GAMEBOARD_DRAW_ENTIRE_GRID)
         {
-            for (int col = 0; col < 8; col++)
+            foreach (var (hex, ball) in hexMap)
             {
-                var bd = new OffsetCoord(col, row);
-                var hex = bd.ToHex();
-                if (hexMap[hex] is BallData ball)
+                Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
+                ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+            }
+        }
+        else
+        {
+            var minDrawRow = Math.Max(TopRow, ComputeClosestHex(new Vector2(0, -150 - BallData.BALL_SIZE)).R);
+            for (int row = hexMap.MaxR; minDrawRow <= row; row--)
+            {
+                for (int col = 0; col < 8; col++)
                 {
-                    Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
-                    ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+                    var bd = new OffsetCoord(col, row);
+                    var hex = bd.ToHex();
+                    if (hexMap[hex] is BallData ball)
+                    {
+                        Vector2 p = hexLayout.HexToCenterPixel(hex).Downcast();
+                        ball.Draw(spriteBatch, gameTime, _ballAssets, ScreenPositionO(p));
+                    }
                 }
             }
         }
 
         DrawChildren(spriteBatch, gameTime);
 
-        spriteBatch.DrawString(
-            _debugfont,
-            $"pos: {Position}\ndelta: {GetPreferredPos() - Position.Y}\nvel: {Velocity}",
-            ScreenPositionO(new Vector2(0, (int)GetBottomEdgePos())),
-            Color.White
-        );
+        if (DebugOptions.GAMEBOARD_SHOW_POSITIONS)
+        {
+            spriteBatch.DrawString(
+                _debugfont,
+                $"pos: {Position}\ndelta: {GetPreferredPos() - Position.Y}\nvel: {Velocity}",
+                ScreenPositionO(new Vector2(0, (int)GetBottomEdgePos())),
+                Color.White
+            );
+        }
     }
 
     private Hex ComputeClosestHexInner(Vector2 pos)
