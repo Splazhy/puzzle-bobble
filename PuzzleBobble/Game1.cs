@@ -79,7 +79,7 @@ public class Game1 : Game
     {
         Debug.Assert(_spriteBatch is not null, "SpriteBatch is not loaded.");
 
-        GraphicsDevice.Clear(Color.RosyBrown);
+        GraphicsDevice.Clear(_sceneManager.GetBackgroundColor());
 
         _spriteBatch.Begin(samplerState: SamplerState.PointWrap, blendState: BlendState.AlphaBlend);
         if (DebugOptions.SHOW_TIMINGS)

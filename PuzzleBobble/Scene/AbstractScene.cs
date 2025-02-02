@@ -28,4 +28,6 @@ public abstract class AbstractScene : GameObject
     {
         return null;
     }
+
+    public virtual Color BackgroundColor => Color.RosyBrown;
 }

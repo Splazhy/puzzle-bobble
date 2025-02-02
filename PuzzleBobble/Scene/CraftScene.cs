@@ -21,6 +21,8 @@ public class CraftScene : AbstractScene
 
     private ItemData.Assets? _itemAssets;
 
+    public override Color BackgroundColor => new(69, 41, 63);
+
 
     public CraftScene() : base("scene_craft")
     {

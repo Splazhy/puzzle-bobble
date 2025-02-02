@@ -54,6 +54,8 @@ public class GameScene : AbstractScene
     private TimeSpan? _lastUpdateTime;
     private TimeSpan _startTime;
 
+    public override Color BackgroundColor => new(49, 54, 56);
+
     public GameScene() : base("scene_game")
     {
     }

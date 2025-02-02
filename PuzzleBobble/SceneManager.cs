@@ -58,4 +58,9 @@ public class SceneManager
     {
         return CurrentScene.DrawMyra();
     }
+
+    public Color GetBackgroundColor()
+    {
+        return CurrentScene.BackgroundColor;
+    }
 }
