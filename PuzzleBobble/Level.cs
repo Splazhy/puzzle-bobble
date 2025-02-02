@@ -238,7 +238,7 @@ public class Level
         ).ToArray();
 
         List<int> ballColorsUsed = [];
-        while (ballColorsUsed.Count < 6)
+        while (ballColorsUsed.Count < 7)
         {
             var color = BallData.RandomColor(random);
             if (!ballColorsUsed.Contains(color))
@@ -256,9 +256,9 @@ public class Level
         while (level.BallCount < 300)
         {
             int usingTypeCount;
-            if (level.BallCount < 50) { usingTypeCount = 3; }
+            if (level.BallCount < 60) { usingTypeCount = 3; }
             else if (level.BallCount < 150) { usingTypeCount = 4; }
-            else if (level.BallCount < 250) { usingTypeCount = 5; }
+            else if (level.BallCount < 225) { usingTypeCount = 5; }
             else { usingTypeCount = 6; }
 
             var lowLevelPool = totalLevelPool.Where(
