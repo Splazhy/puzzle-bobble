@@ -5,20 +5,28 @@ using Myra.Graphics2D.UI;
 using Myra.Graphics2D;
 using Myra.Graphics2D.Brushes;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace PuzzleBobble.Scene;
 
 public class CraftScene : AbstractScene
 {
+    private SpriteFont? _font;
     private Desktop? _desktop;
     private bool _escKeyDown = true;
 
     private SaveData? _saveData;
 
+    private ItemData.Assets? _itemAssets;
+
 
     public CraftScene() : base("scene_craft")
     {
     }
+
+    private readonly Dictionary<ItemData, int> inventory = [];
 
     public override void Initialize(Game game, SaveData sd)
     {
@@ -46,16 +54,34 @@ public class CraftScene : AbstractScene
                     _saveData.AddToInventory($"ingredient-{ballId}", count);
                 }
             }
+            _saveData.SetPlayHistoryAccountedFor(play);
         }
 
         transaction.Commit();
         _saveData.CleanupCachedStmts();
+
+        RefreshFromSaveData();
     }
 
     public override void LoadContent(ContentManager content)
     {
-        base.LoadContent(content);
+        _itemAssets = new ItemData.Assets(content);
+        _font = content.Load<SpriteFont>("Fonts/Arial24");
         SetupMyra();
+        base.LoadContent(content);
+    }
+
+    public void RefreshFromSaveData()
+    {
+        inventory.Clear();
+        Debug.Assert(_saveData is not null);
+
+        var saveInventory = _saveData.GetInventory();
+        foreach (var (itemId, count) in saveInventory)
+        {
+            var itemData = new ItemData(itemId);
+            inventory[itemData] = count;
+        }
     }
 
     private void SetupMyra()
@@ -226,6 +252,17 @@ public class CraftScene : AbstractScene
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        _desktop?.Render();
+        Debug.Assert(_itemAssets is not null);
+        foreach (var ((item, count), index) in inventory.Select((e, i) => (e, i)))
+        {
+            item.Draw(spriteBatch, _itemAssets, new Vector2(0, 16 * index * PIXEL_SIZE), Vector2.Zero);
+            spriteBatch.DrawString(_font, $"{item.ItemId} x {count}", new Vector2(16 * PIXEL_SIZE, 16 * index * PIXEL_SIZE), Color.White);
+        }
     }
+
+    public override Desktop? DrawMyra()
+    {
+        return _desktop;
+    }
+
 }

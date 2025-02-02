@@ -320,4 +320,24 @@ public class SaveData
         _addToInventoryStmt.ExecuteNonQuery();
     }
 
+    public List<KeyValuePair<string, int>> GetInventory()
+    {
+        using var stmt = new SQLiteCommand(
+            """
+            SELECT itemId, count
+            FROM "Inventory"
+            WHERE saveId = @saveId
+            """,
+            db
+        );
+        stmt.Parameters.AddWithValue("@saveId", SaveId);
+        using var reader = stmt.ExecuteReader();
+        var result = new List<KeyValuePair<string, int>>();
+        while (reader.Read())
+        {
+            result.Add(new KeyValuePair<string, int>(reader.GetString(0), reader.GetInt32(1)));
+        }
+        return result;
+    }
+
 }
