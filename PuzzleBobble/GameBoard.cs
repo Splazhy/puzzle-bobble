@@ -50,6 +50,7 @@ public class GameBoard : GameObject
 
 
     private SoundEffect? settleSfx;
+    private SoundEffect? bombFuseSfx;
     private HexMap<BallData> hexMap = [];
     private readonly HexMap<TimeSpan> bombStartTimes = [];
     private readonly HexMap<TimeSpan> powerUpStartTimes = [];
@@ -104,6 +105,7 @@ public class GameBoard : GameObject
         // IsInfinite = true;
 
         settleSfx = content.Load<SoundEffect>("Audio/Sfx/glass_002");
+        bombFuseSfx = content.Load<SoundEffect>("Audio/Sfx/fuse");
 
         _topBorder = content.Load<Texture2D>("Graphics/border_top");
 
@@ -624,6 +626,7 @@ public class GameBoard : GameObject
             var explodingBalls = ExplodeBalls(ballClosestHex, out Queue<Hex> bombs);
             var fallBalls = RemoveFloatingBalls();
 
+            Debug.Assert(bombFuseSfx is not null);
             foreach (var hex in bombs)
             {
                 if (hexMap[hex] is BallData bomb)
@@ -633,6 +636,7 @@ public class GameBoard : GameObject
                     {
                         bombStartTimes[hex] = gameTime.TotalGameTime;
                         bomb.PlayAltAnimation(gameTime);
+                        bombFuseSfx.Play();
                     }
                 }
             }
@@ -678,6 +682,7 @@ public class GameBoard : GameObject
                 {
                     bombStartTimes[ballClosestHex] = gameTime.TotalGameTime;
                     data.Value.PlayAltAnimation(gameTime);
+                    bombFuseSfx.Play();
                 }
             }
 
