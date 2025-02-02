@@ -36,13 +36,6 @@ public class MenuScene : AbstractScene
         };
         startBtn.Click += (sender, args) => ChangeScene(new GameScene());
 
-        var optionsBtn = new Button
-        {
-            Content = new Label { Text = "Options" },
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Padding = new Thickness(20, 10),
-        };
-
         var creditsBtn = new Button
         {
             Content = new Label { Text = "Credits" },
@@ -59,13 +52,13 @@ public class MenuScene : AbstractScene
         };
         quitBtn.Click += (sender, args) => _game?.Exit();
 
-        var testBtn = new Button
+        var homeBtn = new Button
         {
-            Content = new Label { Text = "Test" },
+            Content = new Label { Text = "Home" },
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        testBtn.Click += (sender, args) => ChangeScene(new CraftScene());
+        homeBtn.Click += (sender, args) => ChangeScene(new CraftScene());
 
         VerticalStackPanel menu = new()
 
@@ -75,10 +68,9 @@ public class MenuScene : AbstractScene
             Widgets =
             {
                 startBtn,
-                optionsBtn,
+                homeBtn,
                 creditsBtn,
                 quitBtn,
-                testBtn
             }
         };
 
