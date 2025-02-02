@@ -444,8 +444,9 @@ public class GameScene : AbstractScene
         foreach (var ((pwup, endTime), index) in _powerUpEndTimes.Select((item, index) => (item, index)))
         {
             var powerUpString = GetPowerUpName(pwup);
-            var drawPosX = ScreenPositionO(new Vector2(GameBoard.BOARD_HALF_WIDTH_PX + 20, 0)).X;
-            var drawPosY = ScreenPosition.Y - index * 30;
+            var offsetedPos = ScreenPositionO(new Vector2(GameBoard.BOARD_HALF_WIDTH_PX + 20, 50));
+            var drawPosX = offsetedPos.X;
+            var drawPosY = offsetedPos.Y + index * 30;
             var secsLeft = (endTime - gameTime.TotalGameTime).TotalSeconds;
             var alpha = EasingFunctions.PowerInOut(2)(Math.Min(1, secsLeft));
             spriteBatch.DrawString(_font, powerUpString, new Vector2(drawPosX, drawPosY), Color.White * (float)alpha);
