@@ -189,7 +189,7 @@ public readonly struct BallData
                         assets.ExplosionSpritesheet,
                         new Rectangle(
                             0,
-                            10 * (assets.ExplosionSpritesheet.Height / 12),
+                            9 * (assets.ExplosionSpritesheet.Height / 12),
                             assets.ExplosionSpritesheet.Width,
                             assets.ExplosionSpritesheet.Height / 12
                         ),
