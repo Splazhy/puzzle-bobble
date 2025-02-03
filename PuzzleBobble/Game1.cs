@@ -110,8 +110,9 @@ public class Game1 : Game
     {
         Window.ClientSizeChanged -= Window_ClientSizeChanged;
 
-        // TODO: code that needs to be run on window size change
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        GameObject.PIXEL_SIZE = Math.Max(1, Window.ClientBounds.Height / 300);
+
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
 
