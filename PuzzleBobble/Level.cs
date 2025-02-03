@@ -291,7 +291,7 @@ public class Level
             ).ToList();
 
             List<(List<KeyValuePair<string, Level>>, double)> availablePools = [
-                (mainLevelPool, 2.5),
+                (mainLevelPool, 3),
                 (lowLevelPool, 1),
                 (highLevelPool, 0.7),
             ];
