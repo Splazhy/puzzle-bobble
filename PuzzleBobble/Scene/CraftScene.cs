@@ -115,7 +115,8 @@ public class CraftScene : AbstractScene
         {
             Content = new Label { Text = "Back" },
             Left = 366,
-            VerticalAlignment = VerticalAlignment.Bottom
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Padding = new Thickness(20, 10),
         };
         BackBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
