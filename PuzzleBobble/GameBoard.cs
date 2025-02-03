@@ -585,7 +585,7 @@ public class GameBoard : GameObject
 
         if (ball.GetState() == Ball.State.Falling)
         {
-            if (400f / 3 < SelfToParentRelPos(ball.Position).Y)
+            if (150 + BallData.BALL_SIZE / 2 < SelfToParentRelPos(ball.Position).Y)
             {
                 ball.Destroy();
             }
