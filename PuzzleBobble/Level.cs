@@ -247,6 +247,8 @@ public class Level
         }
     }
 
+    private static int TARGET_BALL_COUNT = 300;
+
     public static Level Generate(Random random)
     {
         LoadAllToMemory();
@@ -270,12 +272,13 @@ public class Level
         var usedLevelNames = new List<string>();
 
         Level level = new();
-        while (level.BallCount < 300)
+        while (level.BallCount < TARGET_BALL_COUNT)
         {
+            var percentage = level.BallCount / (double)TARGET_BALL_COUNT;
             int usingTypeCount;
-            if (level.BallCount < 60) { usingTypeCount = 3; }
-            else if (level.BallCount < 150) { usingTypeCount = 4; }
-            else if (level.BallCount < 225) { usingTypeCount = 5; }
+            if (percentage < 0.2) { usingTypeCount = 3; }
+            else if (percentage < 0.5) { usingTypeCount = 4; }
+            else if (percentage < 0.75) { usingTypeCount = 5; }
             else { usingTypeCount = 6; }
 
             var lowLevelPool = totalLevelPool.Where(
