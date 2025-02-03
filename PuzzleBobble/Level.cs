@@ -247,7 +247,7 @@ public class Level
         }
     }
 
-    private static int TARGET_BALL_COUNT = 300;
+    private static readonly int TARGET_BALL_COUNT = 300;
 
     public static Level Generate(Random random)
     {
