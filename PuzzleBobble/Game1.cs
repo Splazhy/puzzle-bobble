@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PuzzleBobble.Scene;
 
 namespace PuzzleBobble;
 
@@ -36,7 +37,7 @@ public class Game1 : Game
         // there will be only one save data
         _saveData = new(1);
 
-        _sceneManager = new SceneManager(this, _saveData);
+        _sceneManager = new SceneManager(this, _saveData, new MenuScene());
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;

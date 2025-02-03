@@ -13,11 +13,11 @@ public class SceneManager
     private readonly SaveData _saveData;
     public AbstractScene CurrentScene { get; private set; }
 
-    public SceneManager(Game game, SaveData saveData)
+    public SceneManager(Game game, SaveData saveData, AbstractScene scene)
     {
         _game = game;
         _saveData = saveData;
-        CurrentScene = new MenuScene();
+        CurrentScene = scene;
         CurrentScene.SceneChanged += ChangeScene;
     }
 
