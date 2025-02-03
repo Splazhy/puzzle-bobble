@@ -125,30 +125,6 @@ public class Levels
              a a . b . c c
             """
 },
-{"3-layers",
-            """
-            a a a c c c b b
-             b b b a a a b
-            """
-},
-{"5-layers",
-            """
-            a a a c c c e e
-             b b b d d d e
-            """
-},
-{"3-tris",
-            """
-            a a b c c b a a
-             a b b c b b a
-            """
-},
-{"5-tris",
-            """
-            a a b c c d e e
-             a b b c d d e
-            """
-},
 {"3-zag",
             """
             a a . c c . a a
@@ -251,12 +227,6 @@ public class Levels
             """
             a . b . . c . d
              a . b . c . d
-            """
-},
-{"5-intermezzo2",
-            """
-            a b b b d d d c
-             a a e e e c c
             """
 },
 {"5-intermezzo2S",
