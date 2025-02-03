@@ -101,6 +101,66 @@ public class Levels
              a b a b a b a
             """
 },
+{"2-intermezzoLight",
+            """
+            a . a . . b . b
+             a . a . b . b
+            """
+},
+{"3-intermezzoLight",
+            """
+            . a . b b . c .
+             . a . b . c .
+            """
+},
+{"3-intermezzoLightB",
+            """
+            . a . b b . c .
+             a . . b . . c
+            """
+},
+{"3-intermezzoLightC",
+            """
+            . a . b b . c .
+             a a . b . c c
+            """
+},
+{"3-layers",
+            """
+            a a a c c c b b
+             b b b a a a b
+            """
+},
+{"5-layers",
+            """
+            a a a c c c e e
+             b b b d d d e
+            """
+},
+{"3-tris",
+            """
+            a a b c c b a a
+             a b b c b b a
+            """
+},
+{"5-tris",
+            """
+            a a b c c d e e
+             a b b c d d e
+            """
+},
+{"3-zag",
+            """
+            a a . c c . a a
+             . b b . b b .
+            """
+},
+{"5-zag",
+            """
+            a a . c c . e e
+             . b b . d d .
+            """
+},
 {"3-2-babycrown",
             """
             a . . a c . . b
@@ -185,6 +245,12 @@ public class Levels
             """
             a b c d d c b a
              a b c d c b a
+            """
+},
+{"4-intermezzoLight",
+            """
+            a . b . . c . d
+             a . b . c . d
             """
 },
 {"5-intermezzo2",
@@ -275,6 +341,12 @@ public class Levels
              . . b c h . .
             . . e a a . . .
              . . e d g . .
+            """
+},
+{"12-what",
+            """
+            a d e c c f g a
+             h b i j k b l
             """
 },
 {"test-bombpass",
