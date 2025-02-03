@@ -251,7 +251,7 @@ public class GameScene : AbstractScene
             Debug.Assert(_finishTime is not null, "Finish time is not set.");
             if (TimeSpan.FromSeconds(3) < gameTime.TotalGameTime - _finishTime)
             {
-                ChangeScene(new MenuScene());
+                ChangeScene(new MimiScene());
             }
         }
 
