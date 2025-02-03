@@ -170,12 +170,12 @@ public class GameScene : AbstractScene
         var pauseMenu = new VerticalStackPanel
         {
             Widgets = {
-                new Label { Text = "Paused", HorizontalAlignment = HorizontalAlignment.Center },
                 resumeBtn,
                 menuBtn
             },
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            Spacing = 6
         };
 
         _desktop = new Desktop
@@ -426,7 +426,6 @@ public class GameScene : AbstractScene
         Debug.Assert(_font is not null, "Font is not loaded.");
         Debug.Assert(_gameBoard is not null, "GameBoard is not loaded.");
         DrawChildren(spriteBatch, gameTime);
-        spriteBatch.DrawString(_font, "Press esc to pause", new Vector2(100, 200), Color.White);
 
         switch (_state)
         {

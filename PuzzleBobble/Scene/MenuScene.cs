@@ -35,7 +35,7 @@ public class MenuScene : AbstractScene
         {
             Content = new Label { Text = "Start" },
             HorizontalAlignment = HorizontalAlignment.Center,
-            Padding = new Thickness(20, 10),
+            Padding = new Thickness(40, 20),
         };
         startBtn.Click += (sender, args) => ChangeUpperScene(new GameScene());
 
@@ -66,15 +66,17 @@ public class MenuScene : AbstractScene
         VerticalStackPanel menu = new()
 
         {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
             Widgets =
             {
                 startBtn,
                 homeBtn,
                 creditsBtn,
                 quitBtn,
-            }
+            },
+            Margin = new Thickness(0, 0, 200, 50),
+            Spacing = 6
         };
 
         _desktop = new Desktop
