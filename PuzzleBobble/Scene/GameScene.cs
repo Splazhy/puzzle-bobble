@@ -32,8 +32,6 @@ public class GameScene : AbstractScene
 
     private GameState _state = GameState.Playing;
     private TimeSpan? _finishTime = null;
-    private bool _escKeyDown = false;
-
     private bool _boardChanged = false;
 
     enum PowerUp
@@ -166,7 +164,7 @@ public class GameScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        menuBtn.Click += (sender, args) => ChangeScene(new MenuScene());
+        menuBtn.Click += (sender, args) => ChangeUpperScene(new MimiScene());
 
         var pauseMenu = new VerticalStackPanel
         {
@@ -236,24 +234,16 @@ public class GameScene : AbstractScene
             _guideline.TurnOn(gameTime);
         }
         base.Update(gameTime, parentTranslate);
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (GoBackTriggered)
         {
-            if (!_escKeyDown)
+            if (_state == GameState.Paused)
             {
-                if (_state == GameState.Paused)
-                {
-                    Unpause();
-                }
-                else if (_state == GameState.Playing)
-                {
-                    Pause();
-                }
-                _escKeyDown = true;
+                Unpause();
             }
-        }
-        else
-        {
-            _escKeyDown = false;
+            else if (_state == GameState.Playing)
+            {
+                Pause();
+            }
         }
 
         if (_state == GameState.Fail || _state == GameState.Success)

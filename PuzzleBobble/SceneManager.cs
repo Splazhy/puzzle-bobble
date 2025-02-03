@@ -12,6 +12,7 @@ public class SceneManager
     private readonly Game _game;
     private readonly SaveData _saveData;
     public AbstractScene CurrentScene { get; private set; }
+    public event SceneChangedHandler? UpperSceneChanged;
 
     public SceneManager(Game game, SaveData saveData, AbstractScene scene)
     {
@@ -19,19 +20,28 @@ public class SceneManager
         _saveData = saveData;
         CurrentScene = scene;
         CurrentScene.SceneChanged += ChangeScene;
+        CurrentScene.UpperSceneChanged += ChangeUpperScene;
     }
 
-    private void ChangeScene(AbstractScene oldScene, AbstractScene newScene)
+    private void ChangeScene(AbstractScene newScene)
     {
         // The scene invoking the event must be the current scene
-        Debug.Assert(CurrentScene == oldScene);
 
         CurrentScene.SceneChanged -= ChangeScene;
+        CurrentScene.UpperSceneChanged -= ChangeUpperScene;
         CurrentScene = newScene;
         CurrentScene.SceneChanged += ChangeScene;
+        CurrentScene.UpperSceneChanged += ChangeUpperScene;
 
         CurrentScene.Initialize(_game, _saveData);
         CurrentScene.LoadContent(_game.Content);
+    }
+
+    private void ChangeUpperScene(AbstractScene newScene)
+    {
+        // The scene invoking the event must be the current scene
+        if (UpperSceneChanged is not null) { UpperSceneChanged(newScene); }
+        else { ChangeScene(newScene); }
     }
 
     public void Initialize()

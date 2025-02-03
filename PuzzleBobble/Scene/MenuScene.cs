@@ -12,7 +12,6 @@ public class MenuScene : AbstractScene
 {
     private Game? _game;
     private Desktop? _desktop;
-    private bool _escKeyDown = true;
 
     public MenuScene() : base("scene_menu")
     {
@@ -34,7 +33,7 @@ public class MenuScene : AbstractScene
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        startBtn.Click += (sender, args) => ChangeScene(new GameScene());
+        startBtn.Click += (sender, args) => ChangeUpperScene(new GameScene());
 
         var creditsBtn = new Button
         {
@@ -82,15 +81,11 @@ public class MenuScene : AbstractScene
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         Debug.Assert(_game is not null, "Game is not loaded.");
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (GoBackTriggered)
         {
-            if (!_escKeyDown) _game.Exit();
-            _escKeyDown = true;
-        }
-        else
-        {
-            _escKeyDown = false;
+            _game.Exit();
         }
     }
 

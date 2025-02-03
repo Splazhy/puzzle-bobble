@@ -67,14 +67,14 @@ public class CreditsScene : AbstractScene
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
         base.Update(gameTime, parentTranslate);
-        if (Keyboard.GetState().IsKeyDown(Keys.Q))
+        if (GoBackTriggered)
         {
             ChangeScene(new MenuScene());
         }
     }
 
-    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    public override Desktop? DrawMyra()
     {
-        _desktop?.Render();
+        return _desktop;
     }
 }

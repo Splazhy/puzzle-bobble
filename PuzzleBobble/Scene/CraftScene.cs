@@ -16,23 +16,11 @@ public class CraftScene : AbstractScene
 {
     private SpriteFont? _font;
     private Desktop? _desktop;
-    private bool _escKeyDown = true;
-
     private SaveData? _saveData;
 
     private ItemData.Assets? _itemAssets;
 
     public override Color BackgroundColor => new(69, 41, 63);
-
-    private Texture2D? _cauldronTexture;
-    private Texture2D? _homeDecorTexture;
-    private Texture2D? _mimiTexture;
-    private AnimatedTexture2D? _mimiAnim;
-    private Texture2D? _mimiEyesTexture;
-    private AnimatedTexture2D? _mimiEyesAnim;
-    private TimeSpan _nextMimiBlinkTime = TimeSpan.Zero;
-    private readonly Random _rand = new();
-
 
 
     public CraftScene() : base("scene_craft")
@@ -43,12 +31,6 @@ public class CraftScene : AbstractScene
 
     public override void Initialize(Game game, SaveData sd)
     {
-        children = [
-            new MimiBook() {
-                Position = new Vector2(-82, 31)
-            },
-        ];
-
         _saveData = sd;
 
         using var transaction = _saveData.BeginTransaction();
@@ -87,17 +69,6 @@ public class CraftScene : AbstractScene
     {
         _itemAssets = new ItemData.Assets(content);
         _font = content.Load<SpriteFont>("Fonts/Arial24");
-        _cauldronTexture = content.Load<Texture2D>("Graphics/cauldron");
-        _homeDecorTexture = content.Load<Texture2D>("Graphics/home_decor");
-        _mimiTexture = content.Load<Texture2D>("Graphics/mimi");
-        _mimiAnim = new AnimatedTexture2D(_mimiTexture, 3, 1, 0.5f, true);
-        _mimiEyesTexture = content.Load<Texture2D>("Graphics/mimi_eyes");
-        _mimiEyesAnim = new AnimatedTexture2D(_mimiEyesTexture,
-            new Rectangle(_mimiEyesTexture.Width / 3, 0, _mimiEyesTexture.Width, _mimiEyesTexture.Height),
-         3, 1, 0.05f, false)
-        {
-            KeepDrawingAfterFinish = true
-        };
 
         SetupMyra();
         base.LoadContent(content);
@@ -269,83 +240,17 @@ public class CraftScene : AbstractScene
         base.Update(gameTime, parentTranslate);
         UpdateChildren(gameTime);
 
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (GoBackTriggered)
         {
-            if (!_escKeyDown)
-            {
-                ChangeScene(new MenuScene());
-                _escKeyDown = true;
-            }
-        }
-        else
-        {
-            _escKeyDown = false;
-        }
-
-        Debug.Assert(_mimiEyesAnim is not null);
-        if (_nextMimiBlinkTime < gameTime.TotalGameTime)
-        {
-            _mimiEyesAnim.Play(gameTime);
-            _nextMimiBlinkTime = gameTime.TotalGameTime + TimeSpan.FromSeconds(4.8 + 3 * _rand.NextDouble());
+            ChangeScene(new MenuScene());
         }
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_itemAssets is not null);
-        Debug.Assert(_cauldronTexture is not null);
-        Debug.Assert(_homeDecorTexture is not null);
-        Debug.Assert(_mimiTexture is not null);
-        Debug.Assert(_mimiAnim is not null);
-        Debug.Assert(_mimiEyesTexture is not null);
-        Debug.Assert(_mimiEyesAnim is not null);
-
-
-        spriteBatch.Draw(
-            _homeDecorTexture,
-            ScreenPositionO(new Vector2(90, 0)),
-            null,
-            Color.White,
-            0,
-            new Vector2(_homeDecorTexture.Width / 2, _homeDecorTexture.Height / 2),
-            PIXEL_SIZE,
-            SpriteEffects.None,
-            0
-        );
-
-        _mimiAnim.Draw(
-            spriteBatch,
-            gameTime,
-            ScreenPositionO(new Vector2(-171, 251)),
-            Color.White,
-            0,
-            new Vector2(_mimiTexture.Width / 6, _mimiTexture.Height),
-            PIXEL_SIZE
-        );
-
-        _mimiEyesAnim.Draw(
-            spriteBatch,
-            gameTime,
-            ScreenPositionO(new Vector2(-171, 251)),
-            Color.White,
-            0,
-            new Vector2(_mimiEyesTexture.Width / 6, _mimiEyesTexture.Height),
-            PIXEL_SIZE
-        );
 
         DrawChildren(spriteBatch, gameTime);
-
-        spriteBatch.Draw(
-            _cauldronTexture,
-            ScreenPositionO(new Vector2(-113, 100)),
-            null,
-            Color.White,
-            0,
-            new Vector2(_cauldronTexture.Width / 2, 17),
-            PIXEL_SIZE,
-            SpriteEffects.None,
-            0
-        );
 
         foreach (var ((item, count), index) in inventory.Select((e, i) => (e, i)))
         {
