@@ -122,6 +122,23 @@ public class Level
         BallColorsInLevel.UnionWith(other.BallColorsInLevel);
     }
 
+    public void FlipHorizontal()
+    {
+        Debug.Assert(!_readonly, "Cannot modify readonly level. (make a clone first)");
+        for (int row = Map.MinR; row <= Map.MaxR; row++)
+        {
+            var stagger = (row & 1) == 1;
+            var rowLength = 8 - (stagger ? 1 : 0);
+            for (int col = 0; col < rowLength / 2; col++)
+            {
+                var hex1 = new OffsetCoord(col, row).ToHex();
+                var hex2 = new OffsetCoord(rowLength - 1 - col, row).ToHex();
+                (Map[hex1], Map[hex2]) = (Map[hex2], Map[hex1]);
+            }
+        }
+        _sourceTextHash = null;
+    }
+
     public void ChangeColor(List<KeyValuePair<int, int>> changes)
     {
         Debug.Assert(!_readonly, "Cannot modify readonly level. (make a clone first)");
@@ -324,6 +341,11 @@ public class Level
                     availableColors.Remove(newColor);
                 }
                 coloredLevel.ChangeColor(colorChanges);
+
+                if (random.NextDouble() < 0.5)
+                {
+                    coloredLevel.FlipHorizontal();
+                }
 
                 level.StackUp(coloredLevel);
                 break;
