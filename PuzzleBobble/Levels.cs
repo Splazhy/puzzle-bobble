@@ -187,6 +187,18 @@ public class Levels
              a b c d c b a
             """
 },
+{"5-intermezzo2",
+            """
+            a b b b d d d c
+             a a e e e c c
+            """
+},
+{"5-intermezzo2S",
+            """
+            a b R b d B d c
+             a a e e e c c
+            """
+},
 {"5-6-Hat",
             """
             . . . . . d . .
