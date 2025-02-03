@@ -269,15 +269,33 @@ public class Level
                 pair => pair.Value.BallColorsCount == usingTypeCount
             ).ToList();
 
+            var highLevelPool = totalLevelPool.Where(
+                pair => usingTypeCount < pair.Value.BallColorsCount
+            ).ToList();
+
+            List<(List<KeyValuePair<string, Level>>, double)> availablePools = [
+                (mainLevelPool, 2.5),
+                (lowLevelPool, 1),
+                (highLevelPool, 0.7),
+            ];
+
             while (true)
             {
-
-                var chosenPool = _rand.NextSingle() < 0.75 ? mainLevelPool : lowLevelPool;
-                if (chosenPool.Count == 0)
+                availablePools = availablePools.Where(pair => 0 < pair.Item1.Count).ToList();
+                if (availablePools.Count == 0)
                 {
-                    chosenPool = (chosenPool == mainLevelPool) ? lowLevelPool : mainLevelPool;
-                    if (chosenPool.Count == 0) { throw new Exception("Could not generate level"); }
+                    throw new Exception("Could not generate level");
                 }
+
+                var totalWeight = availablePools.Sum(pair => pair.Item2);
+                var chosenSum = random.NextDouble() * totalWeight;
+                var (chosenPool, _) = availablePools.First(
+                    pair =>
+                    {
+                        chosenSum -= pair.Item2;
+                        return chosenSum <= 0;
+                    }
+                );
 
                 var poolIndex = random.Next(chosenPool.Count);
                 var (levelName, newLevel) = chosenPool[poolIndex];
@@ -291,11 +309,17 @@ public class Level
                 usedLevelNames.Add(levelName);
 
                 Level coloredLevel = new(newLevel);
-                var availableColors = ballColorsUsed.Take(usingTypeCount).ToList();
+                var availableColors = new List<int>();
                 var colorChanges = new List<KeyValuePair<int, int>>();
                 foreach (var color in newLevel.BallColorsInLevel)
                 {
-                    var newColor = availableColors[random.Next(availableColors.Count)];
+                    if (availableColors.Count == 0)
+                    {
+                        availableColors.AddRange(ballColorsUsed.Take(usingTypeCount));
+                    }
+                    var newI = random.Next(availableColors.Count);
+                    var newColor = availableColors[newI];
+                    availableColors.RemoveAt(newI);
                     colorChanges.Add(new KeyValuePair<int, int>(color, newColor));
                     availableColors.Remove(newColor);
                 }
