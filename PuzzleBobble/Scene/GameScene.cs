@@ -456,7 +456,7 @@ public class GameScene : AbstractScene
             var distanceFromTop = YOU_ARE_HERE_POS - _gameBoard.GetMapTopEdgePos();
             distanceFromTop /= GameBoard.HEX_VERTICAL_SPACING;
             var text = distanceFromTop <= 0 ? "- You are here" : $"^ {distanceFromTop:F2} rows to go";
-            var alpha2 = (distanceFromTop + 0.3) / 1.5;
+            var alpha2 = (distanceFromTop + 1) / 3;
             alpha2 = Math.Min(Math.Max(0, alpha2), 1);
             if (alpha2 == 0)
             {
