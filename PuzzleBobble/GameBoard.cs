@@ -734,14 +734,14 @@ public class GameBoard : GameObject
     public BallData.BallStats GetBallStats(bool lucky)
     {
         BallData.BallStats stats = new();
-        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 3); row--)
+        for (int row = hexMap.MaxR; hexMap.MinR <= row && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 2); row--)
         {
-            for (int i = 0; i < 8 && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 3); i++)
+            for (int i = 0; i < 8 && stats.ColorCount < 25 && (!lucky || stats.ColorCounts.Count < 2); i++)
             {
                 var col = (BOARD_WIDTH / 2) +
                     (i / 2) * (i % 2 == 0 ? 1 : -1) +
                     (i % 2 == 0 ? 0 : -1);
-                var bd = new OffsetCoord(i, row);
+                var bd = new OffsetCoord(col, row);
                 if (hexMap[bd] is BallData ball)
                 {
                     stats.Add(ball);

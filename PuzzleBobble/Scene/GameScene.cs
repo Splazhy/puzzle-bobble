@@ -359,11 +359,11 @@ public class GameScene : AbstractScene
             switch (chosenPowerUp)
             {
                 case PowerUp.Precognition:
-                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(15);
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(30);
                     _guideline.SetPowerUp(gameTime, true);
                     break;
                 case PowerUp.Lucky:
-                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(5);
+                    _powerUpEndTimes[chosenPowerUp] = gameTime.TotalGameTime + TimeSpan.FromSeconds(7.77);
                     break;
                 case PowerUp.Special:
                     _specialsPending++;
