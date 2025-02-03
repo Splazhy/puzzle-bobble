@@ -55,7 +55,6 @@ public class Level
                 BallData? value = cells[x] switch
                 {
                     "." => null,
-                    // TODO
                     _ => BallData.FromCode(cells[x]),
                 };
                 map[hex] = value;
