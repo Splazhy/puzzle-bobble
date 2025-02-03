@@ -60,12 +60,15 @@ public class SlingshotStaff : GameObject
             0
         );
 
-        spriteBatch.DrawString(
-            _debugfont,
-            $"pos {Position}\ntpos {TargetPosition}\nvel {Velocity}",
-            ScreenPositionO(new Vector2(15f / 3, 15f / 3)),
-            Color.White
-        );
+        if (DebugOptions.SLINGSHOTSTAFF_SHOW_POSITIONS)
+        {
+            spriteBatch.DrawString(
+                _debugfont,
+                $"pos {Position}\ntpos {TargetPosition}\nvel {Velocity}",
+                ScreenPositionO(new Vector2(15f / 3, 15f / 3)),
+                Color.White
+            );
+        }
 
     }
 }

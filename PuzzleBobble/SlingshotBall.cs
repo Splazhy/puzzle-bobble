@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBobble.Easer;
 namespace PuzzleBobble;
 
 public class SlingshotBall : GameObject
@@ -57,6 +58,7 @@ public class SlingshotBall : GameObject
             var rawFadeValue = (_time - gameTime.TotalGameTime) / FADE_TIME;
             fadeValue = Math.Max(0, rawFadeValue);
         }
+        fadeValue = EasingFunctions.PowerInOut(2)(fadeValue);
 
         Data.Draw(spriteBatch, gameTime, _ballAssets, ScreenPosition, (float)fadeValue);
 

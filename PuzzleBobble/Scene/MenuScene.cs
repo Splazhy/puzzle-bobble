@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -12,13 +13,14 @@ public class MenuScene : AbstractScene
 {
     private Game? _game;
     private Desktop? _desktop;
-    private bool _escKeyDown = true;
+
+    private Texture2D? _logoTexture;
 
     public MenuScene() : base("scene_menu")
     {
     }
 
-    public override void Initialize(Game game)
+    public override void Initialize(Game game, SaveData sd)
     {
         _game = game;
     }
@@ -26,22 +28,16 @@ public class MenuScene : AbstractScene
     public override void LoadContent(ContentManager content)
     {
         base.LoadContent(content);
+        _logoTexture = content.Load<Texture2D>("Graphics/logo");
 
         Button startBtn = new()
 
         {
             Content = new Label { Text = "Start" },
             HorizontalAlignment = HorizontalAlignment.Center,
-            Padding = new Thickness(20, 10),
+            Padding = new Thickness(40, 20),
         };
-        startBtn.Click += (sender, args) => ChangeScene(new GameScene());
-
-        var optionsBtn = new Button
-        {
-            Content = new Label { Text = "Options" },
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Padding = new Thickness(20, 10),
-        };
+        startBtn.Click += (sender, args) => ChangeUpperScene(new GameScene());
 
         var creditsBtn = new Button
         {
@@ -59,27 +55,28 @@ public class MenuScene : AbstractScene
         };
         quitBtn.Click += (sender, args) => _game?.Exit();
 
-        var testBtn = new Button
+        var homeBtn = new Button
         {
-            Content = new Label { Text = "Test" },
+            Content = new Label { Text = "Home" },
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };
-        testBtn.Click += (sender, args) => ChangeScene(new CraftScene());
+        homeBtn.Click += (sender, args) => ChangeScene(new CraftScene());
 
         VerticalStackPanel menu = new()
 
         {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
             Widgets =
             {
                 startBtn,
-                optionsBtn,
+                homeBtn,
                 creditsBtn,
                 quitBtn,
-                testBtn
-            }
+            },
+            Margin = new Thickness(0, 0, 200, 50),
+            Spacing = 6
         };
 
         _desktop = new Desktop
@@ -90,21 +87,37 @@ public class MenuScene : AbstractScene
 
     public override void Update(GameTime gameTime, Vector2 parentTranslate)
     {
+        base.Update(gameTime, parentTranslate);
         Debug.Assert(_game is not null, "Game is not loaded.");
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (GoBackTriggered)
         {
-            if (!_escKeyDown) _game.Exit();
-            _escKeyDown = true;
-        }
-        else
-        {
-            _escKeyDown = false;
+            _game.Exit();
         }
     }
 
     public override Desktop? DrawMyra()
     {
         return _desktop;
+    }
+
+    public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+    {
+        Debug.Assert(_logoTexture is not null, "Logo texture is not loaded.");
+
+        var wave = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * Math.PI * 1.2) * 2);
+
+
+        spriteBatch.Draw(
+            _logoTexture,
+            ScreenPositionO(new Vector2(257, -140 + wave)),
+            null,
+            Color.White,
+            0,
+            new Vector2(_logoTexture.Width, 0),
+            PIXEL_SIZE * (2f / 3f),
+            SpriteEffects.None,
+            0
+        );
     }
 
 }

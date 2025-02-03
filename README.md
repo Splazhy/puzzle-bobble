@@ -39,6 +39,8 @@ The code in this repository is licensed under the [MIT License](./LICENSE).
 
 `PuzzleBobble.Easer.Easer` and related classes' ported from [NutchapolSal/javagameproject](https://github.com/NutchapolSal/javagameproject/blob/main/Tetris/data/easer/Easer.java), licensed under the [MIT License](https://github.com/NutchapolSal/javagameproject/blob/main/LICENSE)
 
+`FrameCounter` implementation from craftworkgames' answer on https://stackoverflow.com/a/20679895
+
 ### Assets
 The art assets in the `Content/Graphics/` folder are licensed under [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](./Content/Graphics/LICENSE).
 

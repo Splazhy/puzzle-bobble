@@ -61,8 +61,19 @@ public class Ball : GameObject
         _ballAssets = new BallData.Assets(content);
         Data.LoadAnimation(_ballAssets);
 
-        explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
-        explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+        switch (Data.value)
+        {
+            case (int)BallData.SpecialType.Bomb:
+                explodeSfx = content.Load<SoundEffect>("Audio/Sfx/bomb_explosion").CreateInstance();
+                break;
+            case (int)BallData.SpecialType.Stone:
+                explodeSfx = content.Load<SoundEffect>("Audio/Sfx/rock_break").CreateInstance();
+                break;
+            default:
+                explodeSfx = content.Load<SoundEffect>($"Audio/Sfx/drop_00{_rand.Next(1, 4 + 1)}").CreateInstance();
+                explodeSfx.Pitch = MAX_RANDOM_PITCH_RANGE * _rand.NextSingle() - (MAX_RANDOM_PITCH_RANGE / 2.0f);
+                break;
+        }
         _soundDelay = Data.ExplosionDelay;
 
         bounceSfx = content.Load<SoundEffect>("Audio/Sfx/bong_001").CreateInstance();

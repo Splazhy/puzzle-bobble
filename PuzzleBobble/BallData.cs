@@ -12,8 +12,12 @@ public readonly struct BallData
 {
     public static readonly int BALL_SIZE = 16;
     public static readonly int EXPLOSION_SIZE = 32;
+    public static readonly int BOMB_EXPLOSION_WIDTH = 80;
+    public static readonly int BOMB_EXPLOSION_HEIGHT = 72;
     public static int BALL_DRAW_SIZE => BALL_SIZE * GameObject.PIXEL_SIZE;
     public static int EXPLOSION_DRAW_SIZE => EXPLOSION_SIZE * GameObject.PIXEL_SIZE;
+    public static int BOMB_EXPLOSION_DRAW_WIDTH => BOMB_EXPLOSION_WIDTH * GameObject.PIXEL_SIZE;
+    public static int BOMB_EXPLOSION_DRAW_HEIGHT => BOMB_EXPLOSION_HEIGHT * GameObject.PIXEL_SIZE;
 
     public const float MAX_EXPLODE_DELAY = 0.2f;
     public const float MAX_PETRIFY_DELAY = 1f;
@@ -44,6 +48,11 @@ public readonly struct BallData
         this.value = value;
     }
 
+    public BallData(BallData other)
+    {
+        value = other.value;
+    }
+
     public static BallData FromCode(string code)
     {
         string firstChar = code.Substring(0, 1);
@@ -65,11 +74,53 @@ public readonly struct BallData
         }
     }
 
+    public static string ToCode(BallData ball)
+    {
+        if (ball.IsColor)
+        {
+            return ((char)('a' + ball.value)).ToString();
+        }
+        return ball.value switch
+        {
+            (int)SpecialType.Rainbow => "R",
+            (int)SpecialType.Bomb => "B",
+            (int)SpecialType.Stone => "S",
+            _ => throw new ArgumentException($"Invalid special ball type: {ball.value}")
+        };
+    }
+
+    public string ToSQLValue()
+    {
+        if (IsColor)
+        {
+            return value.ToString();
+        }
+        return value switch
+        {
+            (int)SpecialType.Rainbow => "rainbow",
+            (int)SpecialType.Bomb => "bomb",
+            (int)SpecialType.Stone => "stone",
+            _ => throw new ArgumentException($"Invalid special ball type: {value}")
+        };
+    }
+
+    public static int RandomColor(Random rand)
+    {
+        return rand.Next(COLOR_COUNT);
+    }
+
+    public static int RandomUsefulSpecial(Random rand)
+    {
+        return rand.Next((int)SpecialType.Bomb, (int)SpecialType.Rainbow + 1);
+    }
+
     public class Assets
     {
         public readonly Texture2D BallSpritesheet;
         public readonly Texture2D SpecialBallSpritesheet;
         public readonly Texture2D ExplosionSpritesheet;
+        public readonly Texture2D BombExplosionSpritesheet;
+        public readonly Texture2D StoneExplosionSpritesheet;
         public readonly Texture2D ShineSpritesheet;
         public readonly Texture2D PreviewBallSpriteSheet;
 
@@ -78,6 +129,8 @@ public readonly struct BallData
             BallSpritesheet = content.Load<Texture2D>("Graphics/balls");
             SpecialBallSpritesheet = content.Load<Texture2D>("Graphics/special_balls");
             ExplosionSpritesheet = content.Load<Texture2D>("Graphics/balls_explode4");
+            BombExplosionSpritesheet = content.Load<Texture2D>("Graphics/bomb_explode");
+            StoneExplosionSpritesheet = content.Load<Texture2D>("Graphics/rock_explode");
             ShineSpritesheet = content.Load<Texture2D>("Graphics/ball_shine");
             PreviewBallSpriteSheet = content.Load<Texture2D>("Graphics/ball_preview");
         }
@@ -103,8 +156,6 @@ public readonly struct BallData
         public bool isExploding = false;
         public bool isPetrifying = false;
         public bool isAlt = false;
-
-
     }
 
     public void LoadAnimation(Assets assets)
@@ -138,7 +189,7 @@ public readonly struct BallData
                         assets.ExplosionSpritesheet,
                         new Rectangle(
                             0,
-                            11 * (assets.ExplosionSpritesheet.Height / 12),
+                            9 * (assets.ExplosionSpritesheet.Height / 12),
                             assets.ExplosionSpritesheet.Width,
                             assets.ExplosionSpritesheet.Height / 12
                         ),
@@ -153,25 +204,25 @@ public readonly struct BallData
                     animState.anim = anim;
 
                     animState.explosionAnim = new AnimatedTexture2D(
-                        assets.ExplosionSpritesheet,
+                        assets.BombExplosionSpritesheet,
                         new Rectangle(
                             0,
-                            11 * (assets.ExplosionSpritesheet.Height / 12),
-                            assets.ExplosionSpritesheet.Width,
-                            assets.ExplosionSpritesheet.Height / 12
+                            0,
+                            assets.BombExplosionSpritesheet.Width,
+                            assets.BombExplosionSpritesheet.Height
                         ),
-                        7, 1, 0.02f, false
+                        6, 1, 0.075f, false
                     );
                     break;
                 }
             case (int)SpecialType.Stone:
                 animState.explosionAnim = new AnimatedTexture2D(
-                    assets.ExplosionSpritesheet,
+                    assets.StoneExplosionSpritesheet,
                     new Rectangle(
                         0,
-                        11 * (assets.ExplosionSpritesheet.Height / 12),
-                        assets.ExplosionSpritesheet.Width,
-                        assets.ExplosionSpritesheet.Height / 12
+                        0,
+                        assets.StoneExplosionSpritesheet.Width,
+                        assets.StoneExplosionSpritesheet.Height
                     ),
                     7, 1, 0.02f, false
                 );
@@ -195,7 +246,8 @@ public readonly struct BallData
         }
 
         animState.explosionAnim.KeepDrawingAfterFinish = false;
-        animState.explodeDelay = _rand.NextSingle() * MAX_EXPLODE_DELAY;
+        if (IsBomb) { animState.explodeDelay = 0; }
+        else { animState.explodeDelay = _rand.NextSingle() * MAX_EXPLODE_DELAY; }
         animState.petrifyDelay = _rand.NextSingle() * MAX_PETRIFY_DELAY;
     }
 
@@ -240,6 +292,11 @@ public readonly struct BallData
     }
 
     public bool IsPlayingExplosionAnimation => animState.isExploding;
+    public bool IsPlayingShineAnimation(GameTime gameTime)
+    {
+        Debug.Assert(animState.shineAnim is not null, "Shine animation is not loaded.");
+        return !animState.shineAnim.IsFinished(gameTime);
+    }
 
     public void PlayExplosionAnimation(GameTime gameTime)
     {
@@ -312,14 +369,30 @@ public readonly struct BallData
     private void DrawExplode(SpriteBatch spriteBatch, GameTime gameTime, Vector2 screenPosition, float alpha)
     {
         Debug.Assert(animState.explosionAnim is not null, "Explosion animation is not loaded.");
-        animState.explosionAnim.Draw(
-            spriteBatch,
-            gameTime,
-            new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
-            Color.White * alpha,
-            0.0f,
-            new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
-        );
+        switch (value)
+        {
+            case (int)SpecialType.Bomb:
+                animState.explosionAnim.Draw(
+                    spriteBatch,
+                    gameTime,
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, BOMB_EXPLOSION_DRAW_WIDTH, BOMB_EXPLOSION_DRAW_HEIGHT),
+                    Color.White * alpha,
+                    0.0f,
+                    new Vector2(BOMB_EXPLOSION_WIDTH / 2, BOMB_EXPLOSION_HEIGHT / 2)
+                );
+                break;
+
+            default:
+                animState.explosionAnim.Draw(
+                    spriteBatch,
+                    gameTime,
+                    new Rectangle((int)screenPosition.X, (int)screenPosition.Y, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE),
+                    Color.White * alpha,
+                    0.0f,
+                    new Vector2(EXPLOSION_SIZE / 2, EXPLOSION_SIZE / 2)
+                );
+                break;
+        }
     }
 
 
@@ -439,21 +512,51 @@ public readonly struct BallData
         }
     }
 
+    public static string HexMapToString(HexMap<BallData> map)
+    {
+        List<string> lines = [];
+        for (int row = map.MinR; row <= map.MaxR; row++)
+        {
+            List<string> cells = [];
+            bool stagger = (row & 1) == 1;
+            for (int col = 0; col < (stagger ? 7 : 8); col++)
+            {
+                var data = map[new OffsetCoord(col, row)];
+                if (data is BallData bd)
+                {
+                    cells.Add(ToCode(bd));
+                }
+                else
+                {
+                    cells.Add(".");
+                }
+            }
+            lines.Add((stagger ? " " : "") + string.Join(" ", cells));
+        }
+        return string.Join("\n", lines);
+    }
+
     public class BallStats
     {
         public readonly Dictionary<int, int> ColorCounts = [];
         public int Count = 0;
+        public int ColorCount = 0;
 
         public void Add(BallData ball)
         {
-            if (ColorCounts.TryGetValue(ball.value, out int value))
+            if (ball.IsColor)
             {
-                ColorCounts[ball.value] = ++value;
+                if (ColorCounts.TryGetValue(ball.value, out int value))
+                {
+                    ColorCounts[ball.value] = ++value;
+                }
+                else
+                {
+                    ColorCounts[ball.value] = 1;
+                }
+                ColorCount++;
             }
-            else
-            {
-                ColorCounts[ball.value] = 1;
-            }
+
             Count++;
         }
 
@@ -461,14 +564,19 @@ public readonly struct BallData
         {
             while (balls.MoveNext())
             {
-                if (ColorCounts.TryGetValue(balls.Current.value, out int value))
+                if (balls.Current.IsColor)
                 {
-                    ColorCounts[balls.Current.value] = ++value;
+                    if (ColorCounts.TryGetValue(balls.Current.value, out int value))
+                    {
+                        ColorCounts[balls.Current.value] = ++value;
+                    }
+                    else
+                    {
+                        ColorCounts[balls.Current.value] = 1;
+                    }
+                    ColorCount++;
                 }
-                else
-                {
-                    ColorCounts[balls.Current.value] = 1;
-                }
+
                 Count++;
             }
         }
@@ -486,6 +594,7 @@ public readonly struct BallData
 
         public bool Check(BallData ball)
         {
+            if (!ball.IsColor) return true;
             return ColorCounts.TryGetValue(ball.value, out int value)
                     && 0 < value;
         }

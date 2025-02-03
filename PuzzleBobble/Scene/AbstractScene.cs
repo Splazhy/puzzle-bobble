@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Myra.Graphics2D.UI;
 
 namespace PuzzleBobble.Scene;
+public delegate void SceneChangedHandler(AbstractScene newScene);
 
 public abstract class AbstractScene : GameObject
 {
@@ -12,20 +11,38 @@ public abstract class AbstractScene : GameObject
     {
     }
 
+    public event SceneChangedHandler? UpperSceneChanged;
     public event SceneChangedHandler? SceneChanged;
-    public delegate void SceneChangedHandler(AbstractScene oldScene, AbstractScene newScene);
 
     protected virtual void ChangeScene(AbstractScene newScene)
     {
-        // ?. operator is used to check if the event is null
-        // before invoking it for thread safety.
-        SceneChanged?.Invoke(this, newScene);
+        SceneChanged?.Invoke(newScene);
+    }
+    protected virtual void ChangeUpperScene(AbstractScene newScene)
+    {
+        UpperSceneChanged?.Invoke(newScene);
     }
 
-    public abstract void Initialize(Game game);
+    public abstract void Initialize(Game game, SaveData sd);
 
     public virtual Desktop? DrawMyra()
     {
         return null;
+    }
+
+    public virtual Color BackgroundColor => Color.RosyBrown;
+
+    private bool _backBtnDown = true;
+    /// <summary>
+    /// Becomes true for one frame when the back button is pressed.
+    /// </summary>
+    protected bool GoBackTriggered { get; private set; }
+    public override void Update(GameTime gameTime, Vector2 parentTranslate)
+    {
+        base.Update(gameTime, parentTranslate);
+        var backBtn = Keyboard.GetState().IsKeyDown(Keys.Escape)
+            || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed;
+        GoBackTriggered = backBtn && !_backBtnDown;
+        _backBtnDown = backBtn;
     }
 }

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PuzzleBobble.Scene;
 
 namespace PuzzleBobble;
 
@@ -19,6 +20,8 @@ public class Game1 : Game
     private TimeSpan _drawOrdersTimeMeasured;
     private TimeSpan _drawCallTimeMeasured;
     private readonly Stopwatch _stopwatch = new();
+
+    private readonly SaveData _saveData;
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this)
@@ -31,7 +34,10 @@ public class Game1 : Game
         };
         IsFixedTimeStep = false;
 
-        _sceneManager = new SceneManager(this);
+        // there will be only one save data
+        _saveData = new(1);
+
+        _sceneManager = new SceneManager(this, _saveData, new MimiScene());
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
@@ -43,7 +49,7 @@ public class Game1 : Game
     protected override void Initialize()
     {
         Myra.MyraEnvironment.Game = this;
-        _sceneManager.Initialize(this);
+        _sceneManager.Initialize();
 
         base.Initialize();
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
@@ -74,14 +80,16 @@ public class Game1 : Game
     {
         Debug.Assert(_spriteBatch is not null, "SpriteBatch is not loaded.");
 
-        GraphicsDevice.Clear(Color.RosyBrown);
+        GraphicsDevice.Clear(_sceneManager.GetBackgroundColor());
 
         _spriteBatch.Begin(samplerState: SamplerState.PointWrap, blendState: BlendState.AlphaBlend);
-        // TODO: hide/show these using debug options
-        _spriteBatch.DrawString(Font, $"Update Time: {_updateTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 10), Color.White);
-        _spriteBatch.DrawString(Font, $"Draw Orders Time: {_drawOrdersTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 40), Color.White);
-        _spriteBatch.DrawString(Font, $"Draw Call Time: {_drawCallTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 70), Color.White);
-        _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 100), Color.White);
+        if (DebugOptions.SHOW_TIMINGS)
+        {
+            _spriteBatch.DrawString(Font, $"Update Time: {_updateTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 10), Color.White);
+            _spriteBatch.DrawString(Font, $"Draw Orders Time: {_drawOrdersTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 40), Color.White);
+            _spriteBatch.DrawString(Font, $"Draw Call Time: {_drawCallTimeMeasured.TotalMilliseconds:#.###}ms", new Vector2(10, 70), Color.White);
+            _spriteBatch.DrawString(Font, $"FPS: {_frameCounter.AverageFramesPerSecond}", new Vector2(10, 100), Color.White);
+        }
 
         _stopwatch.Restart();
         _sceneManager.Draw(_spriteBatch, gameTime);
@@ -102,8 +110,16 @@ public class Game1 : Game
     {
         Window.ClientSizeChanged -= Window_ClientSizeChanged;
 
-        // TODO: code that needs to be run on window size change
         _screenCenter = new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height / 2);
+        GameObject.PIXEL_SIZE = Math.Max(1, Window.ClientBounds.Height / 300);
+
         Window.ClientSizeChanged += Window_ClientSizeChanged;
     }
+
+    protected override void EndRun()
+    {
+        _saveData.Close();
+        base.EndRun();
+    }
+
 }

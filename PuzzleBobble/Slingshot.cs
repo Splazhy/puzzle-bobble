@@ -91,13 +91,6 @@ public class Slingshot : GameObject
     {
         base.Update(gameTime, parentTranslate);
 
-        // TODO: Implement `IsJustPressed` method for new InputManager class
-        // This code executes multiple times per a short key press,
-        // resulting in undesired behavior.
-        //
-        // if (Keyboard.GetState().IsKeyDown(Keys.H))
-        //     IsActive = !IsActive;
-
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _timeSinceLastFired += deltaTime;
         visualRecoilOffset = Math.Max(0.0f, visualRecoilOffset - RECOIL_RECOVERY * deltaTime);
