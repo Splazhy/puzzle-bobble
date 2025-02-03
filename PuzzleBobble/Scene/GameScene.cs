@@ -19,6 +19,7 @@ public class GameScene : AbstractScene
     private GameBoard? _gameBoard;
     private Guideline? _guideline;
     private DeathLine? _deathline;
+    private BoardBackground? _boardBackground;
     private Desktop? _desktop;
 
     /// <summary>
@@ -84,7 +85,7 @@ public class GameScene : AbstractScene
         _slingshot = new(game);
         _gameBoard = new GameBoard(game);
         _deathline = new(GameBoard.DEATH_Y_POS);
-        BoardBackground boardBackground = new(_gameBoard);
+        _boardBackground = new(_gameBoard);
 
         _guideline = new Guideline(
             _gameBoard,
@@ -131,7 +132,7 @@ public class GameScene : AbstractScene
             }
         };
         children = [
-            boardBackground,
+            _boardBackground,
             _deathline,
             _gameBoard,
             _guideline,
@@ -206,12 +207,13 @@ public class GameScene : AbstractScene
     private void Fail(GameTime gameTime)
     {
         Debug.Assert(_state == GameState.Playing);
-        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null);
+        Debug.Assert(_gameBoard is not null && _slingshot is not null && _guideline is not null && _boardBackground is not null);
         _state = GameState.Fail;
         _finishTime = gameTime.TotalGameTime;
         _gameBoard.Fail(gameTime);
         _slingshot.Fail(gameTime);
         _guideline.TurnOff(gameTime);
+        _boardBackground.Fail(gameTime);
     }
 
     private void Success(GameTime gameTime)
