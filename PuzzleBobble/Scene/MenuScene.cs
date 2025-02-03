@@ -57,7 +57,7 @@ public class MenuScene : AbstractScene
 
         var homeBtn = new Button
         {
-            Content = new Label { Text = "Home" },
+            Content = new Label { Text = "Statistics" },
             HorizontalAlignment = HorizontalAlignment.Center,
             Padding = new Thickness(20, 10),
         };

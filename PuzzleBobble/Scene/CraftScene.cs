@@ -120,38 +120,21 @@ public class CraftScene : AbstractScene
         };
         BackBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
-        // Label
-        var inventoryLabel = new Label
-        {
-            Text = "Inventory",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Top,
-            TextColor = Color.White,
-        };
-
         // Panel
         var rightTop = new Panel
         {
             Widgets =
             {
-                inventoryLabel
             }
         };
         rightGrid.Widgets.Add(rightTop);
         Grid.SetRow(rightTop, 0);
 
-        var dividerLine = new HorizontalSeparator
-        {
-            Thickness = 2,
-            Color = Color.Black,
-        };
-        rightGrid.Widgets.Add(dividerLine);
-        Grid.SetRow(dividerLine, 1);
-
         var rightBottom = new Panel
         {
             Widgets =
             {
+                BackBtn
             }
         };
         rightGrid.Widgets.Add(rightBottom);
@@ -161,7 +144,6 @@ public class CraftScene : AbstractScene
         {
             Widgets =
             {
-                BackBtn
             }
         };
         mainGrid.Widgets.Add(leftPanel);
@@ -197,6 +179,7 @@ public class CraftScene : AbstractScene
         }
     }
 
+    private Vector2 textOffSet = new Vector2(900, 100);
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
         Debug.Assert(_itemAssets is not null);
@@ -205,8 +188,8 @@ public class CraftScene : AbstractScene
 
         foreach (var ((item, count), index) in inventory.Select((e, i) => (e, i)))
         {
-            item.Draw(spriteBatch, _itemAssets, new Vector2(0, 16 * index * PIXEL_SIZE), Vector2.Zero);
-            spriteBatch.DrawString(_font, $"{item.ItemId} x {count}", new Vector2(16 * PIXEL_SIZE, 16 * index * PIXEL_SIZE), Color.White);
+            item.Draw(spriteBatch, _itemAssets, new Vector2(0 + textOffSet.X, 16 * index * PIXEL_SIZE + textOffSet.Y), Vector2.Zero);
+            spriteBatch.DrawString(_font, $"{item.ItemId} x {count}", new Vector2(16 * PIXEL_SIZE + textOffSet.X, 16 * index * PIXEL_SIZE + textOffSet.Y), Color.White);
         }
     }
 
