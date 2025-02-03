@@ -119,42 +119,10 @@ public class CraftScene : AbstractScene
         };
         BackBtn.Click += (sender, args) => ChangeScene(new MenuScene());
 
-        var CraftBtn = new Button
-        {
-            Content = new Label { Text = "C" },
-            Left = 372,
-            Top = 240,
-            Padding = new Thickness(10, 5)
-        };
-
-        var OrderBtn = new Button
-        {
-            Content = new Label { Text = "O" },
-            Left = 372,
-            Top = 270,
-            Padding = new Thickness(10, 5)
-        };
-
         // Label
         var inventoryLabel = new Label
         {
             Text = "Inventory",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Top,
-            TextColor = Color.White,
-        };
-
-        var CraftLabel = new Label
-        {
-            Text = "Crafting Potion",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Top,
-            TextColor = Color.White,
-        };
-
-        var OrderLabel = new Label
-        {
-            Text = "Order Items",
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Top,
             TextColor = Color.White,
@@ -183,7 +151,6 @@ public class CraftScene : AbstractScene
         {
             Widgets =
             {
-                CraftLabel
             }
         };
         rightGrid.Widgets.Add(rightBottom);
@@ -193,8 +160,6 @@ public class CraftScene : AbstractScene
         {
             Widgets =
             {
-                CraftBtn,
-                OrderBtn,
                 BackBtn
             }
         };
@@ -211,22 +176,7 @@ public class CraftScene : AbstractScene
         mainGrid.Widgets.Add(rightPanel);
         Grid.SetColumn(rightPanel, 1);
 
-        // Button event
-        OrderBtn.Click += (sender, args) =>
-        {
-            rightBottom.Widgets.Clear();
-            rightBottom.Widgets.Add(OrderLabel);
-
-            Grid.SetRow(rightBottom, 2);
-        };
-
-        CraftBtn.Click += (sender, args) =>
-        {
-            rightBottom.Widgets.Clear();
-            rightBottom.Widgets.Add(CraftLabel);
-
-            Grid.SetRow(rightBottom, 2);
-        };
+        // TODO: well, maybe someday later
 
         _desktop = new Desktop
         {
