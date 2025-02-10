@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.IO;
 
 namespace PuzzleBobble;
@@ -16,17 +16,23 @@ public class SaveData
 
     public readonly long SaveId;
 
-    private readonly SQLiteConnection db;
+    private readonly SqliteConnection db;
 
     public SaveData(long saveId)
     {
         Directory.CreateDirectory(SaveFolderPath);
 
-        db = new SQLiteConnection($"Data Source={Path.Join(SaveFolderPath, "savedata.db")}");
+        var connectionString = new SqliteConnectionStringBuilder()
+        {
+            DataSource = Path.Join(SaveFolderPath, "savedata.db"),
+            ForeignKeys = true,
+        }.ToString();
+
+        db = new SqliteConnection(connectionString);
 
         db.Open();
 
-        var stmt = new SQLiteCommand(
+        var stmt = new SqliteCommand(
             """
             PRAGMA foreign_keys = OFF
             """,
@@ -34,7 +40,7 @@ public class SaveData
         );
         stmt.ExecuteNonQuery();
 
-        stmt = new SQLiteCommand(
+        stmt = new SqliteCommand(
             """
             PRAGMA journal_mode = WAL
             """,
@@ -45,7 +51,7 @@ public class SaveData
         Migrate();
 
         SaveId = saveId;
-        stmt = new SQLiteCommand(
+        stmt = new SqliteCommand(
             """
             INSERT INTO "SaveData"
             VALUES (@saveId)
@@ -67,7 +73,13 @@ public class SaveData
             """
             PRAGMA user_version
             """;
-        var version = (long)command.ExecuteScalar();
+
+        using var versionReader = command.ExecuteReader();
+        if (!versionReader.Read())
+        {
+            throw new Exception("Failed to read user_version");
+        }
+        var version = versionReader.GetInt32(0);
 
         if (version == 1) return;
 
@@ -131,7 +143,7 @@ public class SaveData
         db.Close();
     }
 
-    public SQLiteTransaction BeginTransaction()
+    public SqliteTransaction BeginTransaction()
     {
         CleanupCachedStmts();
         return db.BeginTransaction();
@@ -153,11 +165,12 @@ public class SaveData
 
     public long CreateNewPlayHistoryEntry(DateTime startTime)
     {
-        using var stmt = new SQLiteCommand(
+        using var stmt = new SqliteCommand(
             """
             INSERT INTO "PlayHistory"
             (saveId, startTime, duration, status, accountedFor)
             VALUES (@saveId, @startTime, @duration, @status, @accountedFor)
+            RETURNING playHistoryId
             """,
             db
         );
@@ -166,16 +179,16 @@ public class SaveData
         stmt.Parameters.AddWithValue("@duration", 0);
         stmt.Parameters.AddWithValue("@status", (int)GameState.Playing);
         stmt.Parameters.AddWithValue("@accountedFor", false);
-        stmt.ExecuteNonQuery();
-
-        return db.LastInsertRowId;
+        using var reader = stmt.ExecuteReader();
+        reader.Read();
+        return reader.GetInt64(0);
     }
 
-    private SQLiteCommand? _updatePlayHistoryEntryStmt;
+    private SqliteCommand? _updatePlayHistoryEntryStmt;
 
     public void UpdatePlayHistoryEntry(long playHistoryId, double duration, GameState status)
     {
-        _updatePlayHistoryEntryStmt ??= new SQLiteCommand(
+        _updatePlayHistoryEntryStmt ??= new SqliteCommand(
             """
             UPDATE "PlayHistory"
             SET duration = @duration, status = @status
@@ -190,10 +203,10 @@ public class SaveData
         _updatePlayHistoryEntryStmt.ExecuteNonQuery();
     }
 
-    private SQLiteCommand? _upsertPlayHistoryDetailStmt;
+    private SqliteCommand? _upsertPlayHistoryDetailStmt;
     public void AddToPlayHistoryDetail(long playHistoryId, string stat, int value)
     {
-        _upsertPlayHistoryDetailStmt ??= new SQLiteCommand(
+        _upsertPlayHistoryDetailStmt ??= new SqliteCommand(
             """
             INSERT INTO "PlayHistoryDetail"
             (playHistoryId, stat, value)
@@ -211,7 +224,7 @@ public class SaveData
 
     public List<long> GetUnaccountedPlayHistoryEntries()
     {
-        using var stmt = new SQLiteCommand(
+        using var stmt = new SqliteCommand(
             """
             SELECT playHistoryId
             FROM "PlayHistory"
@@ -231,7 +244,7 @@ public class SaveData
 
     public void SetPlayHistoryAccountedFor(long playHistoryId)
     {
-        using var stmt = new SQLiteCommand(
+        using var stmt = new SqliteCommand(
             """
             UPDATE "PlayHistory"
             SET accountedFor = 1
@@ -252,11 +265,11 @@ public class SaveData
         public bool AccountedFor;
     }
 
-    private SQLiteCommand? _getPlayHistoryStmt;
+    private SqliteCommand? _getPlayHistoryStmt;
 
     public PlayHistory GetPlayHistory(long playHistoryId)
     {
-        _getPlayHistoryStmt ??= new SQLiteCommand(
+        _getPlayHistoryStmt ??= new SqliteCommand(
                     """
             SELECT startTime, duration, status, accountedFor
             FROM "PlayHistory"
@@ -282,7 +295,7 @@ public class SaveData
 
     public List<KeyValuePair<string, int>> GetPlayHistoryDetails(long playHistoryId)
     {
-        using var stmt = new SQLiteCommand(
+        using var stmt = new SqliteCommand(
             """
             SELECT stat, value
             FROM "PlayHistoryDetail"
@@ -300,11 +313,11 @@ public class SaveData
         return result;
     }
 
-    private SQLiteCommand? _addToInventoryStmt;
+    private SqliteCommand? _addToInventoryStmt;
 
     public void AddToInventory(string itemId, int count)
     {
-        _addToInventoryStmt ??= new SQLiteCommand(
+        _addToInventoryStmt ??= new SqliteCommand(
             """
             INSERT INTO "Inventory"
             (saveId, itemId, count)
@@ -322,7 +335,7 @@ public class SaveData
 
     public List<KeyValuePair<string, int>> GetInventory()
     {
-        using var stmt = new SQLiteCommand(
+        using var stmt = new SqliteCommand(
             """
             SELECT itemId, count
             FROM "Inventory"
