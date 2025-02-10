@@ -76,14 +76,18 @@ public class SaveData
             PRAGMA user_version
             """;
 
-        using var versionReader = command.ExecuteReader();
-        if (!versionReader.Read())
+        using (var versionReader = command.ExecuteReader())
         {
-            throw new Exception("Failed to read user_version");
-        }
-        var version = versionReader.GetInt32(0);
 
-        if (version == 1) return;
+            if (!versionReader.Read())
+            {
+                throw new Exception("Failed to read user_version");
+            }
+            var version = versionReader.GetInt32(0);
+
+            if (version == 1) return;
+        }
+        ;
 
         command.CommandText =
             """
