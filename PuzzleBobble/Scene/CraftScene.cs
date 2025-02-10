@@ -33,7 +33,7 @@ public class CraftScene : AbstractScene
     {
         _saveData = sd;
 
-        using var transaction = _saveData.BeginTransaction();
+        _saveData.BeginTransaction();
         var unaccountedPlays = _saveData.GetUnaccountedPlayHistoryEntries();
         foreach (var play in unaccountedPlays)
         {
@@ -59,8 +59,7 @@ public class CraftScene : AbstractScene
             _saveData.SetPlayHistoryAccountedFor(play);
         }
 
-        transaction.Commit();
-        _saveData.CleanupCachedStmts();
+        _saveData.Commit();
 
         RefreshFromSaveData();
     }

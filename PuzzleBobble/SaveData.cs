@@ -18,6 +18,8 @@ public class SaveData
 
     private readonly SqliteConnection db;
 
+    private SqliteTransaction? transaction;
+
     public SaveData(long saveId)
     {
         Directory.CreateDirectory(SaveFolderPath);
@@ -143,13 +145,21 @@ public class SaveData
         db.Close();
     }
 
-    public SqliteTransaction BeginTransaction()
+    public void BeginTransaction()
     {
         CleanupCachedStmts();
-        return db.BeginTransaction();
+
+        transaction = db.BeginTransaction();
     }
 
-    public void CleanupCachedStmts()
+    public void Commit()
+    {
+        transaction?.Commit();
+        transaction = null;
+        CleanupCachedStmts();
+    }
+
+    private void CleanupCachedStmts()
     {
         _updatePlayHistoryEntryStmt?.Dispose();
         _upsertPlayHistoryDetailStmt?.Dispose(); ;
@@ -174,6 +184,7 @@ public class SaveData
             """,
             db
         );
+        stmt.Transaction = transaction;
         stmt.Parameters.AddWithValue("@saveId", SaveId);
         stmt.Parameters.AddWithValue("@startTime", startTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
         stmt.Parameters.AddWithValue("@duration", 0);
@@ -196,6 +207,7 @@ public class SaveData
             """,
             db
         );
+        _updatePlayHistoryEntryStmt.Transaction = transaction;
         _updatePlayHistoryEntryStmt.Parameters.Clear();
         _updatePlayHistoryEntryStmt.Parameters.AddWithValue("@duration", duration);
         _updatePlayHistoryEntryStmt.Parameters.AddWithValue("@status", (int)status);
@@ -215,6 +227,7 @@ public class SaveData
             """,
             db
         );
+        _upsertPlayHistoryDetailStmt.Transaction = transaction;
         _upsertPlayHistoryDetailStmt.Parameters.Clear();
         _upsertPlayHistoryDetailStmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
         _upsertPlayHistoryDetailStmt.Parameters.AddWithValue("@stat", stat);
@@ -232,6 +245,7 @@ public class SaveData
             """,
             db
         );
+        stmt.Transaction = transaction;
         stmt.Parameters.AddWithValue("@saveId", SaveId);
         using var reader = stmt.ExecuteReader();
         var result = new List<long>();
@@ -252,6 +266,7 @@ public class SaveData
             """,
             db
         );
+        stmt.Transaction = transaction;
         stmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
         stmt.ExecuteNonQuery();
     }
@@ -277,6 +292,7 @@ public class SaveData
             """,
                     db
                 );
+        _getPlayHistoryStmt.Transaction = transaction;
         _getPlayHistoryStmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
         using var reader = _getPlayHistoryStmt.ExecuteReader();
         if (!reader.Read())
@@ -303,6 +319,7 @@ public class SaveData
             """,
             db
         );
+        stmt.Transaction = transaction;
         stmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
         using var reader = stmt.ExecuteReader();
         var result = new List<KeyValuePair<string, int>>();
@@ -326,6 +343,7 @@ public class SaveData
             """,
             db
         );
+        _addToInventoryStmt.Transaction = transaction;
         _addToInventoryStmt.Parameters.Clear();
         _addToInventoryStmt.Parameters.AddWithValue("@saveId", SaveId);
         _addToInventoryStmt.Parameters.AddWithValue("@itemId", itemId);
@@ -343,6 +361,7 @@ public class SaveData
             """,
             db
         );
+        stmt.Transaction = transaction;
         stmt.Parameters.AddWithValue("@saveId", SaveId);
         using var reader = stmt.ExecuteReader();
         var result = new List<KeyValuePair<string, int>>();
