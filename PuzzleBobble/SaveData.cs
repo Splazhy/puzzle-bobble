@@ -297,6 +297,7 @@ public class SaveData
                     db
                 );
         _getPlayHistoryStmt.Transaction = transaction;
+        _getPlayHistoryStmt.Parameters.Clear();
         _getPlayHistoryStmt.Parameters.AddWithValue("@playHistoryId", playHistoryId);
         using var reader = _getPlayHistoryStmt.ExecuteReader();
         if (!reader.Read())
