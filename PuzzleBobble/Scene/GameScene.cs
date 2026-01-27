@@ -80,7 +80,7 @@ public class GameScene : AbstractScene
     public override void Initialize(Game game, SaveData sd)
     {
         _saveData = sd;
-        _playHistoryId = sd.CreateNewPlayHistoryEntry(DateTime.Now);
+        // _playHistoryId = sd.CreateNewPlayHistoryEntry(DateTime.Now);
 
         _slingshot = new(game);
         _gameBoard = new GameBoard(game);
@@ -126,10 +126,10 @@ public class GameScene : AbstractScene
                 }
             }
 
-            foreach (var (ball, count) in _ballObtainedCounts)
-            {
-                _saveData.AddToPlayHistoryDetail(_playHistoryId, $"ball-{ball}", count);
-            }
+            // foreach (var (ball, count) in _ballObtainedCounts)
+            // {
+            //     _saveData.AddToPlayHistoryDetail(_playHistoryId, $"ball-{ball}", count);
+            // }
         };
         children = [
             _boardBackground,
@@ -414,10 +414,10 @@ public class GameScene : AbstractScene
         }
         _lastUpdateTime = gameTime.TotalGameTime;
 
-        Debug.Assert(_saveData is not null, "SaveData is not loaded.");
+        // Debug.Assert(_saveData is not null, "SaveData is not loaded.");
 
         var elapsedTime = ((_finishTime ?? gameTime.TotalGameTime) - _startTime).TotalSeconds;
-        _saveData.UpdatePlayHistoryEntry(_playHistoryId, elapsedTime, _state == GameState.Paused ? GameState.Playing : _state);
+        // _saveData.UpdatePlayHistoryEntry(_playHistoryId, elapsedTime, _state == GameState.Paused ? GameState.Playing : _state);
     }
 
     public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)

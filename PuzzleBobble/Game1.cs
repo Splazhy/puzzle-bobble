@@ -35,7 +35,7 @@ public class Game1 : Game
         IsFixedTimeStep = false;
 
         // there will be only one save data
-        _saveData = new(1);
+        // _saveData = new(1);
 
         _sceneManager = new SceneManager(this, _saveData, new MimiScene());
         Content.RootDirectory = "Content";
@@ -118,7 +118,7 @@ public class Game1 : Game
 
     protected override void EndRun()
     {
-        _saveData.Close();
+        // _saveData.Close();
         base.EndRun();
     }
 
