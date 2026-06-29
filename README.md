@@ -1,5 +1,9 @@
 # Mimi and The Bubble Forest
 
+![Title Screen](screenshots/titlescreen.png)
+
+![Gameplay Screen](screenshots/gameplay.png)
+
 A game with mechanics heavily inspired by the classic **Puzzle Bobble** game. The game is a project for the course of Computer Game Programming at King Mongkut's Institute of Technology Ladkrabang (KMITL).
 
 ## Development
